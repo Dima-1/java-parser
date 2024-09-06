@@ -1,7 +1,9 @@
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /*ClassFile {
 	u4             magic;
@@ -25,6 +27,7 @@ import java.util.Arrays;
 public class Parser {
 
 	private int count = 0;
+	List<ConstantPoolRecord> constants = new ArrayList<>();
 
 	public static void main(String[] args) {
 		if (args.length == 0) {
@@ -45,8 +48,8 @@ public class Parser {
 			int constantPoolCount = getU2(fis, "Constant pool count");
 			readConstantPool(fis, constantPoolCount);
 			getU2(fis, "Access flags");
-			getU2(fis, "This class");
-			getU2(fis, "Super class");
+			getU2(fis, "This class", true);
+			getU2(fis, "Super class", true);
 			int interfacesCount = getU2(fis, "Interfaces count");
 			readInterfaces(fis, interfacesCount);
 			int fieldsCount = getU2(fis, "Fields count");
@@ -74,8 +77,10 @@ public class Parser {
 
 	}
 
-	private void readInterfaces(FileInputStream fis, int interfacesCount) {
-
+	private void readInterfaces(FileInputStream fis, int interfacesCount) throws IOException {
+		for (int i = 0; i < interfacesCount; i++) {
+			getU2(fis, "", true);
+		}
 	}
 
 	public enum ConstantPool {
@@ -106,10 +111,8 @@ public class Parser {
 			this.length = length;
 		}
 
-		boolean isStringIndex() {
-			return this == CONSTANT_Class
-					| this == CONSTANT_String | this == CONSTANT_MethodType
-					| this == CONSTANT_Module | this == CONSTANT_Package;
+		boolean isTwoEntriesTakeUp() {
+			return this == CONSTANT_Double | this == CONSTANT_Long;
 		}
 
 		static ConstantPool getConstant(int tag) {
@@ -128,45 +131,79 @@ public class Parser {
 			u1 info[];
 		}*/
 
-		for (int i = 2; i < constantPoolCount; i++) {
-			int offset = count;
-			int tag = fis.read();
-			ConstantPool cp = ConstantPool.getConstant(tag);
-			System.out.printf("%04X %4d %27s %4s \n", offset, i, cp.name(), getData(fis, tag));
-			count++;
+		for (int i = 1; i < constantPoolCount; i++) {
+			ConstantPoolRecord cpr = getCPRecord(i, fis);
+			constants.add(cpr);
+			if (cpr.cp.isTwoEntriesTakeUp()) {
+				constants.add(null);
+				i++;
+			}
+		}
+		for (int i = 0; i < constants.size(); i++) {
+			ConstantPoolRecord cpr = constants.get(i);
+			cpr.print(constants);
+			if (cpr.cp.isTwoEntriesTakeUp()) {
+				i++;
+			}
 		}
 	}
 
-	public String getData(FileInputStream fis, int tag) throws IOException {
+	private ConstantPoolRecord getCPRecord(int idx, FileInputStream fis) throws IOException {
+		int offset = count;
+		int tag = fis.read();
+		count++;
 		ConstantPool cp = ConstantPool.getConstant(tag);
-		int a = switch (cp) {
+
+		return switch (cp) {
 			case CONSTANT_Class, CONSTANT_String, CONSTANT_MethodType, CONSTANT_Module, CONSTANT_Package -> {
+				final short aShort = ByteBuffer.wrap(fis.readNBytes(Short.BYTES)).order(ByteOrder.BIG_ENDIAN).getShort();
 				count += Short.BYTES;
-				yield ByteBuffer.wrap(fis.readNBytes(Short.BYTES)).order(ByteOrder.BIG_ENDIAN).getShort();
+				yield new ConstantPoolString(offset, idx, cp, aShort);
+			}
+			case CONSTANT_Fieldref, CONSTANT_Methodref, CONSTANT_InterfaceMethodref, CONSTANT_NameAndType -> {
+				final short aShort = ByteBuffer.wrap(fis.readNBytes(Short.BYTES)).order(ByteOrder.BIG_ENDIAN).getShort();
+				count += Short.BYTES;
+				int bShort = ByteBuffer.wrap(fis.readNBytes(Short.BYTES)).order(ByteOrder.BIG_ENDIAN).getShort();
+				count += Short.BYTES;
+				yield new ConstantPoolMethodRef(offset, idx, cp, aShort, bShort);
 			}
 			case CONSTANT_Utf8 -> {
+				final short length = ByteBuffer.wrap(fis.readNBytes(Short.BYTES)).order(ByteOrder.BIG_ENDIAN).getShort();
 				count += Short.BYTES;
-				yield (int) ByteBuffer.wrap(fis.readNBytes(Short.BYTES)).order(ByteOrder.BIG_ENDIAN).getShort();
+				count += length;
+				yield new ConstantPoolUtf8Record(offset, idx, cp, new String(fis.readNBytes(length)));
+			}
+			case CONSTANT_MethodHandle -> {
+				final int referenceKind = fis.read();
+				count++;
+				int bShort = ByteBuffer.wrap(fis.readNBytes(Short.BYTES)).order(ByteOrder.BIG_ENDIAN).getShort();
+				count += Short.BYTES;
+				yield new ConstantPoolMethodHandle(offset, idx, cp, referenceKind, bShort);
 			}
 			default -> {
 				count += cp.length;
 				fis.readNBytes(cp.length);
-				yield cp.length;
+				yield new ConstantPoolDefault(offset, idx, cp);
 			}
 		};
-		if (cp == ConstantPool.CONSTANT_Utf8) {
-			count += a;
-			return new String(fis.readNBytes(a));
-		}
-		if (ConstantPool.getConstant(tag).isStringIndex()) {
-			return " ==> " + a;
-		}
-		return String.valueOf(a);
 	}
 
 	private int getU2(FileInputStream fis, String title) throws IOException {
+		return getU2(fis, title, false);
+	}
+
+	private int getU2(FileInputStream fis, String title, boolean addSymbolicName) throws IOException {
+		String symbolic = "";
 		int u2 = ByteBuffer.wrap(fis.readNBytes(Short.BYTES)).order(ByteOrder.BIG_ENDIAN).getShort();
-		System.out.printf("%04X %s %02d\n", count, title, u2);
+		if (addSymbolicName) {
+			if (u2 > 0) {
+				symbolic = " " + constants.get(u2 - 1).getString(constants);
+			} else {
+				symbolic = "java/lang/Object";
+			}
+		}
+
+		System.out.printf("%04X %s %02d%s\n", count, title, u2, symbolic);
 		count += Short.BYTES;
 		return u2;
 	}
@@ -184,6 +221,127 @@ public class Parser {
 				}
 				throw new RuntimeException("Wrong magic tag : " + sb);
 			}
+		}
+	}
+
+	private static abstract class ConstantPoolRecord {
+		int offset;
+		int idx;
+		ConstantPool cp;
+
+		public ConstantPoolRecord(int offset, int idx, ConstantPool cp) {
+			this.offset = offset;
+			this.idx = idx;
+			this.cp = cp;
+		}
+
+		void print(List<ConstantPoolRecord> constants) {
+			System.out.printf("%04X %4d %19s ", offset, idx, cp.name().replaceFirst("^CONSTANT_", ""));
+		}
+
+		abstract String getString(List<ConstantPoolRecord> constants);
+	}
+
+	private static final class ConstantPoolString extends ConstantPoolRecord {
+		int stringIndex;
+
+		public ConstantPoolString(int offset, int idx, ConstantPool cp, int stringIndex) {
+			super(offset, idx, cp);
+			this.stringIndex = stringIndex;
+		}
+
+		@Override
+		void print(List<ConstantPoolRecord> constants) {
+			super.print(constants);
+			System.out.println(getString(constants));
+		}
+
+		@Override
+		String getString(List<ConstantPoolRecord> constants) {
+			return "(" + stringIndex + ") " + constants.get(stringIndex - 1).getString(constants);
+		}
+	}
+
+	private static final class ConstantPoolMethodRef extends ConstantPoolRecord {
+		int classIndex;
+		int nameAndTypeIndex;
+
+		public ConstantPoolMethodRef(int offset, int idx, ConstantPool cp, int classIndex, int nameAndTypeIndex) {
+			super(offset, idx, cp);
+			this.classIndex = classIndex;
+			this.nameAndTypeIndex = nameAndTypeIndex;
+		}
+
+		@Override
+		void print(List<ConstantPoolRecord> constants) {
+			super.print(constants);
+			System.out.println(getString(constants));
+		}
+
+		@Override
+		String getString(List<ConstantPoolRecord> constants) {
+			return "(" + classIndex + ") " + constants.get(classIndex - 1).getString(constants)
+					+ " (" + nameAndTypeIndex + ") " + constants.get(nameAndTypeIndex - 1).getString(constants);
+		}
+	}
+
+	private static final class ConstantPoolUtf8Record extends ConstantPoolRecord {
+		String UTF8;
+
+		public ConstantPoolUtf8Record(int offset, int idx, ConstantPool cp, String UTF8) {
+			super(offset, idx, cp);
+			this.UTF8 = UTF8;
+		}
+
+		@Override
+		void print(List<ConstantPoolRecord> constants) {
+			super.print(constants);
+			System.out.println(getString(constants));
+		}
+
+		@Override
+		String getString(List<ConstantPoolRecord> constants) {
+			return UTF8;
+		}
+	}
+
+	private static final class ConstantPoolDefault extends ConstantPoolRecord {
+
+		public ConstantPoolDefault(int offset, int idx, ConstantPool cp) {
+			super(offset, idx, cp);
+		}
+
+		@Override
+		void print(List<ConstantPoolRecord> constants) {
+			super.print(constants);
+			System.out.println(getString(constants));
+		}
+
+		@Override
+		String getString(List<ConstantPoolRecord> constants) {
+			return "" + cp.length;
+		}
+	}
+
+	private static class ConstantPoolMethodHandle extends ConstantPoolRecord {
+		private final int referenceKind;
+		private final int referenceIndex;
+
+		public ConstantPoolMethodHandle(int offset, int idx, ConstantPool cp, int referenceKind, int referenceIndex) {
+			super(offset, idx, cp);
+			this.referenceKind = referenceKind;
+			this.referenceIndex = referenceIndex;
+		}
+
+		@Override
+		void print(List<ConstantPoolRecord> constants) {
+			super.print(constants);
+			System.out.println(getString(constants));
+		}
+
+		@Override
+		String getString(List<ConstantPoolRecord> constants) {
+			return referenceKind + " (" + referenceIndex + ")" + constants.get(referenceIndex - 1).getString(constants);
 		}
 	}
 }
