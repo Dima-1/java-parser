@@ -53,28 +53,36 @@ public class Parser {
 			int interfacesCount = getU2(fis, "Interfaces count");
 			readInterfaces(fis, interfacesCount);
 			int fieldsCount = getU2(fis, "Fields count");
-			readFields(fis, interfacesCount);
+			readFields(fis, fieldsCount);
 			int methodsCount = getU2(fis, "Methods count");
-			readMethods(fis, interfacesCount);
+			readMethods(fis, methodsCount);
 			int attributesCount = getU2(fis, "Attributes count");
-			readAttributes(fis, interfacesCount);
+			readAttributes(fis, attributesCount);
 
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
+	//https://docs.oracle.com/javase/specs/jvms/se11/html/jvms-4.html#jvms-4.7
+	private void readAttributes(FileInputStream fis, int attributesCount) {
+		for (int i = 0; i < attributesCount; i++) {
 
-	private void readAttributes(FileInputStream fis, int interfacesCount) {
-
+		}
 	}
 
-	private void readMethods(FileInputStream fis, int interfacesCount) {
+	//https://docs.oracle.com/javase/specs/jvms/se11/html/jvms-4.html#jvms-4.6
+	private void readMethods(FileInputStream fis, int methodsCount) {
+		for (int i = 0; i < methodsCount; i++) {
 
+		}
 	}
 
-	private void readFields(FileInputStream fis, int interfacesCount) {
+	//https://docs.oracle.com/javase/specs/jvms/se11/html/jvms-4.html#jvms-4.5
+	private void readFields(FileInputStream fis, int fieldsCount) throws IOException {
+		for (int i = 0; i < fieldsCount; i++) {
 
+		}
 	}
 
 	private void readInterfaces(FileInputStream fis, int interfacesCount) throws IOException {
@@ -125,11 +133,10 @@ public class Parser {
 		}
 	}
 
+
+	//https://docs.oracle.com/javase/specs/jvms/se11/html/jvms-4.html#jvms-4.4
 	private void readConstantPool(FileInputStream fis, int constantPoolCount) throws IOException {
-/*		cp_info {
-			u1 tag;
-			u1 info[];
-		}*/
+
 
 		for (int i = 1; i < constantPoolCount; i++) {
 			ConstantPoolRecord cpr = getCPRecord(i, fis);
