@@ -3,68 +3,64 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/*ClassFile {
-	u4             magic;
-	u2             minor_version;
-	u2             major_version;
-	u2             constant_pool_count;
-	cp_info        constant_pool[constant_pool_count-1];
-	u2             access_flags;
-	u2             this_class;
-	u2             super_class;
-	u2             interfaces_count;
-	u2             interfaces[interfaces_count];
-	u2             fields_count;
-	field_info     fields[fields_count];
-	u2             methods_count;
-	method_info    methods[methods_count];
-	u2             attributes_count;
-	attribute_info attributes[attributes_count];
-}*/
-
+/**
+ * <a href="https://docs.oracle.com/javase/specs/jvms/se11/html/jvms-4.html#jvms-4.1">4.1. The ClassFile Structure</a>
+ */
 public class Parser {
 
+	private final Print print;
 	private int count = 0;
-	List<ConstantPoolRecord> constants = new ArrayList<>();
+	private final List<ConstantPoolRecord> constants = new ArrayList<>();
+
+	public Parser(Print print) {
+		this.print = print;
+	}
 
 	public static void main(String[] args) {
 		if (args.length == 0) {
 			System.out.println("Use [/path/file.class] as first argument");
 			System.exit(0);
 		}
-		Parser parser = new Parser();
+		Parser parser = new Parser(new Print());
 		parser.process(args[0]);
 	}
 
 	private void process(String fileName) {
 		File file = new File(fileName);
-		try (FileInputStream fis = new FileInputStream(file)) {
-			DataInputStream dis = new DataInputStream(fis);
+		try (FileInputStream fis = new FileInputStream(file);
+		     DataInputStream dis = new DataInputStream(fis)) {
 			count = Magic.BYTES;
 			Magic.getMagic(dis);
-			getU2(dis, "Minor version");
-			getU2(dis, "Major version");
-			int constantPoolCount = getU2(dis, "Constant pool count");
-			readConstantPool(dis, constantPoolCount);
-			getU2(dis, "Access flags");
-			getU2(dis, "This class", true);
-			getU2(dis, "Super class", true);
-			int interfacesCount = getU2(dis, "Interfaces count");
-			readInterfaces(dis, interfacesCount);
-			int fieldsCount = getU2(dis, "Fields count");
-			readFields(dis, fieldsCount);
-			int methodsCount = getU2(dis, "Methods count");
-			readMethods(dis, methodsCount);
-			int attributesCount = getU2(dis, "Attributes count");
-			readAttributes(dis, attributesCount);
+			print.u2(getU2(dis), "Minor version");
+			print.u2(getU2(dis), "Major version");
+			U2 u2 = getU2(dis);
+			print.u2(u2, "Constant pool count");
+			readConstantPool(dis, u2.value);
+			print.constantPool(constants);
+			U2 accessFlags = getU2(dis);
+			print.accessFlags(accessFlags, Type.CLASS);
+			print.u2(getU2(dis, true), "This class");
+			print.u2(getU2(dis, true), "Super class");
+			u2 = getU2(dis);
+			print.u2(u2, "Interfaces count");
+			readInterfaces(dis, u2.value);
+			u2 = getU2(dis);
+			print.u2(u2, "Fields count");
+			readFields(dis, u2.value);
+			u2 = getU2(dis);
+			print.u2(u2, "Methods count");
+			readMethods(dis, u2.value);
+			u2 = getU2(dis);
+			print.u2(u2, "Attributes count");
+			readAttributes(dis, u2.value);
 		} catch (IOException e) {
-			e.printStackTrace();
+			e.getMessage();
 		}
 	}
 
 	private void readInterfaces(DataInputStream dis, int interfacesCount) throws IOException {
 		for (int i = 0; i < interfacesCount; i++) {
-			getU2(dis, "", true);
+			print.u2(getU2(dis, true), "");
 		}
 	}
 
@@ -73,21 +69,13 @@ public class Parser {
 	 */
 	private void readFields(DataInputStream dis, int fieldsCount) throws IOException {
 		for (int i = 0; i < fieldsCount; i++) {
-			int accessFlags = getU2(dis, "Access flags");
-		/*  ACC_PUBLIC      0x0001 	Declared public; may be accessed from outside its package.
-			ACC_PRIVATE     0x0002 	Declared private; accessible only within the defining class and other classes belonging to the same nest (§5.4.4).
-			ACC_PROTECTED   0x0004 	Declared protected; may be accessed within subclasses.
-			ACC_STATIC      0x0008 	Declared static.
-			ACC_FINAL       0x0010 	Declared final; never directly assigned to after object construction (JLS §17.5).
-			ACC_VOLATILE    0x0040 	Declared volatile; cannot be cached.
-			ACC_TRANSIENT   0x0080 	Declared transient; not written or read by a persistent object manager.
-			ACC_SYNTHETIC   0x1000 	Declared synthetic; not present in the source code.
-			ACC_ENUM        0x4000 	Declared as an element of an enum.*/
-
-			getU2(dis, "Name index", true);
-			getU2(dis, "Descriptor index", true);
-			int attributesCount = getU2(dis, "Attributes count");
-			readAttributes(dis, attributesCount);
+			U2 accessFlags = getU2(dis);
+			print.accessFlags(accessFlags, Type.FIELD);
+			print.u2(getU2(dis, true), "Name index");
+			print.u2(getU2(dis, true), "Descriptor index");
+			U2 u2 = getU2(dis);
+			print.u2(u2, "Attributes count");
+			readAttributes(dis, u2.value);
 		}
 	}
 
@@ -96,24 +84,13 @@ public class Parser {
 	 */
 	private void readMethods(DataInputStream dis, int methodsCount) throws IOException {
 		for (int i = 0; i < methodsCount; i++) {
-			int accessFlags = getU2(dis, "Access flags");
-		/*  ACC_PUBLIC 	    0x0001 	Declared public; may be accessed from outside its package.
-			ACC_PRIVATE     0x0002 	Declared private; accessible only within the defining class and other classes belonging to the same nest (§5.4.4).
-			ACC_PROTECTED   0x0004 	Declared protected; may be accessed within subclasses.
-			ACC_STATIC      0x0008 	Declared static.
-			ACC_FINAL       0x0010 	Declared final; must not be overridden (§5.4.5).
-			ACC_SYNCHRONIZED 0x0020 Declared synchronized; invocation is wrapped by a monitor use.
-			ACC_BRIDGE      0x0040 	A bridge method, generated by the compiler.
-			ACC_VARARGS     0x0080 	Declared with variable number of arguments.
-			ACC_NATIVE      0x0100 	Declared native; implemented in a language other than the Java programming language.
-			ACC_ABSTRACT    0x0400 	Declared abstract; no implementation is provided.
-			ACC_STRICT      0x0800 	Declared strictfp; floating-point mode is FP-strict.
-			ACC_SYNTHETIC   0x1000 	Declared synthetic; not present in the source code. */
-
-			getU2(dis, "Name index", true);
-			getU2(dis, "Descriptor index", true);
-			int attributesCount = getU2(dis, "Attributes count");
-			readAttributes(dis, attributesCount);
+			U2 accessFlags = getU2(dis);
+			print.accessFlags(accessFlags, Type.METHOD);
+			print.u2(getU2(dis, true), "Name index");
+			print.u2(getU2(dis, true), "Descriptor index");
+			U2 u2 = getU2(dis);
+			print.u2(u2, "Attributes count");
+			readAttributes(dis, u2.value);
 		}
 	}
 
@@ -122,9 +99,10 @@ public class Parser {
 	 */
 	private void readAttributes(DataInputStream dis, int attributesCount) throws IOException {
 		for (int i = 0; i < attributesCount; i++) {
-			getU2(dis, "Name index", true);
-			int attributeLength = getU4(dis);
-			for (int j = 0; j < attributeLength; j++) {
+			print.u2(getU2(dis, true), "Name index");
+			U4 attributeLength = getU4(dis);
+			print.u4(attributeLength);
+			for (int j = 0; j < attributeLength.value; j++) {
 				dis.readByte();
 				count++;
 			}
@@ -185,13 +163,6 @@ public class Parser {
 				i++;
 			}
 		}
-		for (int i = 0; i < constants.size(); i++) {
-			ConstantPoolRecord cpr = constants.get(i);
-			cpr.print(constants);
-			if (cpr.cp.isTwoEntriesTakeUp()) {
-				i++;
-			}
-		}
 	}
 
 	private ConstantPoolRecord getCPRecord(int idx, DataInputStream dis) throws IOException {
@@ -234,29 +205,28 @@ public class Parser {
 		};
 	}
 
-	private int getU2(DataInputStream dis, String title) throws IOException {
-		return getU2(dis, title, false);
+	private U2 getU2(DataInputStream dis) throws IOException {
+		return getU2(dis, false);
 	}
 
-	private int getU2(DataInputStream dis, String title, boolean addSymbolicName) throws IOException {
+	private U2 getU2(DataInputStream dis, boolean addSymbolicName) throws IOException {
 		String symbolic = "";
-		int u2 = dis.readUnsignedShort();
-		if (addSymbolicName) {
-			if (u2 > 0) {
-				symbolic = " " + constants.get(u2 - 1).getString(constants);
+		int value = dis.readUnsignedShort();
+		if (addSymbolicName && !constants.isEmpty()) {
+			if (value > 0) {
+				symbolic = " " + constants.get(value - 1).getAdditional(constants);
 			} else {
 				symbolic = "java/lang/Object";
 			}
 		}
-
-		System.out.printf("%04X %s %02d%s\n", count, title, u2, symbolic);
+		U2 u2 = new U2(count, value, symbolic);
 		count += Short.BYTES;
 		return u2;
 	}
 
-	private int getU4(DataInputStream dis) throws IOException {
-		int u4 = dis.readInt();
-		System.out.printf("%04X %s %02d\n", count, "Attribute length", u4);
+	private U4 getU4(DataInputStream dis) throws IOException {
+		int value = dis.readInt();
+		U4 u4 = new U4(count, value, "");
 		count += Integer.BYTES;
 		return u4;
 	}
@@ -277,7 +247,7 @@ public class Parser {
 		}
 	}
 
-	private static abstract class ConstantPoolRecord {
+	public abstract static class ConstantPoolRecord {
 		int offset;
 		int idx;
 		ConstantPool cp;
@@ -288,11 +258,7 @@ public class Parser {
 			this.cp = cp;
 		}
 
-		void print(List<ConstantPoolRecord> constants) {
-			System.out.printf("%04X %4d %19s ", offset, idx, cp.name().replaceFirst("^CONSTANT_", ""));
-		}
-
-		abstract String getString(List<ConstantPoolRecord> constants);
+		abstract String getAdditional(List<ConstantPoolRecord> constants);
 	}
 
 	private static final class ConstantPoolString extends ConstantPoolRecord {
@@ -304,14 +270,8 @@ public class Parser {
 		}
 
 		@Override
-		void print(List<ConstantPoolRecord> constants) {
-			super.print(constants);
-			System.out.println(getString(constants));
-		}
-
-		@Override
-		String getString(List<ConstantPoolRecord> constants) {
-			return "(" + stringIndex + ") " + constants.get(stringIndex - 1).getString(constants);
+		String getAdditional(List<ConstantPoolRecord> constants) {
+			return "(" + stringIndex + ") " + constants.get(stringIndex - 1).getAdditional(constants);
 		}
 	}
 
@@ -326,15 +286,9 @@ public class Parser {
 		}
 
 		@Override
-		void print(List<ConstantPoolRecord> constants) {
-			super.print(constants);
-			System.out.println(getString(constants));
-		}
-
-		@Override
-		String getString(List<ConstantPoolRecord> constants) {
-			return "(" + classIndex + ") " + constants.get(classIndex - 1).getString(constants)
-					+ " (" + nameAndTypeIndex + ") " + constants.get(nameAndTypeIndex - 1).getString(constants);
+		String getAdditional(List<ConstantPoolRecord> constants) {
+			return "(" + classIndex + ") " + constants.get(classIndex - 1).getAdditional(constants)
+					+ " (" + nameAndTypeIndex + ") " + constants.get(nameAndTypeIndex - 1).getAdditional(constants);
 		}
 	}
 
@@ -347,13 +301,7 @@ public class Parser {
 		}
 
 		@Override
-		void print(List<ConstantPoolRecord> constants) {
-			super.print(constants);
-			System.out.println(getString(constants));
-		}
-
-		@Override
-		String getString(List<ConstantPoolRecord> constants) {
+		String getAdditional(List<ConstantPoolRecord> constants) {
 			return UTF8;
 		}
 	}
@@ -365,13 +313,7 @@ public class Parser {
 		}
 
 		@Override
-		void print(List<ConstantPoolRecord> constants) {
-			super.print(constants);
-			System.out.println(getString(constants));
-		}
-
-		@Override
-		String getString(List<ConstantPoolRecord> constants) {
+		String getAdditional(List<ConstantPoolRecord> constants) {
 			return "" + cp.length;
 		}
 	}
@@ -387,14 +329,26 @@ public class Parser {
 		}
 
 		@Override
-		void print(List<ConstantPoolRecord> constants) {
-			super.print(constants);
-			System.out.println(getString(constants));
+		String getAdditional(List<ConstantPoolRecord> constants) {
+			return referenceKind + " (" + referenceIndex + ")" + constants.get(referenceIndex - 1).getAdditional(constants);
 		}
+	}
 
-		@Override
-		String getString(List<ConstantPoolRecord> constants) {
-			return referenceKind + " (" + referenceIndex + ")" + constants.get(referenceIndex - 1).getString(constants);
+	public static class U2 {
+		int offset;
+		int value;
+		String symbolic;
+
+		public U2(int offset, int value, String symbolic) {
+			this.offset = offset;
+			this.value = value;
+			this.symbolic = symbolic;
+		}
+	}
+
+	public static class U4 extends U2 {
+		public U4(int offset, int value, String symbolic) {
+			super(offset, value, symbolic);
 		}
 	}
 }
