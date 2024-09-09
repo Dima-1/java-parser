@@ -2,23 +2,23 @@ import java.util.List;
 
 public class Print {
 
-	public static final boolean PRINT_CONSTANT_POOL = false;
+	public static final boolean PRINT_CONSTANT_POOL = true;
 
 	void u2(Parser.U2 u2, String title) {
 		System.out.printf("%04X %s %02d" + ConsoleColors.YELLOW + "%s" + ConsoleColors.RESET + "\n",
-				u2.offset, title, u2.value, u2.symbolic);
+				u2.getOffset(), title, u2.getValue(), u2.getSymbolic());
 	}
 
 	void u4(Parser.U4 u4) {
 		System.out.printf("%04X %s %02d" + ConsoleColors.YELLOW + "%s" + ConsoleColors.RESET + "\n",
-				u4.offset, "Attribute length", u4.value, u4.symbolic);
+				u4.getOffset(), "Attribute length", u4.getValue(), u4.getSymbolic());
 	}
 
 	public void constantPool(List<Parser.ConstantPoolRecord> constants) {
 		for (int i = 0; i < constants.size(); i++) {
 			printRecord(constants, i);
 			Parser.ConstantPoolRecord cpr = constants.get(i);
-			if (cpr.cp.isTwoEntriesTakeUp()) {
+			if (cpr.getRecord().isTwoEntriesTakeUp()) {
 				i++;
 			}
 		}
@@ -29,8 +29,8 @@ public class Print {
 			return;
 		}
 		Parser.ConstantPoolRecord cpr = constants.get(idx);
-		String cpName = cpr.cp.name().replaceFirst("^CONSTANT_", "");
-		System.out.printf("%04X %4d %19s %s\n", cpr.offset, cpr.idx, cpName, cpr.getAdditional(constants));
+		String cpName = cpr.getRecord().name().replaceFirst("^CONSTANT_", "");
+		System.out.printf("%04X %4d %19s %s\n", cpr.getOffset(), cpr.getIdx(), cpName, cpr.getAdditional(constants));
 	}
 
 	void accessFlags(Parser.U2 u2, Type type) {
@@ -45,12 +45,12 @@ public class Print {
 			ACC_ENUM        0x4000 	Declared as an enum type.
 			ACC_MODULE      0x8000 	Is a module, not a class or interface.*/
 			case CLASS -> {
-				String string = Integer.toBinaryString(u2.value);
-				System.out.printf("%04X %s 0x%02X %s\n", u2.offset, "Access flags", u2.value, string);
+				String string = Integer.toBinaryString(u2.getValue());
+				System.out.printf("%04X %s 0x%02X %s\n", u2.getOffset(), "Access flags", u2.getValue(), string);
 			}
 			case INTERFACE -> {
-				String string = Integer.toBinaryString(u2.value);
-				System.out.printf("%04X %s 0x%02X %s\n", u2.offset, "Access flags", u2.value, string);
+				String string = Integer.toBinaryString(u2.getValue());
+				System.out.printf("%04X %s 0x%02X %s\n", u2.getOffset(), "Access flags", u2.getValue(), string);
 			}
 		/*  ACC_PUBLIC      0x0001 	Declared public; may be accessed from outside its package.
 			ACC_PRIVATE     0x0002 	Declared private; accessible only within the defining class and other classes belonging to the same nest (§5.4.4).
@@ -62,8 +62,8 @@ public class Print {
 			ACC_SYNTHETIC   0x1000 	Declared synthetic; not present in the source code.
 			ACC_ENUM        0x4000 	Declared as an element of an enum.*/
 			case FIELD -> {
-				String string = Integer.toBinaryString(u2.value);
-				System.out.printf("%04X %s 0x%02X %s\n", u2.offset, "Access flags", u2.value, string);
+				String string = Integer.toBinaryString(u2.getValue());
+				System.out.printf("%04X %s 0x%02X %s\n", u2.getOffset(), "Access flags", u2.getValue(), string);
 			}
 		/*  ACC_PUBLIC 	    0x0001 	Declared public; may be accessed from outside its package.
 			ACC_PRIVATE     0x0002 	Declared private; accessible only within the defining class and other classes belonging to the same nest (§5.4.4).
@@ -78,8 +78,8 @@ public class Print {
 			ACC_STRICT      0x0800 	Declared strictfp; floating-point mode is FP-strict.
 			ACC_SYNTHETIC   0x1000 	Declared synthetic; not present in the source code. */
 			case METHOD -> {
-				String string = Integer.toBinaryString(u2.value);
-				System.out.printf("%04X %s 0x%02X %s\n", u2.offset, "Access flags", u2.value, string);
+				String string = Integer.toBinaryString(u2.getValue());
+				System.out.printf("%04X %s 0x%02X %s\n", u2.getOffset(), "Access flags", u2.getValue(), string);
 			}
 		}
 	}

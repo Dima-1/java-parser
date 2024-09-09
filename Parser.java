@@ -102,7 +102,7 @@ public class Parser {
 			print.u2(getU2(dis, true), "Name index");
 			U4 attributeLength = getU4(dis);
 			print.u4(attributeLength);
-			for (int j = 0; j < attributeLength.value; j++) {
+			for (int j = 0; j < attributeLength.getValue(); j++) {
 				dis.readByte();
 				count++;
 			}
@@ -111,23 +111,23 @@ public class Parser {
 
 	public enum ConstantPool {
 
-		CONSTANT_Utf8(1, 2),                //1  45.3	1.0.2
-		CONSTANT_Integer(3, 4),             //3  45.3	1.0.2
-		CONSTANT_Float(4, 4),               //4  45.3	1.0.2
-		CONSTANT_Long(5, 8),                //5  45.3	1.0.2
-		CONSTANT_Double(6, 8),              //6  45.3	1.0.2
-		CONSTANT_Class(7, 2),               //7  45.3	1.0.2
-		CONSTANT_String(8, 2),              //8  45.3	1.0.2
-		CONSTANT_Fieldref(9, 4),            //9  45.3	1.0.2
-		CONSTANT_Methodref(10, 4),          //10 45.3	1.0.2
-		CONSTANT_InterfaceMethodref(11, 4), //11 45.3	1.0.2
-		CONSTANT_NameAndType(12, 4),        //12 45.3	1.0.2
-		CONSTANT_MethodHandle(15, 3),       //15 51.0	7
+		CONSTANT_Utf8(1, 0),                //1  45.3	1.0.2
+		CONSTANT_Integer(3, 0),             //3  45.3	1.0.2
+		CONSTANT_Float(4, 0),               //4  45.3	1.0.2
+		CONSTANT_Long(5, 0),                //5  45.3	1.0.2
+		CONSTANT_Double(6, 0),              //6  45.3	1.0.2
+		CONSTANT_Class(7, 0),               //7  45.3	1.0.2
+		CONSTANT_String(8, 0),              //8  45.3	1.0.2
+		CONSTANT_Fieldref(9, 0),            //9  45.3	1.0.2
+		CONSTANT_Methodref(10, 0),          //10 45.3	1.0.2
+		CONSTANT_InterfaceMethodref(11, 0), //11 45.3	1.0.2
+		CONSTANT_NameAndType(12, 0),        //12 45.3	1.0.2
+		CONSTANT_MethodHandle(15, 0),       //15 51.0	7
 		CONSTANT_MethodType(16, 2),         //16 51.0	7
 		CONSTANT_Dynamic(17, 4),            //17 55.0	11
 		CONSTANT_InvokeDynamic(18, 4),      //18 51.0	7
-		CONSTANT_Module(19, 2),             //19 53.0	9
-		CONSTANT_Package(20, 2);            //20 53.0	9
+		CONSTANT_Module(19, 0),             //19 53.0	9
+		CONSTANT_Package(20, 0);            //20 53.0	9
 
 		private final int tag;
 		private final int length;
@@ -158,7 +158,7 @@ public class Parser {
 		for (int i = 1; i < constantPoolCount; i++) {
 			ConstantPoolRecord cpr = getCPRecord(i, dis);
 			constants.add(cpr);
-			if (cpr.cp.isTwoEntriesTakeUp()) {
+			if (cpr.record.isTwoEntriesTakeUp()) {
 				constants.add(null);
 				i++;
 			}
@@ -172,6 +172,32 @@ public class Parser {
 		ConstantPool cp = ConstantPool.getConstant(tag);
 
 		return switch (cp) {
+			case CONSTANT_Utf8 -> {
+				final int length = dis.readUnsignedShort();
+				count += Short.BYTES;
+				count += length;
+				yield new ConstantPoolUtf8Record(offset, idx, cp, new String(dis.readNBytes(length)));
+			}
+			case CONSTANT_Integer -> {
+				int anInt = dis.readInt();
+				count += Integer.BYTES;
+				yield new ConstantPoolInteger(offset, idx, cp, anInt);
+			}
+			case CONSTANT_Float -> {
+				float aFloat = dis.readFloat();
+				count += Long.BYTES;
+				yield new ConstantPoolFloat(offset, idx, cp, aFloat);
+			}
+			case CONSTANT_Long -> {
+				long aLong = dis.readLong();
+				count += Long.BYTES;
+				yield new ConstantPoolLong(offset, idx, cp, aLong);
+			}
+			case CONSTANT_Double -> {
+				double aDouble = dis.readDouble();
+				count += Double.BYTES;
+				yield new ConstantPoolDouble(offset, idx, cp, aDouble);
+			}
 			case CONSTANT_Class, CONSTANT_String, CONSTANT_MethodType, CONSTANT_Module, CONSTANT_Package -> {
 				final int aShort = dis.readUnsignedShort();
 				count += Short.BYTES;
@@ -183,12 +209,6 @@ public class Parser {
 				int bShort = dis.readUnsignedShort();
 				count += Short.BYTES;
 				yield new ConstantPoolMethodRef(offset, idx, cp, aShort, bShort);
-			}
-			case CONSTANT_Utf8 -> {
-				final int length = dis.readUnsignedShort();
-				count += Short.BYTES;
-				count += length;
-				yield new ConstantPoolUtf8Record(offset, idx, cp, new String(dis.readNBytes(length)));
 			}
 			case CONSTANT_MethodHandle -> {
 				final int referenceKind = dis.read();
@@ -248,21 +268,103 @@ public class Parser {
 	}
 
 	public abstract static class ConstantPoolRecord {
-		int offset;
-		int idx;
-		ConstantPool cp;
+		private final int offset;
+		private final int idx;
+		private final ConstantPool record;
 
-		public ConstantPoolRecord(int offset, int idx, ConstantPool cp) {
+		public ConstantPoolRecord(int offset, int idx, ConstantPool record) {
 			this.offset = offset;
 			this.idx = idx;
-			this.cp = cp;
+			this.record = record;
 		}
 
 		abstract String getAdditional(List<ConstantPoolRecord> constants);
+
+		public int getOffset() {
+			return offset;
+		}
+
+		public int getIdx() {
+			return idx;
+		}
+
+		public ConstantPool getRecord() {
+			return record;
+		}
+	}
+
+	private static final class ConstantPoolUtf8Record extends ConstantPoolRecord {
+		private final String UTF8;
+
+		public ConstantPoolUtf8Record(int offset, int idx, ConstantPool cp, String UTF8) {
+			super(offset, idx, cp);
+			this.UTF8 = UTF8;
+		}
+
+		@Override
+		String getAdditional(List<ConstantPoolRecord> constants) {
+			return UTF8;
+		}
+	}
+
+	private static class ConstantPoolInteger extends ConstantPoolRecord {
+		private final int value;
+
+		public ConstantPoolInteger(int offset, int idx, ConstantPool cp, int value) {
+			super(offset, idx, cp);
+			this.value = value;
+		}
+
+		@Override
+		String getAdditional(List<ConstantPoolRecord> constants) {
+			return String.valueOf(value);
+		}
+	}
+
+	private static class ConstantPoolFloat extends ConstantPoolRecord {
+		private final float value;
+
+		public ConstantPoolFloat(int offset, int idx, ConstantPool cp, float value) {
+			super(offset, idx, cp);
+			this.value = value;
+		}
+
+		@Override
+		String getAdditional(List<ConstantPoolRecord> constants) {
+			return String.valueOf(value);
+		}
+	}
+
+	private static class ConstantPoolLong extends ConstantPoolRecord {
+		private final long value;
+
+		public ConstantPoolLong(int offset, int idx, ConstantPool cp, long value) {
+			super(offset, idx, cp);
+			this.value = value;
+		}
+
+		@Override
+		String getAdditional(List<ConstantPoolRecord> constants) {
+			return String.valueOf(value);
+		}
+	}
+
+	private static class ConstantPoolDouble extends ConstantPoolRecord {
+		private final double value;
+
+		public ConstantPoolDouble(int offset, int idx, ConstantPool cp, double value) {
+			super(offset, idx, cp);
+			this.value = value;
+		}
+
+		@Override
+		String getAdditional(List<ConstantPoolRecord> constants) {
+			return String.valueOf(value);
+		}
 	}
 
 	private static final class ConstantPoolString extends ConstantPoolRecord {
-		int stringIndex;
+		private final int stringIndex;
 
 		public ConstantPoolString(int offset, int idx, ConstantPool cp, int stringIndex) {
 			super(offset, idx, cp);
@@ -276,8 +378,8 @@ public class Parser {
 	}
 
 	private static final class ConstantPoolMethodRef extends ConstantPoolRecord {
-		int classIndex;
-		int nameAndTypeIndex;
+		private final int classIndex;
+		private final int nameAndTypeIndex;
 
 		public ConstantPoolMethodRef(int offset, int idx, ConstantPool cp, int classIndex, int nameAndTypeIndex) {
 			super(offset, idx, cp);
@@ -292,20 +394,6 @@ public class Parser {
 		}
 	}
 
-	private static final class ConstantPoolUtf8Record extends ConstantPoolRecord {
-		String UTF8;
-
-		public ConstantPoolUtf8Record(int offset, int idx, ConstantPool cp, String UTF8) {
-			super(offset, idx, cp);
-			this.UTF8 = UTF8;
-		}
-
-		@Override
-		String getAdditional(List<ConstantPoolRecord> constants) {
-			return UTF8;
-		}
-	}
-
 	private static final class ConstantPoolDefault extends ConstantPoolRecord {
 
 		public ConstantPoolDefault(int offset, int idx, ConstantPool cp) {
@@ -314,11 +402,24 @@ public class Parser {
 
 		@Override
 		String getAdditional(List<ConstantPoolRecord> constants) {
-			return "" + cp.length;
+			return "" + getRecord().length;
 		}
 	}
 
 	private static class ConstantPoolMethodHandle extends ConstantPoolRecord {
+
+		enum MHRef {
+			REF_getField,           //getfield C.f:T
+			REF_getStatic,          //getstatic C.f:T
+			REF_putField,           //putfield C.f:T
+			REF_putStatic,          //putstatic C.f:T
+			REF_invokeVirtual,      //invokevirtual C.m:(A*)T
+			REF_invokeStatic,       //invokestatic C.m:(A*)T
+			REF_invokeSpecial,      //invokespecial C.m:(A*)T
+			REF_newInvokeSpecial,   //new C; dup; invokespecial C.<init>:(A*)V
+			REF_invokeInterface     //invokeinterface C.m:(A*)T
+		}
+
 		private final int referenceKind;
 		private final int referenceIndex;
 
@@ -330,19 +431,32 @@ public class Parser {
 
 		@Override
 		String getAdditional(List<ConstantPoolRecord> constants) {
-			return referenceKind + " (" + referenceIndex + ")" + constants.get(referenceIndex - 1).getAdditional(constants);
+			return MHRef.values()[referenceKind].name().replaceFirst("REF_", "")
+					+ " (" + referenceIndex + ")" + constants.get(referenceIndex - 1).getAdditional(constants);
 		}
 	}
 
 	public static class U2 {
-		int offset;
-		int value;
-		String symbolic;
+		private final int offset;
+		private final int value;
+		private final String symbolic;
 
 		public U2(int offset, int value, String symbolic) {
 			this.offset = offset;
 			this.value = value;
 			this.symbolic = symbolic;
+		}
+
+		public int getOffset() {
+			return offset;
+		}
+
+		public int getValue() {
+			return value;
+		}
+
+		public String getSymbolic() {
+			return symbolic;
 		}
 	}
 
