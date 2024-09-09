@@ -1,16 +1,22 @@
 import java.util.List;
+import java.util.Map;
 
 public class Print {
 
 	public static final boolean PRINT_CONSTANT_POOL = true;
+	public static final String YELLOW_STRING = ConsoleColors.YELLOW + "%s" + ConsoleColors.RESET;
 
 	void u2(Parser.U2 u2, String title) {
-		System.out.printf("%04X %s %02d" + ConsoleColors.YELLOW + "%s" + ConsoleColors.RESET + "\n",
+		u2(u2, title, "");
+	}
+
+	void u2(Parser.U2 u2, String title, String titleColor) {
+		System.out.printf("%04X " + titleColor + "%s" + ConsoleColors.RESET + " %02d" + YELLOW_STRING + "\n",
 				u2.getOffset(), title, u2.getValue(), u2.getSymbolic());
 	}
 
 	void u4(Parser.U4 u4) {
-		System.out.printf("%04X %s %02d" + ConsoleColors.YELLOW + "%s" + ConsoleColors.RESET + "\n",
+		System.out.printf("%04X %s %02d" + YELLOW_STRING + "\n",
 				u4.getOffset(), "Attribute length", u4.getValue(), u4.getSymbolic());
 	}
 
@@ -34,53 +40,67 @@ public class Print {
 	}
 
 	void accessFlags(Parser.U2 u2, Type type) {
+		Map<Integer, String> flagsMap;
 		switch (type) {
-		/*  ACC_PUBLIC      0x0001 	Declared public; may be accessed from outside its package.
-			ACC_FINAL       0x0010 	Declared final; no subclasses allowed.
-			ACC_SUPER       0x0020 	Treat superclass methods specially when invoked by the invokespecial instruction.
-			ACC_INTERFACE   0x0200 	Is an interface, not a class.
-			ACC_ABSTRACT    0x0400 	Declared abstract; must not be instantiated.
-			ACC_SYNTHETIC   0x1000 	Declared synthetic; not present in the source code.
-			ACC_ANNOTATION  0x2000 	Declared as an annotation type.
-			ACC_ENUM        0x4000 	Declared as an enum type.
-			ACC_MODULE      0x8000 	Is a module, not a class or interface.*/
 			case CLASS -> {
-				String string = Integer.toBinaryString(u2.getValue());
-				System.out.printf("%04X %s 0x%02X %s\n", u2.getOffset(), "Access flags", u2.getValue(), string);
+				flagsMap = Map.of(
+						0x0001, "ACC_PUBLIC",     //   Declared public; may be accessed from outside its package.
+						0x0010, "ACC_FINAL",      //   Declared final; no subclasses allowed.
+						0x0020, "ACC_SUPER",      //   Treat superclass methods specially when invoked by the invokespecial instruction.
+						0x0200, "ACC_INTERFACE",  //   Is an interface, not a class.
+						0x0400, "ACC_ABSTRACT",   //   Declared abstract; must not be instantiated.
+						0x1000, "ACC_SYNTHETIC",  //   Declared synthetic; not present in the source code.
+						0x2000, "ACC_ANNOTATION", //   Declared as an annotation type.
+						0x4000, "ACC_ENUM",       //   Declared as an enum type.
+						0x8000, "ACC_MODULE"      //   Is a module, not a class or interface.*/
+				);
+				String string = getAccessFlags(u2.getValue(), flagsMap);
+				System.out.printf("%04X %s 0x%02X" + YELLOW_STRING + "\n", u2.getOffset(), "Access flags", u2.getValue(), string);
 			}
-			case INTERFACE -> {
-				String string = Integer.toBinaryString(u2.getValue());
-				System.out.printf("%04X %s 0x%02X %s\n", u2.getOffset(), "Access flags", u2.getValue(), string);
-			}
-		/*  ACC_PUBLIC      0x0001 	Declared public; may be accessed from outside its package.
-			ACC_PRIVATE     0x0002 	Declared private; accessible only within the defining class and other classes belonging to the same nest (§5.4.4).
-			ACC_PROTECTED   0x0004 	Declared protected; may be accessed within subclasses.
-			ACC_STATIC      0x0008 	Declared static.
-			ACC_FINAL       0x0010 	Declared final; never directly assigned to after object construction (JLS §17.5).
-			ACC_VOLATILE    0x0040 	Declared volatile; cannot be cached.
-			ACC_TRANSIENT   0x0080 	Declared transient; not written or read by a persistent object manager.
-			ACC_SYNTHETIC   0x1000 	Declared synthetic; not present in the source code.
-			ACC_ENUM        0x4000 	Declared as an element of an enum.*/
 			case FIELD -> {
-				String string = Integer.toBinaryString(u2.getValue());
-				System.out.printf("%04X %s 0x%02X %s\n", u2.getOffset(), "Access flags", u2.getValue(), string);
+				flagsMap = Map.of(
+						0x0001, "ACC_PUBLIC",    // Declared public; may be accessed from outside its package.
+						0x0002, "ACC_PRIVATE",   // Declared private; accessible only within the defining class and other classes belonging to the same nest (§5.4.4).
+						0x0004, "ACC_PROTECTED", // Declared protected; may be accessed within subclasses.
+						0x0008, "ACC_STATIC",    // Declared static.
+						0x0010, "ACC_FINAL",     // Declared final; never directly assigned to after object construction (JLS §17.5).
+						0x0040, "ACC_VOLATILE",  // Declared volatile; cannot be cached.
+						0x0080, "ACC_TRANSIENT", // Declared transient; not written or read by a persistent object manager.
+						0x1000, "ACC_SYNTHETIC", // Declared synthetic; not present in the source code.
+						0x4000, "ACC_ENUM"       // Declared as an element of an enum.
+				);
+				String string = getAccessFlags(u2.getValue(), flagsMap);
+				System.out.printf("%04X %s 0x%02X" + YELLOW_STRING + "\n", u2.getOffset(), "Access flags", u2.getValue(), string);
 			}
-		/*  ACC_PUBLIC 	    0x0001 	Declared public; may be accessed from outside its package.
-			ACC_PRIVATE     0x0002 	Declared private; accessible only within the defining class and other classes belonging to the same nest (§5.4.4).
-			ACC_PROTECTED   0x0004 	Declared protected; may be accessed within subclasses.
-			ACC_STATIC      0x0008 	Declared static.
-			ACC_FINAL       0x0010 	Declared final; must not be overridden (§5.4.5).
-			ACC_SYNCHRONIZED 0x0020 Declared synchronized; invocation is wrapped by a monitor use.
-			ACC_BRIDGE      0x0040 	A bridge method, generated by the compiler.
-			ACC_VARARGS     0x0080 	Declared with variable number of arguments.
-			ACC_NATIVE      0x0100 	Declared native; implemented in a language other than the Java programming language.
-			ACC_ABSTRACT    0x0400 	Declared abstract; no implementation is provided.
-			ACC_STRICT      0x0800 	Declared strictfp; floating-point mode is FP-strict.
-			ACC_SYNTHETIC   0x1000 	Declared synthetic; not present in the source code. */
 			case METHOD -> {
-				String string = Integer.toBinaryString(u2.getValue());
-				System.out.printf("%04X %s 0x%02X %s\n", u2.getOffset(), "Access flags", u2.getValue(), string);
+				flagsMap = Map.ofEntries(
+						Map.entry(0x0001, "ACC_PUBLIC"),       //Declared public; may be accessed from outside its package.
+						Map.entry(0x0002, "ACC_PRIVATE"),      //Declared private; accessible only within the defining class and other classes belonging to the same nest (§5.4.4).
+						Map.entry(0x0004, "ACC_PROTECTED"),    //Declared protected; may be accessed within subclasses.
+						Map.entry(0x0008, "ACC_STATIC"),       //Declared static.
+						Map.entry(0x0010, "ACC_FINAL"),        //Declared final; must not be overridden (§5.4.5).
+						Map.entry(0x0020, "ACC_SYNCHRONIZED"), //Declared synchronized; invocation is wrapped by a monitor use.
+						Map.entry(0x0040, "ACC_BRIDGE"),       //A bridge method, generated by the compiler.
+						Map.entry(0x0080, "ACC_VARARGS"),      //Declared with variable number of arguments.
+						Map.entry(0x0100, "ACC_NATIVE"),       //Declared native; implemented in a language other than the Java programming language.
+						Map.entry(0x0400, "ACC_ABSTRACT"),     //Declared abstract; no implementation is provided.
+						Map.entry(0x0800, "ACC_STRICT"),       //Declared strictfp; floating-point mode is FP-strict.
+						Map.entry(0x1000, "ACC_SYNTHETIC")     //Declared synthetic; not present in the source code.
+				);
+				String string = getAccessFlags(u2.getValue(), flagsMap);
+				System.out.printf("%04X %s 0x%02X" + YELLOW_STRING + "\n", u2.getOffset(), "Access flags", u2.getValue(), string);
 			}
 		}
+	}
+
+	private String getAccessFlags(int value, Map<Integer, String> flagsMap) {
+		StringBuilder res = new StringBuilder();
+		for (int bit = 1; bit < 0x100000; bit <<= 1) {
+			String flag = flagsMap.get(value & bit);
+			if (flag != null && !flag.isEmpty()) {
+				res.append(" ").append(flag.replaceFirst("ACC_", ""));
+			}
+		}
+		return res.toString().toLowerCase();
 	}
 }

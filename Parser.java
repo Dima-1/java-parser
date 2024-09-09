@@ -31,10 +31,10 @@ public class Parser {
 		     DataInputStream dis = new DataInputStream(fis)) {
 			count = Magic.BYTES;
 			Magic.getMagic(dis);
-			print.u2(getU2(dis), "Minor version");
-			print.u2(getU2(dis), "Major version");
+			print.u2(getU2(dis), "Minor version", ConsoleColors.BLUE);
+			print.u2(getU2(dis), "Major version", ConsoleColors.BLUE);
 			U2 u2 = getU2(dis);
-			print.u2(u2, "Constant pool count");
+			print.u2(u2, "Constant pool count", ConsoleColors.BLUE);
 			readConstantPool(dis, u2.value);
 			print.constantPool(constants);
 			U2 accessFlags = getU2(dis);
@@ -42,16 +42,16 @@ public class Parser {
 			print.u2(getU2(dis, true), "This class");
 			print.u2(getU2(dis, true), "Super class");
 			u2 = getU2(dis);
-			print.u2(u2, "Interfaces count");
+			print.u2(u2, "Interfaces count", ConsoleColors.BLUE);
 			readInterfaces(dis, u2.value);
 			u2 = getU2(dis);
-			print.u2(u2, "Fields count");
+			print.u2(u2, "Fields count", ConsoleColors.BLUE);
 			readFields(dis, u2.value);
 			u2 = getU2(dis);
-			print.u2(u2, "Methods count");
+			print.u2(u2, "Methods count", ConsoleColors.BLUE);
 			readMethods(dis, u2.value);
 			u2 = getU2(dis);
-			print.u2(u2, "Attributes count");
+			print.u2(u2, "Attributes count", ConsoleColors.BLUE);
 			readAttributes(dis, u2.value);
 		} catch (IOException e) {
 			e.getMessage();
@@ -99,7 +99,7 @@ public class Parser {
 	 */
 	private void readAttributes(DataInputStream dis, int attributesCount) throws IOException {
 		for (int i = 0; i < attributesCount; i++) {
-			print.u2(getU2(dis, true), "Name index");
+			print.u2(getU2(dis, true), "Attribute name index");
 			U4 attributeLength = getU4(dis);
 			print.u4(attributeLength);
 			for (int j = 0; j < attributeLength.getValue(); j++) {
@@ -123,7 +123,7 @@ public class Parser {
 		CONSTANT_InterfaceMethodref(11, 0), //11 45.3	1.0.2
 		CONSTANT_NameAndType(12, 0),        //12 45.3	1.0.2
 		CONSTANT_MethodHandle(15, 0),       //15 51.0	7
-		CONSTANT_MethodType(16, 2),         //16 51.0	7
+		CONSTANT_MethodType(16, 0),         //16 51.0	7
 		CONSTANT_Dynamic(17, 4),            //17 55.0	11
 		CONSTANT_InvokeDynamic(18, 4),      //18 51.0	7
 		CONSTANT_Module(19, 0),             //19 53.0	9
