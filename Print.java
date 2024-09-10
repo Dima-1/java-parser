@@ -21,6 +21,9 @@ public class Print {
 	}
 
 	public void constantPool(List<Parser.ConstantPoolRecord> constants) {
+		if (!PRINT_CONSTANT_POOL) {
+			return;
+		}
 		for (int i = 0; i < constants.size(); i++) {
 			printRecord(constants, i);
 			Parser.ConstantPoolRecord cpr = constants.get(i);
@@ -31,9 +34,6 @@ public class Print {
 	}
 
 	void printRecord(List<Parser.ConstantPoolRecord> constants, int idx) {
-		if (!PRINT_CONSTANT_POOL) {
-			return;
-		}
 		Parser.ConstantPoolRecord cpr = constants.get(idx);
 		String cpName = cpr.getRecord().name().replaceFirst("^CONSTANT_", "");
 		System.out.printf("%04X %4d %19s %s\n", cpr.getOffset(), cpr.getIdx(), cpName, cpr.getAdditional(constants));
@@ -102,5 +102,14 @@ public class Print {
 			}
 		}
 		return res.toString().toLowerCase();
+	}
+
+	public void attributes(Map<String, Attribute> attributes) {
+		for(Map.Entry<String, Attribute> entry: attributes.entrySet()) {
+			Attribute attr = entry.getValue();
+			u2(attr.getNameIndex(),"Attribute name index");
+			u4(attr.getLength());
+			u2(attr.getAdditional(),"");
+		}
 	}
 }

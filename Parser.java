@@ -1,7 +1,5 @@
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * <a href="https://docs.oracle.com/javase/specs/jvms/se11/html/jvms-4.html#jvms-4.1">4.1. The ClassFile Structure</a>
@@ -11,6 +9,7 @@ public class Parser {
 	private final Print print;
 	private int count = 0;
 	private final List<ConstantPoolRecord> constants = new ArrayList<>();
+	private final Map<String, Attribute> attributes = new LinkedHashMap<>();
 
 	public Parser(Print print) {
 		this.print = print;
@@ -52,7 +51,8 @@ public class Parser {
 			readMethods(dis, u2.value);
 			u2 = getU2(dis);
 			print.u2(u2, "Attributes count", ConsoleColors.BLUE);
-			readAttributes(dis, u2.value);
+			readAttributesClass(dis, u2.value);
+			print.attributes(attributes);
 		} catch (IOException e) {
 			e.getMessage();
 		}
@@ -109,32 +109,38 @@ public class Parser {
 		}
 	}
 
+	private void readAttributesClass(DataInputStream dis, int attributesCount) throws IOException {
+		for (int i = 0; i < attributesCount; i++) {
+			int offset = count;
+			Attribute attribute = readAttribute(offset, dis);
+			attributes.put(attribute.getName(), attribute);
+		}
+	}
+
 	public enum ConstantPool {
 
-		CONSTANT_Utf8(1, 0),                //1  45.3	1.0.2
-		CONSTANT_Integer(3, 0),             //3  45.3	1.0.2
-		CONSTANT_Float(4, 0),               //4  45.3	1.0.2
-		CONSTANT_Long(5, 0),                //5  45.3	1.0.2
-		CONSTANT_Double(6, 0),              //6  45.3	1.0.2
-		CONSTANT_Class(7, 0),               //7  45.3	1.0.2
-		CONSTANT_String(8, 0),              //8  45.3	1.0.2
-		CONSTANT_Fieldref(9, 0),            //9  45.3	1.0.2
-		CONSTANT_Methodref(10, 0),          //10 45.3	1.0.2
-		CONSTANT_InterfaceMethodref(11, 0), //11 45.3	1.0.2
-		CONSTANT_NameAndType(12, 0),        //12 45.3	1.0.2
-		CONSTANT_MethodHandle(15, 0),       //15 51.0	7
-		CONSTANT_MethodType(16, 0),         //16 51.0	7
-		CONSTANT_Dynamic(17, 4),            //17 55.0	11
-		CONSTANT_InvokeDynamic(18, 4),      //18 51.0	7
-		CONSTANT_Module(19, 0),             //19 53.0	9
-		CONSTANT_Package(20, 0);            //20 53.0	9
+		CONSTANT_Utf8(1),                //1  45.3	1.0.2
+		CONSTANT_Integer(3),             //3  45.3	1.0.2
+		CONSTANT_Float(4),               //4  45.3	1.0.2
+		CONSTANT_Long(5),                //5  45.3	1.0.2
+		CONSTANT_Double(6),              //6  45.3	1.0.2
+		CONSTANT_Class(7),               //7  45.3	1.0.2
+		CONSTANT_String(8),              //8  45.3	1.0.2
+		CONSTANT_Fieldref(9),            //9  45.3	1.0.2
+		CONSTANT_Methodref(10),          //10 45.3	1.0.2
+		CONSTANT_InterfaceMethodref(11), //11 45.3	1.0.2
+		CONSTANT_NameAndType(12),        //12 45.3	1.0.2
+		CONSTANT_MethodHandle(15),       //15 51.0	7
+		CONSTANT_MethodType(16),         //16 51.0	7
+		CONSTANT_Dynamic(17),            //17 55.0	11
+		CONSTANT_InvokeDynamic(18),      //18 51.0	7
+		CONSTANT_Module(19),             //19 53.0	9
+		CONSTANT_Package(20);            //20 53.0	9
 
 		private final int tag;
-		private final int length;
 
-		ConstantPool(int tag, int length) {
+		ConstantPool(int tag) {
 			this.tag = tag;
-			this.length = length;
 		}
 
 		boolean isTwoEntriesTakeUp() {
@@ -210,6 +216,13 @@ public class Parser {
 				count += Short.BYTES;
 				yield new ConstantPoolMethodRef(offset, idx, cp, aShort, bShort);
 			}
+			case CONSTANT_Dynamic, CONSTANT_InvokeDynamic -> {
+				final int aShort = dis.readUnsignedShort();
+				count += Short.BYTES;
+				int bShort = dis.readUnsignedShort();
+				count += Short.BYTES;
+				yield new ConstantPoolDynamic(offset, idx, cp, aShort, bShort);
+			}
 			case CONSTANT_MethodHandle -> {
 				final int referenceKind = dis.read();
 				count++;
@@ -217,10 +230,28 @@ public class Parser {
 				count += Short.BYTES;
 				yield new ConstantPoolMethodHandle(offset, idx, cp, referenceKind, bShort);
 			}
+		};
+	}
+
+	private Attribute readAttribute(int offset, DataInputStream dis) throws IOException {
+		U2 attributeNameIndex = getU2(dis, true);
+		String name = constants.get(attributeNameIndex.getValue() - 1).getAdditional(constants);
+		U4 attributeLength = getU4(dis);
+
+		return switch (name) {
+			case "SourceFile" -> {
+				final U2 aShort = getU2(dis, true);
+				yield new Attribute.SourceFileAttribute(offset, constants, attributeNameIndex, attributeLength, aShort);
+			}
+			case "NestedMember" -> {
+				yield new Attribute(offset, constants, attributeNameIndex, attributeLength);
+			}
 			default -> {
-				count += cp.length;
-				dis.readNBytes(cp.length);
-				yield new ConstantPoolDefault(offset, idx, cp);
+				for (int j = 0; j < attributeLength.getValue(); j++) {
+					dis.readByte();
+					count++;
+				}
+				yield new Attribute(offset, constants, attributeNameIndex, attributeLength);
 			}
 		};
 	}
@@ -394,15 +425,20 @@ public class Parser {
 		}
 	}
 
-	private static final class ConstantPoolDefault extends ConstantPoolRecord {
+	private static final class ConstantPoolDynamic extends ConstantPoolRecord {
+		private final int bootstrapMethodAttrIndex;
+		private final int nameAndTypeIndex;
 
-		public ConstantPoolDefault(int offset, int idx, ConstantPool cp) {
+		public ConstantPoolDynamic(int offset, int idx, ConstantPool cp, int bootstrapMethodAttrIndex, int nameAndTypeIndex) {
 			super(offset, idx, cp);
+			this.bootstrapMethodAttrIndex = bootstrapMethodAttrIndex;
+			this.nameAndTypeIndex = nameAndTypeIndex;
 		}
 
 		@Override
 		String getAdditional(List<ConstantPoolRecord> constants) {
-			return "" + getRecord().length;
+			return "(" + bootstrapMethodAttrIndex + ") "
+					+ " (" + nameAndTypeIndex + ") " + constants.get(nameAndTypeIndex - 1).getAdditional(constants);
 		}
 	}
 
