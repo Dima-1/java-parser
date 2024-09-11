@@ -30,10 +30,10 @@ public class Parser {
 		     DataInputStream dis = new DataInputStream(fis)) {
 			count = Magic.BYTES;
 			Magic.getMagic(dis);
-			print.u2(getU2(dis), "Minor version", ConsoleColors.BLUE);
-			print.u2(getU2(dis), "Major version", ConsoleColors.BLUE);
+			print.u2(getU2(dis), "Minor version", ConsoleColors.BLUE, true);
+			print.u2(getU2(dis), "Major version", ConsoleColors.BLUE, true);
 			U2 u2 = getU2(dis);
-			print.u2(u2, "Constant pool count", ConsoleColors.BLUE);
+			print.u2(u2, "Constant pool count", ConsoleColors.BLUE, true);
 			readConstantPool(dis, u2.value);
 			print.constantPool(constants);
 			U2 accessFlags = getU2(dis);
@@ -241,17 +241,32 @@ public class Parser {
 		return switch (name) {
 			case "SourceFile" -> {
 				final U2 aShort = getU2(dis, true);
-				yield new Attribute.SourceFileAttribute(offset, constants, attributeNameIndex, attributeLength, aShort);
+				yield new Attribute.SourceFileAttribute(constants, attributeNameIndex, attributeLength, aShort);
 			}
-			case "NestedMember" -> {
-				yield new Attribute(offset, constants, attributeNameIndex, attributeLength);
+			case "NestMembers" -> {
+				final U2 numberOf = getU2(dis);
+				U2[] classes = new U2[numberOf.getValue()];
+				for (int i = 0; i < numberOf.getValue(); i++) {
+					classes[i] = getU2(dis, true);
+				}
+				yield new Attribute.NestMembersAttribute(constants, attributeNameIndex, attributeLength,
+						numberOf, classes);
+			}
+			case "BootstrapMethods" -> {
+				final U2 numberOf = getU2(dis);
+				Attribute.BootstrapMethod[] bootstrapMethods = new Attribute.BootstrapMethod[numberOf.getValue()];
+				for (int i = 0; i < numberOf.getValue(); i++) {
+					bootstrapMethods[i] = getBootstrapMethods(i, dis);
+				}
+				yield new Attribute.BootstrapMethodsAttribute(constants, attributeNameIndex, attributeLength,
+						numberOf, bootstrapMethods);
 			}
 			default -> {
 				for (int j = 0; j < attributeLength.getValue(); j++) {
 					dis.readByte();
 					count++;
 				}
-				yield new Attribute(offset, constants, attributeNameIndex, attributeLength);
+				yield new Attribute(constants, attributeNameIndex, attributeLength);
 			}
 		};
 	}
@@ -280,6 +295,16 @@ public class Parser {
 		U4 u4 = new U4(count, value, "");
 		count += Integer.BYTES;
 		return u4;
+	}
+
+	public Attribute.BootstrapMethod getBootstrapMethods(int index, DataInputStream dis) throws IOException {
+		final U2 bootstrapMethodRef = getU2(dis, true);
+		final U2 numberOf = getU2(dis);
+		U2[] bootstrapArguments = new U2[numberOf.getValue()];
+		for (int i = 0; i < numberOf.getValue(); i++) {
+			bootstrapArguments[i] = getU2(dis, true);
+		}
+		return new Attribute.BootstrapMethod(index, bootstrapMethodRef, bootstrapArguments);
 	}
 
 	private static final class Magic {

@@ -5,18 +5,24 @@ public class Print {
 
 	public static final boolean PRINT_CONSTANT_POOL = true;
 	public static final String YELLOW_STRING = ConsoleColors.YELLOW + "%s" + ConsoleColors.RESET;
-
-	void u2(Parser.U2 u2, String title) {
-		u2(u2, title, "");
-	}
+	AttributePrinter attributePrinter = new AttributePrinter();
 
 	void u2(Parser.U2 u2, String title, String titleColor) {
-		System.out.printf("%04X " + titleColor + "%s" + ConsoleColors.RESET + " %02d" + YELLOW_STRING + "\n",
-				u2.getOffset(), title, u2.getValue(), u2.getSymbolic());
+		u2(u2, title, titleColor, false);
+	}
+
+	void u2(Parser.U2 u2, String title) {
+		u2(u2, title, "", false);
+	}
+
+	void u2(Parser.U2 u2, String title, String titleColor, boolean addDecimal) {
+		String formatedValue = String.format(" %02X" + (addDecimal ? "(%02d)" : ""), u2.getValue(), u2.getValue());
+		System.out.printf("%04X " + titleColor + "%s" + ConsoleColors.RESET + " %s" + YELLOW_STRING + "\n",
+				u2.getOffset(), title, formatedValue, u2.getSymbolic());
 	}
 
 	void u4(Parser.U4 u4) {
-		System.out.printf("%04X %s %02d" + YELLOW_STRING + "\n",
+		System.out.printf("%04X %s %02X" + YELLOW_STRING + "\n",
 				u4.getOffset(), "Attribute length", u4.getValue(), u4.getSymbolic());
 	}
 
@@ -36,7 +42,7 @@ public class Print {
 	void printRecord(List<Parser.ConstantPoolRecord> constants, int idx) {
 		Parser.ConstantPoolRecord cpr = constants.get(idx);
 		String cpName = cpr.getRecord().name().replaceFirst("^CONSTANT_", "");
-		System.out.printf("%04X %4d %19s %s\n", cpr.getOffset(), cpr.getIdx(), cpName, cpr.getAdditional(constants));
+		System.out.printf("%04X %4X %19s %s\n", cpr.getOffset(), cpr.getIdx(), cpName, cpr.getAdditional(constants));
 	}
 
 	void accessFlags(Parser.U2 u2, Type type) {
@@ -105,11 +111,47 @@ public class Print {
 	}
 
 	public void attributes(Map<String, Attribute> attributes) {
-		for(Map.Entry<String, Attribute> entry: attributes.entrySet()) {
+		for (Map.Entry<String, Attribute> entry : attributes.entrySet()) {
 			Attribute attr = entry.getValue();
-			u2(attr.getNameIndex(),"Attribute name index");
+			attr.print(attributePrinter);
+		}
+	}
+
+	public interface Printable {
+		void print(AttributePrinter printer);
+	}
+
+	public class AttributePrinter {
+		void print(Attribute attr) {
+			u2(attr.getNameIndex(), "Attribute name index");
 			u4(attr.getLength());
-			u2(attr.getAdditional(),"");
+		}
+
+		void print(Attribute.SourceFileAttribute attr) {
+			u2(attr.getSourceFileIndex(), "Attribute source file index");
+		}
+
+		void print(Attribute.NestMembersAttribute attr) {
+			Parser.U2[] classes = attr.getClasses();
+			u2(attr.getNumberOfClasses(), "Attribute number of classes");
+			for (Parser.U2 aClass : classes) {
+				u2(aClass, "Nest");
+			}
+		}
+
+		void print(Attribute.BootstrapMethodsAttribute attr) {
+			u2(attr.getNumberOf(), "Attribute number of bootstrap methods");
+			for (Attribute.BootstrapMethod bootstrapMethod : attr.getBootstrapMethods()) {
+				bootstrapMethod.print(this);
+			}
+		}
+
+		void print(Attribute.BootstrapMethod bootstrapMethod) {
+			String formatedIndex = String.format("%4X ", bootstrapMethod.getIndex());
+			u2(bootstrapMethod.getBootstrapMethodRef(), formatedIndex + "Bootstrap method");
+			for (Parser.U2 u2 : bootstrapMethod.getBootstrapArguments()) {
+				u2(u2, "     Argument");
+			}
 		}
 	}
 }
