@@ -75,6 +75,32 @@ public class Attribute implements Print.Printable {
 		}
 	}
 
+	public static class InnerClassesAttribute extends Attribute {
+		private final Parser.U2 numberOf;
+		private final InnerClass[] innerClasses;
+
+		public InnerClassesAttribute(List<Parser.ConstantPoolRecord> constants, Parser.U2 nameIndex,
+		                             Parser.U4 length, Parser.U2 numberOf, InnerClass[] innerClasses) {
+			super(constants, nameIndex, length);
+			this.numberOf = numberOf;
+			this.innerClasses = innerClasses;
+		}
+
+		@Override
+		public void print(Print.AttributePrinter printer) {
+			super.print(printer);
+			printer.print(this);
+		}
+
+		public Parser.U2 getNumberOf() {
+			return numberOf;
+		}
+
+		public InnerClass[] getInnerClasses() {
+			return innerClasses;
+		}
+	}
+
 	public static class BootstrapMethodsAttribute extends Attribute {
 		private final Parser.U2 numberOf;
 		private final BootstrapMethod[] bootstrapMethods;
@@ -101,33 +127,21 @@ public class Attribute implements Print.Printable {
 		}
 	}
 
-	public static class BootstrapMethod implements Print.Printable {
-
-		private final int index;
-		private final Parser.U2 bootstrapMethodRef;
-		private final Parser.U2[] bootstrapArguments;
-
-		public BootstrapMethod(int index, Parser.U2 bootstrapMethodRef, Parser.U2[] bootstrapArguments) {
-			this.index = index;
-			this.bootstrapMethodRef = bootstrapMethodRef;
-			this.bootstrapArguments = bootstrapArguments;
-		}
+	public record BootstrapMethod(int index, Parser.U2 bootstrapMethodRef,
+	                              Parser.U2[] bootstrapArguments) implements Print.Printable {
 
 		@Override
 		public void print(Print.AttributePrinter printer) {
 			printer.print(this);
 		}
+	}
 
-		public Parser.U2 getBootstrapMethodRef() {
-			return bootstrapMethodRef;
-		}
+	public record InnerClass(Parser.U2 innerClassInfoIndex, Parser.U2 outerClassInfoIndex, Parser.U2 innerNameIndex,
+	                         Parser.U2 innerClassAccessFlags) implements Print.Printable {
 
-		public int getIndex() {
-			return index;
-		}
-
-		public Parser.U2[] getBootstrapArguments() {
-			return bootstrapArguments;
+		@Override
+		public void print(Print.AttributePrinter printer) {
+			printer.print(this);
 		}
 	}
 }

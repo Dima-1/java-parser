@@ -111,8 +111,7 @@ public class Parser {
 
 	private void readAttributesClass(DataInputStream dis, int attributesCount) throws IOException {
 		for (int i = 0; i < attributesCount; i++) {
-			int offset = count;
-			Attribute attribute = readAttribute(offset, dis);
+			Attribute attribute = readAttribute(dis);
 			attributes.put(attribute.getName(), attribute);
 		}
 	}
@@ -233,7 +232,7 @@ public class Parser {
 		};
 	}
 
-	private Attribute readAttribute(int offset, DataInputStream dis) throws IOException {
+	private Attribute readAttribute(DataInputStream dis) throws IOException {
 		U2 attributeNameIndex = getU2(dis, true);
 		String name = constants.get(attributeNameIndex.getValue() - 1).getAdditional(constants);
 		U4 attributeLength = getU4(dis);
@@ -252,11 +251,20 @@ public class Parser {
 				yield new Attribute.NestMembersAttribute(constants, attributeNameIndex, attributeLength,
 						numberOf, classes);
 			}
+			case "InnerClasses" -> {
+				final U2 numberOf = getU2(dis);
+				Attribute.InnerClass[] classes = new Attribute.InnerClass[numberOf.getValue()];
+				for (int i = 0; i < numberOf.getValue(); i++) {
+					classes[i] = getInnerClass(dis);
+				}
+				yield new Attribute.InnerClassesAttribute(constants, attributeNameIndex, attributeLength,
+						numberOf, classes);
+			}
 			case "BootstrapMethods" -> {
 				final U2 numberOf = getU2(dis);
 				Attribute.BootstrapMethod[] bootstrapMethods = new Attribute.BootstrapMethod[numberOf.getValue()];
 				for (int i = 0; i < numberOf.getValue(); i++) {
-					bootstrapMethods[i] = getBootstrapMethods(i, dis);
+					bootstrapMethods[i] = getBootstrapMethod(i, dis);
 				}
 				yield new Attribute.BootstrapMethodsAttribute(constants, attributeNameIndex, attributeLength,
 						numberOf, bootstrapMethods);
@@ -297,7 +305,7 @@ public class Parser {
 		return u4;
 	}
 
-	public Attribute.BootstrapMethod getBootstrapMethods(int index, DataInputStream dis) throws IOException {
+	public Attribute.BootstrapMethod getBootstrapMethod(int index, DataInputStream dis) throws IOException {
 		final U2 bootstrapMethodRef = getU2(dis, true);
 		final U2 numberOf = getU2(dis);
 		U2[] bootstrapArguments = new U2[numberOf.getValue()];
@@ -305,6 +313,17 @@ public class Parser {
 			bootstrapArguments[i] = getU2(dis, true);
 		}
 		return new Attribute.BootstrapMethod(index, bootstrapMethodRef, bootstrapArguments);
+	}
+
+	public Attribute.InnerClass getInnerClass(DataInputStream dis) throws IOException {
+		final U2 innerClassInfoIndex = getU2(dis, true);
+		final U2 outerClassInfoIndex = getU2(dis, true);
+		outerClassInfoIndex.clearZeroSymbolic();
+		final U2 innerNameIndex = getU2(dis, true);
+		innerNameIndex.clearZeroSymbolic();
+		final U2 innerClassAccessFlags = getU2(dis, true);
+		innerClassAccessFlags.clearZeroSymbolic();
+		return new Attribute.InnerClass(innerClassInfoIndex, outerClassInfoIndex, innerNameIndex, innerClassAccessFlags);
 	}
 
 	private static final class Magic {
@@ -500,7 +519,7 @@ public class Parser {
 	public static class U2 {
 		private final int offset;
 		private final int value;
-		private final String symbolic;
+		private String symbolic;
 
 		public U2(int offset, int value, String symbolic) {
 			this.offset = offset;
@@ -518,6 +537,12 @@ public class Parser {
 
 		public String getSymbolic() {
 			return symbolic;
+		}
+
+		public void clearZeroSymbolic() {
+			if (value == 0) {
+				symbolic = "";
+			}
 		}
 	}
 
