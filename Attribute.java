@@ -1,7 +1,7 @@
 
 import java.util.List;
 
-public class Attribute implements Print.Printable {
+public class Attribute implements Print.Printable<Print.AttributePrinter> {
 	private final Parser.U2 nameIndex;
 	private final String name;
 	private final Parser.U4 length;
@@ -128,7 +128,7 @@ public class Attribute implements Print.Printable {
 	}
 
 	public record BootstrapMethod(int index, Parser.U2 bootstrapMethodRef,
-	                              Parser.U2[] bootstrapArguments) implements Print.Printable {
+	                              Parser.U2[] bootstrapArguments) implements Print.Printable<Print.AttributePrinter> {
 
 		@Override
 		public void print(Print.AttributePrinter printer) {
@@ -137,7 +137,7 @@ public class Attribute implements Print.Printable {
 	}
 
 	public record InnerClass(Parser.U2 innerClassInfoIndex, Parser.U2 outerClassInfoIndex, Parser.U2 innerNameIndex,
-	                         Parser.U2 innerClassAccessFlags) implements Print.Printable {
+	                         Parser.U2 innerClassAccessFlags) implements Print.Printable<Print.AttributePrinter> {
 
 		@Override
 		public void print(Print.AttributePrinter printer) {

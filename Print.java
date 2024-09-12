@@ -117,8 +117,8 @@ public class Print {
 		}
 	}
 
-	public interface Printable {
-		void print(AttributePrinter printer);
+	public interface Printable<T> {
+		void print(T printer);
 	}
 
 	public class AttributePrinter {
@@ -145,7 +145,6 @@ public class Print {
 				innerClass.print(this);
 			}
 		}
-
 
 		void print(Attribute.BootstrapMethodsAttribute attr) {
 			u2(attr.getNumberOf(), "Attribute number of bootstrap methods");

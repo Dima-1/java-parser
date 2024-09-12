@@ -30,26 +30,26 @@ public class Parser {
 		     DataInputStream dis = new DataInputStream(fis)) {
 			count = Magic.BYTES;
 			Magic.getMagic(dis);
-			print.u2(getU2(dis), "Minor version", ConsoleColors.BLUE, true);
-			print.u2(getU2(dis), "Major version", ConsoleColors.BLUE, true);
-			U2 u2 = getU2(dis);
+			print.u2(readU2(dis), "Minor version", ConsoleColors.BLUE, true);
+			print.u2(readU2(dis), "Major version", ConsoleColors.BLUE, true);
+			U2 u2 = readU2(dis);
 			print.u2(u2, "Constant pool count", ConsoleColors.BLUE, true);
 			readConstantPool(dis, u2.value);
 			print.constantPool(constants);
-			U2 accessFlags = getU2(dis);
+			U2 accessFlags = readU2(dis);
 			print.accessFlags(accessFlags, Type.CLASS);
-			print.u2(getU2(dis, true), "This class");
-			print.u2(getU2(dis, true), "Super class");
-			u2 = getU2(dis);
+			print.u2(readU2(dis, true), "This class");
+			print.u2(readU2(dis, true), "Super class");
+			u2 = readU2(dis);
 			print.u2(u2, "Interfaces count", ConsoleColors.BLUE);
 			readInterfaces(dis, u2.value);
-			u2 = getU2(dis);
+			u2 = readU2(dis);
 			print.u2(u2, "Fields count", ConsoleColors.BLUE);
 			readFields(dis, u2.value);
-			u2 = getU2(dis);
+			u2 = readU2(dis);
 			print.u2(u2, "Methods count", ConsoleColors.BLUE);
 			readMethods(dis, u2.value);
-			u2 = getU2(dis);
+			u2 = readU2(dis);
 			print.u2(u2, "Attributes count", ConsoleColors.BLUE);
 			readAttributesClass(dis, u2.value);
 			print.attributes(attributes);
@@ -60,7 +60,7 @@ public class Parser {
 
 	private void readInterfaces(DataInputStream dis, int interfacesCount) throws IOException {
 		for (int i = 0; i < interfacesCount; i++) {
-			print.u2(getU2(dis, true), "");
+			print.u2(readU2(dis, true), "");
 		}
 	}
 
@@ -69,11 +69,11 @@ public class Parser {
 	 */
 	private void readFields(DataInputStream dis, int fieldsCount) throws IOException {
 		for (int i = 0; i < fieldsCount; i++) {
-			U2 accessFlags = getU2(dis);
+			U2 accessFlags = readU2(dis);
 			print.accessFlags(accessFlags, Type.FIELD);
-			print.u2(getU2(dis, true), "Name index");
-			print.u2(getU2(dis, true), "Descriptor index");
-			U2 u2 = getU2(dis);
+			print.u2(readU2(dis, true), "Name index");
+			print.u2(readU2(dis, true), "Descriptor index");
+			U2 u2 = readU2(dis);
 			print.u2(u2, "Attributes count");
 			readAttributes(dis, u2.value);
 		}
@@ -84,11 +84,11 @@ public class Parser {
 	 */
 	private void readMethods(DataInputStream dis, int methodsCount) throws IOException {
 		for (int i = 0; i < methodsCount; i++) {
-			U2 accessFlags = getU2(dis);
+			U2 accessFlags = readU2(dis);
 			print.accessFlags(accessFlags, Type.METHOD);
-			print.u2(getU2(dis, true), "Name index");
-			print.u2(getU2(dis, true), "Descriptor index");
-			U2 u2 = getU2(dis);
+			print.u2(readU2(dis, true), "Name index");
+			print.u2(readU2(dis, true), "Descriptor index");
+			U2 u2 = readU2(dis);
 			print.u2(u2, "Attributes count");
 			readAttributes(dis, u2.value);
 		}
@@ -99,8 +99,8 @@ public class Parser {
 	 */
 	private void readAttributes(DataInputStream dis, int attributesCount) throws IOException {
 		for (int i = 0; i < attributesCount; i++) {
-			print.u2(getU2(dis, true), "Attribute name index");
-			U4 attributeLength = getU4(dis);
+			print.u2(readU2(dis, true), "Attribute name index");
+			U4 attributeLength = readU4(dis);
 			print.u4(attributeLength);
 			for (int j = 0; j < attributeLength.getValue(); j++) {
 				dis.readByte();
@@ -233,26 +233,26 @@ public class Parser {
 	}
 
 	private Attribute readAttribute(DataInputStream dis) throws IOException {
-		U2 attributeNameIndex = getU2(dis, true);
+		U2 attributeNameIndex = readU2(dis, true);
 		String name = constants.get(attributeNameIndex.getValue() - 1).getAdditional(constants);
-		U4 attributeLength = getU4(dis);
+		U4 attributeLength = readU4(dis);
 
 		return switch (name) {
 			case "SourceFile" -> {
-				final U2 aShort = getU2(dis, true);
+				final U2 aShort = readU2(dis, true);
 				yield new Attribute.SourceFileAttribute(constants, attributeNameIndex, attributeLength, aShort);
 			}
 			case "NestMembers" -> {
-				final U2 numberOf = getU2(dis);
+				final U2 numberOf = readU2(dis);
 				U2[] classes = new U2[numberOf.getValue()];
 				for (int i = 0; i < numberOf.getValue(); i++) {
-					classes[i] = getU2(dis, true);
+					classes[i] = readU2(dis, true);
 				}
 				yield new Attribute.NestMembersAttribute(constants, attributeNameIndex, attributeLength,
 						numberOf, classes);
 			}
 			case "InnerClasses" -> {
-				final U2 numberOf = getU2(dis);
+				final U2 numberOf = readU2(dis);
 				Attribute.InnerClass[] classes = new Attribute.InnerClass[numberOf.getValue()];
 				for (int i = 0; i < numberOf.getValue(); i++) {
 					classes[i] = getInnerClass(dis);
@@ -261,7 +261,7 @@ public class Parser {
 						numberOf, classes);
 			}
 			case "BootstrapMethods" -> {
-				final U2 numberOf = getU2(dis);
+				final U2 numberOf = readU2(dis);
 				Attribute.BootstrapMethod[] bootstrapMethods = new Attribute.BootstrapMethod[numberOf.getValue()];
 				for (int i = 0; i < numberOf.getValue(); i++) {
 					bootstrapMethods[i] = getBootstrapMethod(i, dis);
@@ -279,11 +279,11 @@ public class Parser {
 		};
 	}
 
-	private U2 getU2(DataInputStream dis) throws IOException {
-		return getU2(dis, false);
+	private U2 readU2(DataInputStream dis) throws IOException {
+		return readU2(dis, false);
 	}
 
-	private U2 getU2(DataInputStream dis, boolean addSymbolicName) throws IOException {
+	private U2 readU2(DataInputStream dis, boolean addSymbolicName) throws IOException {
 		String symbolic = "";
 		int value = dis.readUnsignedShort();
 		if (addSymbolicName && !constants.isEmpty()) {
@@ -298,7 +298,7 @@ public class Parser {
 		return u2;
 	}
 
-	private U4 getU4(DataInputStream dis) throws IOException {
+	private U4 readU4(DataInputStream dis) throws IOException {
 		int value = dis.readInt();
 		U4 u4 = new U4(count, value, "");
 		count += Integer.BYTES;
@@ -306,22 +306,22 @@ public class Parser {
 	}
 
 	public Attribute.BootstrapMethod getBootstrapMethod(int index, DataInputStream dis) throws IOException {
-		final U2 bootstrapMethodRef = getU2(dis, true);
-		final U2 numberOf = getU2(dis);
+		final U2 bootstrapMethodRef = readU2(dis, true);
+		final U2 numberOf = readU2(dis);
 		U2[] bootstrapArguments = new U2[numberOf.getValue()];
 		for (int i = 0; i < numberOf.getValue(); i++) {
-			bootstrapArguments[i] = getU2(dis, true);
+			bootstrapArguments[i] = readU2(dis, true);
 		}
 		return new Attribute.BootstrapMethod(index, bootstrapMethodRef, bootstrapArguments);
 	}
 
 	public Attribute.InnerClass getInnerClass(DataInputStream dis) throws IOException {
-		final U2 innerClassInfoIndex = getU2(dis, true);
-		final U2 outerClassInfoIndex = getU2(dis, true);
+		final U2 innerClassInfoIndex = readU2(dis, true);
+		final U2 outerClassInfoIndex = readU2(dis, true);
 		outerClassInfoIndex.clearZeroSymbolic();
-		final U2 innerNameIndex = getU2(dis, true);
+		final U2 innerNameIndex = readU2(dis, true);
 		innerNameIndex.clearZeroSymbolic();
-		final U2 innerClassAccessFlags = getU2(dis, true);
+		final U2 innerClassAccessFlags = readU2(dis, true);
 		innerClassAccessFlags.clearZeroSymbolic();
 		return new Attribute.InnerClass(innerClassInfoIndex, outerClassInfoIndex, innerNameIndex, innerClassAccessFlags);
 	}
