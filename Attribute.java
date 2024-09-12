@@ -6,9 +6,9 @@ public class Attribute implements Print.Printable<Print.AttributePrinter> {
 	private final String name;
 	private final Parser.U4 length;
 
-	public Attribute(List<Parser.ConstantPoolRecord> constants, Parser.U2 nameIndex, Parser.U4 length) {
+	public Attribute(List<Parser.ConstantPoolEntry> constants, Parser.U2 nameIndex, Parser.U4 length) {
 		this.nameIndex = nameIndex;
-		name = constants.get(nameIndex.getValue() - 1).getAdditional(constants);
+		name = constants.get(nameIndex.getValue() - 1).getAdditional();
 		this.length = length;
 	}
 
@@ -32,7 +32,7 @@ public class Attribute implements Print.Printable<Print.AttributePrinter> {
 	public static class SourceFileAttribute extends Attribute {
 		private final Parser.U2 sourceFileIndex;
 
-		public SourceFileAttribute(List<Parser.ConstantPoolRecord> constants, Parser.U2 nameIndex,
+		public SourceFileAttribute(List<Parser.ConstantPoolEntry> constants, Parser.U2 nameIndex,
 		                           Parser.U4 length, Parser.U2 sourceFileIndex) {
 			super(constants, nameIndex, length);
 			this.sourceFileIndex = sourceFileIndex;
@@ -53,7 +53,7 @@ public class Attribute implements Print.Printable<Print.AttributePrinter> {
 		private final Parser.U2 numberOfClasses;
 		private final Parser.U2[] classes;
 
-		public NestMembersAttribute(List<Parser.ConstantPoolRecord> constants, Parser.U2 nameIndex,
+		public NestMembersAttribute(List<Parser.ConstantPoolEntry> constants, Parser.U2 nameIndex,
 		                            Parser.U4 length, Parser.U2 numberOfClasses, Parser.U2[] classes) {
 			super(constants, nameIndex, length);
 			this.numberOfClasses = numberOfClasses;
@@ -79,7 +79,7 @@ public class Attribute implements Print.Printable<Print.AttributePrinter> {
 		private final Parser.U2 numberOf;
 		private final InnerClass[] innerClasses;
 
-		public InnerClassesAttribute(List<Parser.ConstantPoolRecord> constants, Parser.U2 nameIndex,
+		public InnerClassesAttribute(List<Parser.ConstantPoolEntry> constants, Parser.U2 nameIndex,
 		                             Parser.U4 length, Parser.U2 numberOf, InnerClass[] innerClasses) {
 			super(constants, nameIndex, length);
 			this.numberOf = numberOf;
@@ -105,7 +105,7 @@ public class Attribute implements Print.Printable<Print.AttributePrinter> {
 		private final Parser.U2 numberOf;
 		private final BootstrapMethod[] bootstrapMethods;
 
-		public BootstrapMethodsAttribute(List<Parser.ConstantPoolRecord> constants, Parser.U2 nameIndex,
+		public BootstrapMethodsAttribute(List<Parser.ConstantPoolEntry> constants, Parser.U2 nameIndex,
 		                                 Parser.U4 length, Parser.U2 numberOf, BootstrapMethod[] bootstrapMethods) {
 			super(constants, nameIndex, length);
 			this.numberOf = numberOf;

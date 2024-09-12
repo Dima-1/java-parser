@@ -8,6 +8,7 @@ public class Print {
 	public static final String YELLOW_STRING = ConsoleColors.YELLOW + "%s" + ConsoleColors.RESET;
 	public static final String SP_5 = " ".repeat(5);
 	AttributePrinter attributePrinter = new AttributePrinter();
+	ConstantPrinter constantPrinter = new ConstantPrinter();
 
 	void u2(Parser.U2 u2, String title, String titleColor) {
 		u2(u2, title, titleColor, false);
@@ -28,23 +29,18 @@ public class Print {
 				u4.getOffset(), "Attribute length", u4.getValue(), u4.getSymbolic());
 	}
 
-	public void constantPool(List<Parser.ConstantPoolRecord> constants) {
+	public void constantPool(List<Parser.ConstantPoolEntry> constants) {
 		if (!PRINT_CONSTANT_POOL) {
 			return;
 		}
 		for (int i = 0; i < constants.size(); i++) {
-			printRecord(constants, i);
-			Parser.ConstantPoolRecord cpr = constants.get(i);
-			if (cpr.getRecord().isTwoEntriesTakeUp()) {
+			Parser.ConstantPoolEntry entry = constants.get(i);
+			entry.print(constantPrinter);
+			constantPrinter.print();
+			if (entry.getConstantTag().isTwoEntriesTakeUp()) {
 				i++;
 			}
 		}
-	}
-
-	void printRecord(List<Parser.ConstantPoolRecord> constants, int idx) {
-		Parser.ConstantPoolRecord cpr = constants.get(idx);
-		String cpName = cpr.getRecord().name().replaceFirst("^CONSTANT_", "");
-		System.out.printf("%04X %4X %19s %s\n", cpr.getOffset(), cpr.getIdx(), cpName, cpr.getAdditional(constants));
 	}
 
 	void accessFlags(Parser.U2 u2, Type type) {
@@ -119,6 +115,76 @@ public class Print {
 
 	public interface Printable<T> {
 		void print(T printer);
+	}
+
+	public class ConstantPrinter {
+		private String formatedString;
+		private boolean printGeneral = true;
+
+		void format(Parser.ConstantPoolEntry cpe) {
+			if (printGeneral) {
+				String cpName = cpe.getConstantTag().name().replaceFirst("^CONSTANT_", "");
+				formatedString = String.format("%04X %4X %19s", cpe.getOffset(), cpe.getIdx(), cpName);
+				printGeneral = false;
+			}
+		}
+
+		void format(Parser.ConstantPoolUtf8 cpe) {
+			formatedString += " " + cpe.getUTF8();
+		}
+
+		void format(Parser.ConstantPoolInteger cpe) {
+			formatedString += " " + cpe.getValue();
+		}
+
+		void format(Parser.ConstantPoolFloat cpe) {
+			formatedString += " " + cpe.getValue();
+		}
+
+		void format(Parser.ConstantPoolLong cpe) {
+			formatedString += " " + cpe.getValue();
+		}
+
+		void format(Parser.ConstantPoolDouble cpe) {
+			formatedString += " " + cpe.getValue();
+		}
+
+		void format(Parser.ConstantPoolString cpe) {
+			formatedString += String.format(" (%02X)", cpe.getStringIndex());
+			format((Parser.ConstantPoolUtf8) cpe.constants.get(cpe.getStringIndex() - 1));
+		}
+
+		void format(Parser.ConstantPoolMethodRef cpe) {
+			formatedString += String.format(" (%02X)", cpe.getClassIndex());
+			format((Parser.ConstantPoolString) cpe.constants.get(cpe.getClassIndex() - 1));
+			formatedString += String.format(" (%02X)", cpe.getNameAndTypeIndex());
+			format((Parser.ConstantPoolNameAndType) cpe.constants.get(cpe.getNameAndTypeIndex() - 1));
+		}
+
+		void format(Parser.ConstantPoolNameAndType cpe) {
+			formatedString += String.format(" (%02X)", cpe.getNameIndex());
+			format((Parser.ConstantPoolUtf8) cpe.constants.get(cpe.getNameIndex() - 1));
+			formatedString += String.format(" (%02X)", cpe.getDescriptorIndex());
+			format((Parser.ConstantPoolUtf8) cpe.constants.get(cpe.getDescriptorIndex() - 1));
+		}
+
+		void format(Parser.ConstantPoolDynamic cpe) {
+			formatedString += String.format(" (%02X)", cpe.getBootstrapMethodAttrIndex());
+			formatedString += String.format(" (%02X)", cpe.getNameAndTypeIndex());
+			format((Parser.ConstantPoolNameAndType) cpe.constants.get(cpe.getNameAndTypeIndex() - 1));
+		}
+
+		void format(Parser.ConstantPoolMethodHandle cpe) {
+			formatedString += " " + Parser.ConstantPoolMethodHandle.MHRef.values()[cpe.getReferenceKind()].name()
+					.replaceFirst("REF_", "");
+			formatedString += String.format(" (%02X)", cpe.getReferenceIndex());
+			format((Parser.ConstantPoolMethodRef) cpe.constants.get(cpe.getReferenceIndex() - 1));
+		}
+
+		void print() {
+			System.out.println(formatedString);
+			printGeneral = true;
+		}
 	}
 
 	public class AttributePrinter {
