@@ -1,3 +1,7 @@
+package com.example.jcparser;
+
+import org.apache.commons.text.StringEscapeUtils;
+
 import java.io.*;
 import java.util.*;
 
@@ -41,16 +45,16 @@ public class Parser {
 			print.u2(readU2(dis, true), "This class");
 			print.u2(readU2(dis, true), "Super class");
 			u2 = readU2(dis);
-			print.u2(u2, "Interfaces count", ConsoleColors.BLUE);
+			print.u2(u2, "Interfaces count", ConsoleColors.BLUE, true);
 			readInterfaces(dis, u2.value);
 			u2 = readU2(dis);
-			print.u2(u2, "Fields count", ConsoleColors.BLUE);
+			print.u2(u2, "Fields count", ConsoleColors.BLUE, true);
 			readFields(dis, u2.value);
 			u2 = readU2(dis);
-			print.u2(u2, "Methods count", ConsoleColors.BLUE);
+			print.u2(u2, "Methods count", ConsoleColors.BLUE, true);
 			readMethods(dis, u2.value);
 			u2 = readU2(dis);
-			print.u2(u2, "Attributes count", ConsoleColors.BLUE);
+			print.u2(u2, "Attributes count", ConsoleColors.BLUE, true);
 			readAttributesClass(dis, u2.value);
 			print.attributes(attributes);
 		} catch (IOException e) {
@@ -354,7 +358,7 @@ public class Parser {
 		private final int offset;
 		private final int idx;
 		private final ConstantTag constantTag;
-		
+
 		public ConstantPoolEntry(List<ConstantPoolEntry> constants, int offset, int idx, ConstantTag constantTag) {
 			this.constants = constants;
 			this.offset = offset;
@@ -389,7 +393,7 @@ public class Parser {
 
 		public ConstantPoolUtf8(List<ConstantPoolEntry> constants, int offset, int idx, ConstantTag constantTag, String UTF8) {
 			super(constants, offset, idx, constantTag);
-			this.UTF8 = UTF8;
+			this.UTF8 = StringEscapeUtils.escapeJava(UTF8);
 		}
 
 		public String getUTF8() {
@@ -507,7 +511,7 @@ public class Parser {
 	public static final class ConstantPoolString extends ConstantPoolEntry {
 		private final int stringIndex;
 
-		public ConstantPoolString(List<ConstantPoolEntry> constants, int offset, int idx, ConstantTag constantTag, 
+		public ConstantPoolString(List<ConstantPoolEntry> constants, int offset, int idx, ConstantTag constantTag,
 		                          int stringIndex) {
 			super(constants, offset, idx, constantTag);
 			this.stringIndex = stringIndex;
@@ -537,7 +541,7 @@ public class Parser {
 		private final int classIndex;
 		private final int nameAndTypeIndex;
 
-		public ConstantPoolMethodRef(List<ConstantPoolEntry> constants, int offset, int idx, ConstantTag constantTag, 
+		public ConstantPoolMethodRef(List<ConstantPoolEntry> constants, int offset, int idx, ConstantTag constantTag,
 		                             int classIndex, int nameAndTypeIndex) {
 			super(constants, offset, idx, constantTag);
 			this.classIndex = classIndex;
@@ -662,7 +666,7 @@ public class Parser {
 		private final int referenceKind;
 		private final int referenceIndex;
 
-		public ConstantPoolMethodHandle(List<ConstantPoolEntry> constants, int offset, int idx, ConstantTag constantTag, 
+		public ConstantPoolMethodHandle(List<ConstantPoolEntry> constants, int offset, int idx, ConstantTag constantTag,
 		                                int referenceKind, int referenceIndex) {
 			super(constants, offset, idx, constantTag);
 			this.referenceKind = referenceKind;

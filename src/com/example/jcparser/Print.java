@@ -1,3 +1,5 @@
+package com.example.jcparser;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,9 +12,6 @@ public class Print {
 	AttributePrinter attributePrinter = new AttributePrinter();
 	ConstantPrinter constantPrinter = new ConstantPrinter();
 
-	void u2(Parser.U2 u2, String title, String titleColor) {
-		u2(u2, title, titleColor, false);
-	}
 
 	void u2(Parser.U2 u2, String title) {
 		u2(u2, title, "", false);
@@ -199,21 +198,21 @@ public class Print {
 
 		void print(Attribute.NestMembersAttribute attr) {
 			Parser.U2[] classes = attr.getClasses();
-			u2(attr.getNumberOfClasses(), "Attribute number of classes");
-			for (Parser.U2 aClass : classes) {
-				u2(aClass, SP_5 + "Nest");
+			u2(attr.getNumberOfClasses(), "Attribute number of classes", "", true);
+			for (int i = 0; i < classes.length; i++) {
+				u2(classes[i], String.format("%4X ", i) + "Nest");
 			}
 		}
 
 		void print(Attribute.InnerClassesAttribute attr) {
-			u2(attr.getNumberOf(), "Attribute number of inner classes");
+			u2(attr.getNumberOf(), "Attribute number of inner classes", "", true);
 			for (Attribute.InnerClass innerClass : attr.getInnerClasses()) {
 				innerClass.print(this);
 			}
 		}
 
 		void print(Attribute.BootstrapMethodsAttribute attr) {
-			u2(attr.getNumberOf(), "Attribute number of bootstrap methods");
+			u2(attr.getNumberOf(), "Attribute number of bootstrap methods", "", true);
 			for (Attribute.BootstrapMethod bootstrapMethod : attr.getBootstrapMethods()) {
 				bootstrapMethod.print(this);
 			}
