@@ -194,7 +194,7 @@ public class Parser {
 			}
 			case CONSTANT_Float -> {
 				float aFloat = dis.readFloat();
-				count += Long.BYTES;
+				count += Float.BYTES;
 				yield new ConstantPoolFloat(constantPool, offset, idx, constantTag, aFloat);
 			}
 			case CONSTANT_Long -> {
@@ -332,7 +332,7 @@ public class Parser {
 		outerClassInfoIndex.clearZeroSymbolic();
 		final U2 innerNameIndex = readU2(dis, true);
 		innerNameIndex.clearZeroSymbolic();
-		final U2 innerClassAccessFlags = readU2(dis, true);
+		final U2 innerClassAccessFlags = readU2(dis);
 		innerClassAccessFlags.clearZeroSymbolic();
 		return new Attribute.InnerClass(innerClassInfoIndex, outerClassInfoIndex, innerNameIndex, innerClassAccessFlags);
 	}
