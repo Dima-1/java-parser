@@ -30,13 +30,47 @@ public class Attribute implements Print.Printable<Print.AttributePrinter> {
 		printer.print(this);
 	}
 
-	public static class SourceFileAttribute extends Attribute {
-		private final Parser.U2 sourceFileIndex;
+	public static class ConstantPoolAttribute extends Attribute {
+		private final Parser.U2 constantPoolIndex;
+
+		public ConstantPoolAttribute(List<Parser.ConstantPoolEntry> constants, Parser.U2 nameIndex,
+		                             Parser.U4 length, Parser.U2 constantPoolIndex) {
+			super(constants, nameIndex, length);
+			this.constantPoolIndex = constantPoolIndex;
+		}
+
+		public Parser.U2 getConstantPoolIndex() {
+			return constantPoolIndex;
+		}
+	}
+
+	public static class ConstantValueAttribute extends ConstantPoolAttribute {
+
+		public ConstantValueAttribute(List<Parser.ConstantPoolEntry> constants, Parser.U2 nameIndex,
+		                              Parser.U4 length, Parser.U2 constantValueIndex) {
+			super(constants, nameIndex, length, constantValueIndex);
+			Parser.ConstantPoolEntry entry = constants.get(constantValueIndex.getValue() - 1);
+			if (!entry.getConstantTag().isConstantValueAttribute()) {
+				throw new RuntimeException(String.format("%04X ConstantValue = %s", constantValueIndex.getOffset(), entry.getConstantTag()));
+			}
+		}
+
+		@Override
+		public void print(Print.AttributePrinter printer) {
+			super.print(printer);
+			printer.print(this);
+		}
+
+		public Parser.U2 getConstantValueIndex() {
+			return getConstantPoolIndex();
+		}
+	}
+
+	public static class SourceFileAttribute extends ConstantPoolAttribute {
 
 		public SourceFileAttribute(List<Parser.ConstantPoolEntry> constants, Parser.U2 nameIndex,
 		                           Parser.U4 length, Parser.U2 sourceFileIndex) {
-			super(constants, nameIndex, length);
-			this.sourceFileIndex = sourceFileIndex;
+			super(constants, nameIndex, length, sourceFileIndex);
 		}
 
 		@Override
@@ -46,7 +80,25 @@ public class Attribute implements Print.Printable<Print.AttributePrinter> {
 		}
 
 		public Parser.U2 getSourceFileIndex() {
-			return sourceFileIndex;
+			return getConstantPoolIndex();
+		}
+	}
+
+	public static class SignatureAttribute extends ConstantPoolAttribute {
+
+		public SignatureAttribute(List<Parser.ConstantPoolEntry> constants, Parser.U2 nameIndex,
+		                          Parser.U4 length, Parser.U2 signatureIndex) {
+			super(constants, nameIndex, length, signatureIndex);
+		}
+
+		@Override
+		public void print(Print.AttributePrinter printer) {
+			super.print(printer);
+			printer.print(this);
+		}
+
+		public Parser.U2 getSignatureIndex() {
+			return getConstantPoolIndex();
 		}
 	}
 

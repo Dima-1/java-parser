@@ -192,6 +192,10 @@ public class Print {
 			u4(attr.getLength());
 		}
 
+		void print(Attribute.ConstantValueAttribute attr) {
+			u2(attr.getConstantValueIndex(), "Attribute constant value index");
+		}
+
 		void print(Attribute.SourceFileAttribute attr) {
 			u2(attr.getSourceFileIndex(), "Attribute source file index");
 		}
@@ -209,6 +213,10 @@ public class Print {
 			for (Attribute.InnerClass innerClass : attr.getInnerClasses()) {
 				innerClass.print(this);
 			}
+		}
+
+		void print(Attribute.SignatureAttribute attr) {
+			u2(attr.getSignatureIndex(), "Attribute signature index");
 		}
 
 		void print(Attribute.BootstrapMethodsAttribute attr) {

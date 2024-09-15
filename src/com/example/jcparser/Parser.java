@@ -53,10 +53,12 @@ public class Parser {
 			u2 = readU2(dis);
 			print.u2(u2, "Methods count", ConsoleColors.BLUE, true);
 			readMethods(dis, u2.value);
-			u2 = readU2(dis);
-			print.u2(u2, "Attributes count", ConsoleColors.BLUE, true);
-			readAttributesClass(dis, u2.value);
-			print.attributes(attributes);
+			U2 attributesCount = readU2(dis);
+			print.u2(attributesCount, "Attributes count", ConsoleColors.BLUE, true);
+			if (attributesCount.value > 0) {
+				attributes.putAll(readAttributes(dis, attributesCount.value));
+				print.attributes(attributes);
+			}
 		} catch (IOException e) {
 			e.getMessage();
 		}
@@ -79,7 +81,8 @@ public class Parser {
 			print.u2(readU2(dis, true), "Descriptor index");
 			U2 u2 = readU2(dis);
 			print.u2(u2, "Attributes count");
-			readAttributes(dis, u2.value);
+			Map<String, Attribute> attributes = new LinkedHashMap<>(readAttributes(dis, u2.value));
+			print.attributes(attributes);
 		}
 	}
 
@@ -94,30 +97,21 @@ public class Parser {
 			print.u2(readU2(dis, true), "Descriptor index");
 			U2 u2 = readU2(dis);
 			print.u2(u2, "Attributes count");
-			readAttributes(dis, u2.value);
+			Map<String, Attribute> attributes = new LinkedHashMap<>(readAttributes(dis, u2.value));
+			print.attributes(attributes);
 		}
 	}
 
 	/**
 	 * <a href="https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-4.html#jvms-4.7">4.7. Attributes</a>
 	 */
-	private void readAttributes(DataInputStream dis, int attributesCount) throws IOException {
-		for (int i = 0; i < attributesCount; i++) {
-			print.u2(readU2(dis, true), "Attribute name index");
-			U4 attributeLength = readU4(dis);
-			print.u4(attributeLength);
-			for (int j = 0; j < attributeLength.getValue(); j++) {
-				dis.readByte();
-				count++;
-			}
-		}
-	}
-
-	private void readAttributesClass(DataInputStream dis, int attributesCount) throws IOException {
+	private Map<String, Attribute> readAttributes(DataInputStream dis, int attributesCount) throws IOException {
+		Map<String, Attribute> attributes = new LinkedHashMap<>();
 		for (int i = 0; i < attributesCount; i++) {
 			Attribute attribute = readAttribute(dis);
 			attributes.put(attribute.getName(), attribute);
 		}
+		return attributes;
 	}
 
 	public enum ConstantTag {
@@ -148,6 +142,11 @@ public class Parser {
 
 		boolean isTwoEntriesTakeUp() {
 			return this == CONSTANT_Double | this == CONSTANT_Long;
+		}
+
+		boolean isConstantValueAttribute() {
+			return this == CONSTANT_Integer | this == CONSTANT_Float | this == CONSTANT_Long
+					| this == CONSTANT_Double | this == CONSTANT_String;
 		}
 
 		static ConstantTag getConstant(int tag) {
@@ -249,18 +248,13 @@ public class Parser {
 		U4 attributeLength = readU4(dis);
 
 		return switch (name) {
+			case "ConstantValue" -> {
+				final U2 aShort = readU2(dis, true);
+				yield new Attribute.ConstantValueAttribute(constantPool, attributeNameIndex, attributeLength, aShort);
+			}
 			case "SourceFile" -> {
 				final U2 aShort = readU2(dis, true);
 				yield new Attribute.SourceFileAttribute(constantPool, attributeNameIndex, attributeLength, aShort);
-			}
-			case "NestMembers" -> {
-				final U2 numberOf = readU2(dis);
-				U2[] classes = new U2[numberOf.getValue()];
-				for (int i = 0; i < numberOf.getValue(); i++) {
-					classes[i] = readU2(dis, true);
-				}
-				yield new Attribute.NestMembersAttribute(constantPool, attributeNameIndex, attributeLength,
-						numberOf, classes);
 			}
 			case "InnerClasses" -> {
 				final U2 numberOf = readU2(dis);
@@ -271,6 +265,10 @@ public class Parser {
 				yield new Attribute.InnerClassesAttribute(constantPool, attributeNameIndex, attributeLength,
 						numberOf, classes);
 			}
+			case "Signature" -> {
+				final U2 aShort = readU2(dis, true);
+				yield new Attribute.SignatureAttribute(constantPool, attributeNameIndex, attributeLength, aShort);
+			}
 			case "BootstrapMethods" -> {
 				final U2 numberOf = readU2(dis);
 				Attribute.BootstrapMethod[] bootstrapMethods = new Attribute.BootstrapMethod[numberOf.getValue()];
@@ -279,6 +277,15 @@ public class Parser {
 				}
 				yield new Attribute.BootstrapMethodsAttribute(constantPool, attributeNameIndex, attributeLength,
 						numberOf, bootstrapMethods);
+			}
+			case "NestMembers" -> {
+				final U2 numberOf = readU2(dis);
+				U2[] classes = new U2[numberOf.getValue()];
+				for (int i = 0; i < numberOf.getValue(); i++) {
+					classes[i] = readU2(dis, true);
+				}
+				yield new Attribute.NestMembersAttribute(constantPool, attributeNameIndex, attributeLength,
+						numberOf, classes);
 			}
 			default -> {
 				for (int j = 0; j < attributeLength.getValue(); j++) {
