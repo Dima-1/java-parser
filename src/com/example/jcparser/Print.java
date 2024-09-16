@@ -4,36 +4,40 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.example.jcparser.Attribute.*;
+import static com.example.jcparser.Parser.*;
+
 public class Print {
 
 	public static final boolean PRINT_CONSTANT_POOL = true;
 	public static final String YELLOW_STRING = ConsoleColors.YELLOW + "%s" + ConsoleColors.RESET;
 	public static final String SP_5 = " ".repeat(5);
+	public static final String HEX_2 = " (%02X)";
 	AttributePrinter attributePrinter = new AttributePrinter();
 	ConstantPrinter constantPrinter = new ConstantPrinter();
 
 
-	void u2(Parser.U2 u2, String title) {
+	void u2(U2 u2, String title) {
 		u2(u2, title, "", false);
 	}
 
-	void u2(Parser.U2 u2, String title, String titleColor, boolean addDecimal) {
+	void u2(U2 u2, String title, String titleColor, boolean addDecimal) {
 		String formatedValue = String.format(" %02X" + (addDecimal ? "(%02d)" : ""), u2.getValue(), u2.getValue());
 		System.out.printf("%04X " + titleColor + "%s" + ConsoleColors.RESET + " %s" + YELLOW_STRING + "\n",
 				u2.getOffset(), title, formatedValue, u2.getSymbolic());
 	}
 
-	void u4(Parser.U4 u4) {
+	void u4(U4 u4) {
 		System.out.printf("%04X %s %02X" + YELLOW_STRING + "\n",
 				u4.getOffset(), "Attribute length", u4.getValue(), u4.getSymbolic());
 	}
 
-	public void constantPool(List<Parser.ConstantPoolEntry> constants) {
+	public void constantPool(List<ConstantPoolEntry> constants) {
 		if (!PRINT_CONSTANT_POOL) {
 			return;
 		}
 		for (int i = 0; i < constants.size(); i++) {
-			Parser.ConstantPoolEntry entry = constants.get(i);
+			ConstantPoolEntry entry = constants.get(i);
 			entry.print(constantPrinter);
 			constantPrinter.print();
 			if (entry.getConstantTag().isTwoEntriesTakeUp()) {
@@ -42,11 +46,11 @@ public class Print {
 		}
 	}
 
-	void accessFlags(Parser.U2 u2, Type type) {
+	void accessFlags(U2 u2, Type type) {
 		accessFlags(u2, type, "Access flags");
 	}
 
-	void accessFlags(Parser.U2 u2, Type type, String title) {
+	void accessFlags(U2 u2, Type type, String title) {
 		Map<Integer, String> flagsMap = switch (type) {
 			case CLASS -> Map.ofEntries(
 					Map.entry(0x0001, "ACC_PUBLIC"),     //   Declared public; may be accessed from outside its package.
@@ -120,7 +124,7 @@ public class Print {
 		private String formatedString;
 		private boolean printGeneral = true;
 
-		void format(Parser.ConstantPoolEntry cpe) {
+		void format(ConstantPoolEntry cpe) {
 			if (printGeneral) {
 				String cpName = cpe.getConstantTag().name().replaceFirst("^CONSTANT_", "");
 				formatedString = String.format("%04X %4X %19s", cpe.getOffset(), cpe.getIdx(), cpName);
@@ -128,56 +132,56 @@ public class Print {
 			}
 		}
 
-		void format(Parser.ConstantPoolUtf8 cpe) {
+		void format(ConstantPoolUtf8 cpe) {
 			formatedString += " " + cpe.getUTF8();
 		}
 
-		void format(Parser.ConstantPoolInteger cpe) {
+		void format(ConstantPoolInteger cpe) {
 			formatedString += " " + cpe.getValue();
 		}
 
-		void format(Parser.ConstantPoolFloat cpe) {
+		void format(ConstantPoolFloat cpe) {
 			formatedString += " " + cpe.getValue();
 		}
 
-		void format(Parser.ConstantPoolLong cpe) {
+		void format(ConstantPoolLong cpe) {
 			formatedString += " " + cpe.getValue();
 		}
 
-		void format(Parser.ConstantPoolDouble cpe) {
+		void format(ConstantPoolDouble cpe) {
 			formatedString += " " + cpe.getValue();
 		}
 
-		void format(Parser.ConstantPoolString cpe) {
-			formatedString += String.format(" (%02X)", cpe.getStringIndex());
-			format((Parser.ConstantPoolUtf8) cpe.constants.get(cpe.getStringIndex() - 1));
+		void format(ConstantPoolString cpe) {
+			formatedString += String.format(HEX_2, cpe.getStringIndex());
+			cpe.constants.get(cpe.getStringIndex() - 1).print(this);
 		}
 
-		void format(Parser.ConstantPoolMethodRef cpe) {
-			formatedString += String.format(" (%02X)", cpe.getClassIndex());
-			format((Parser.ConstantPoolString) cpe.constants.get(cpe.getClassIndex() - 1));
-			formatedString += String.format(" (%02X)", cpe.getNameAndTypeIndex());
-			format((Parser.ConstantPoolNameAndType) cpe.constants.get(cpe.getNameAndTypeIndex() - 1));
+		void format(ConstantPoolMethodRef cpe) {
+			formatedString += String.format(HEX_2, cpe.getClassIndex());
+			cpe.constants.get(cpe.getClassIndex() - 1).print(this);
+			formatedString += String.format(HEX_2, cpe.getNameAndTypeIndex());
+			cpe.constants.get(cpe.getNameAndTypeIndex() - 1).print(this);
 		}
 
-		void format(Parser.ConstantPoolNameAndType cpe) {
-			formatedString += String.format(" (%02X)", cpe.getNameIndex());
-			format((Parser.ConstantPoolUtf8) cpe.constants.get(cpe.getNameIndex() - 1));
-			formatedString += String.format(" (%02X)", cpe.getDescriptorIndex());
-			format((Parser.ConstantPoolUtf8) cpe.constants.get(cpe.getDescriptorIndex() - 1));
+		void format(ConstantPoolNameAndType cpe) {
+			formatedString += String.format(HEX_2, cpe.getNameIndex());
+			cpe.constants.get(cpe.getNameIndex() - 1).print(this);
+			formatedString += String.format(HEX_2, cpe.getDescriptorIndex());
+			cpe.constants.get(cpe.getDescriptorIndex() - 1).print(this);
 		}
 
-		void format(Parser.ConstantPoolDynamic cpe) {
-			formatedString += String.format(" (%02X)", cpe.getBootstrapMethodAttrIndex());
-			formatedString += String.format(" (%02X)", cpe.getNameAndTypeIndex());
-			format((Parser.ConstantPoolNameAndType) cpe.constants.get(cpe.getNameAndTypeIndex() - 1));
+		void format(ConstantPoolDynamic cpe) {
+			formatedString += String.format(HEX_2, cpe.getBootstrapMethodAttrIndex());
+			formatedString += String.format(HEX_2, cpe.getNameAndTypeIndex());
+			cpe.constants.get(cpe.getNameAndTypeIndex() - 1).print(this);
 		}
 
-		void format(Parser.ConstantPoolMethodHandle cpe) {
-			formatedString += " " + Parser.ConstantPoolMethodHandle.MHRef.values()[cpe.getReferenceKind()].name()
+		void format(ConstantPoolMethodHandle cpe) {
+			formatedString += " " + ConstantPoolMethodHandle.MHRef.values()[cpe.getReferenceKind()].name()
 					.replaceFirst("REF_", "");
-			formatedString += String.format(" (%02X)", cpe.getReferenceIndex());
-			format((Parser.ConstantPoolMethodRef) cpe.constants.get(cpe.getReferenceIndex() - 1));
+			formatedString += String.format(HEX_2, cpe.getReferenceIndex());
+			cpe.constants.get(cpe.getReferenceIndex() - 1).print(this);
 		}
 
 		void print() {
@@ -192,49 +196,49 @@ public class Print {
 			u4(attr.getLength());
 		}
 
-		void print(Attribute.ConstantValueAttribute attr) {
+		void print(ConstantValueAttribute attr) {
 			u2(attr.getConstantValueIndex(), "Attribute constant value index");
 		}
 
-		void print(Attribute.SourceFileAttribute attr) {
+		void print(SourceFileAttribute attr) {
 			u2(attr.getSourceFileIndex(), "Attribute source file index");
 		}
 
-		void print(Attribute.NestMembersAttribute attr) {
-			Parser.U2[] classes = attr.getClasses();
+		void print(NestMembersAttribute attr) {
+			U2[] classes = attr.getClasses();
 			u2(attr.getNumberOfClasses(), "Attribute number of classes", "", true);
 			for (int i = 0; i < classes.length; i++) {
 				u2(classes[i], String.format("%4X ", i) + "Nest");
 			}
 		}
 
-		void print(Attribute.InnerClassesAttribute attr) {
+		void print(InnerClassesAttribute attr) {
 			u2(attr.getNumberOf(), "Attribute number of inner classes", "", true);
-			for (Attribute.InnerClass innerClass : attr.getInnerClasses()) {
+			for (InnerClass innerClass : attr.getInnerClasses()) {
 				innerClass.print(this);
 			}
 		}
 
-		void print(Attribute.SignatureAttribute attr) {
+		void print(SignatureAttribute attr) {
 			u2(attr.getSignatureIndex(), "Attribute signature index");
 		}
 
-		void print(Attribute.BootstrapMethodsAttribute attr) {
+		void print(BootstrapMethodsAttribute attr) {
 			u2(attr.getNumberOf(), "Attribute number of bootstrap methods", "", true);
-			for (Attribute.BootstrapMethod bootstrapMethod : attr.getBootstrapMethods()) {
+			for (BootstrapMethod bootstrapMethod : attr.getBootstrapMethods()) {
 				bootstrapMethod.print(this);
 			}
 		}
 
-		void print(Attribute.BootstrapMethod bootstrapMethod) {
+		void print(BootstrapMethod bootstrapMethod) {
 			var formatedIndex = String.format("%4X ", bootstrapMethod.index());
 			u2(bootstrapMethod.bootstrapMethodRef(), formatedIndex + "Bootstrap method");
-			for (Parser.U2 u2 : bootstrapMethod.bootstrapArguments()) {
+			for (U2 u2 : bootstrapMethod.bootstrapArguments()) {
 				u2(u2, SP_5 + "Argument");
 			}
 		}
 
-		public void print(Attribute.InnerClass innerClass) {
+		public void print(InnerClass innerClass) {
 			u2(innerClass.innerClassInfoIndex(), SP_5 + "Inner class");
 			u2(innerClass.outerClassInfoIndex(), SP_5 + "Outer class");
 			u2(innerClass.innerNameIndex(), SP_5 + "Inner name index");
