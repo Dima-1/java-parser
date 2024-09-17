@@ -13,23 +13,40 @@ public class Print {
 	public static final String YELLOW_STRING = ConsoleColors.YELLOW + "%s" + ConsoleColors.RESET;
 	public static final String SP_5 = " ".repeat(5);
 	public static final String HEX_2 = " (%02X)";
-	AttributePrinter attributePrinter = new AttributePrinter();
-	ConstantPrinter constantPrinter = new ConstantPrinter();
 
+	private final AttributePrinter attributePrinter = new AttributePrinter();
+	private final ConstantPrinter constantPrinter = new ConstantPrinter();
+	private String OFFSET_FORMAT = "%04X ";
+
+	public void setLength(long length) {
+		OFFSET_FORMAT = "%0" + Long.toHexString(length).length() + "X ";
+	}
 
 	void u2(U2 u2, String title) {
 		u2(u2, title, "", false);
 	}
 
 	void u2(U2 u2, String title, String titleColor, boolean addDecimal) {
-		String formatedValue = String.format(" %02X" + (addDecimal ? "(%02d)" : ""), u2.getValue(), u2.getValue());
-		System.out.printf("%04X " + titleColor + "%s" + ConsoleColors.RESET + " %s" + YELLOW_STRING + "\n",
-				u2.getOffset(), title, formatedValue, u2.getSymbolic());
+		String hexValue = String.format("%04X", u2.getValue());
+		StringBuilder splitHexValue = getSplitHexValue(hexValue);
+		String decimalValue = String.format(addDecimal ? "(%02d)" : "", u2.getValue());
+		System.out.printf(OFFSET_FORMAT + "%s " + titleColor + "%s" + ConsoleColors.RESET + " %s" + YELLOW_STRING + "\n",
+				u2.getOffset(), splitHexValue, title, decimalValue, u2.getSymbolic());
 	}
 
 	void u4(U4 u4) {
-		System.out.printf("%04X %s %02X" + YELLOW_STRING + "\n",
-				u4.getOffset(), "Attribute length", u4.getValue(), u4.getSymbolic());
+		String hexValue = String.format("%08X", u4.getValue());
+		StringBuilder splitHexValue = getSplitHexValue(hexValue);
+		System.out.printf(OFFSET_FORMAT + "%s %s" + YELLOW_STRING + "\n",
+				u4.getOffset(), splitHexValue, "Attribute length", u4.getSymbolic());
+	}
+
+	private static StringBuilder getSplitHexValue(String hexValue) {
+		StringBuilder splitHexValue = new StringBuilder(hexValue);
+		for (var i = 2; i < splitHexValue.length(); i += 3) {
+			splitHexValue.insert(i, " ");
+		}
+		return splitHexValue;
 	}
 
 	public void constantPool(List<ConstantPoolEntry> constants) {
@@ -94,8 +111,9 @@ public class Print {
 			default -> new HashMap<>();
 		};
 
-		String string = getAccessFlags(u2.getValue(), flagsMap);
-		System.out.printf("%04X %s 0x%02X" + YELLOW_STRING + "\n", u2.getOffset(), title, u2.getValue(), string);
+		String flags = getAccessFlags(u2.getValue(), flagsMap);
+		System.out.printf(OFFSET_FORMAT + "%s %s" + YELLOW_STRING + "\n", u2.getOffset(),
+				getSplitHexValue(String.format("%04X", u2.getValue())), title, flags);
 	}
 
 	private String getAccessFlags(int value, Map<Integer, String> flagsMap) {
@@ -127,7 +145,7 @@ public class Print {
 		void format(ConstantPoolEntry cpe) {
 			if (printGeneral) {
 				String cpName = cpe.getConstantTag().name().replaceFirst("^CONSTANT_", "");
-				formatedString = String.format("%04X %4X %19s", cpe.getOffset(), cpe.getIdx(), cpName);
+				formatedString = String.format(OFFSET_FORMAT + " %4X %19s", cpe.getOffset(), cpe.getIdx(), cpName);
 				printGeneral = false;
 			}
 		}
@@ -241,6 +259,7 @@ public class Print {
 		void print(BootstrapMethod bootstrapMethod) {
 			var formatedIndex = String.format("%4X ", bootstrapMethod.index());
 			u2(bootstrapMethod.bootstrapMethodRef(), formatedIndex + "Bootstrap method");
+			u2(bootstrapMethod.numberOf(), SP_5 + "Number of arguments", "", true);
 			for (U2 u2 : bootstrapMethod.bootstrapArguments()) {
 				u2(u2, SP_5 + "Argument");
 			}

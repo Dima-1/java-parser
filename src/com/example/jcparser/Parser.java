@@ -32,6 +32,7 @@ public class Parser {
 		File file = new File(fileName);
 		try (FileInputStream fis = new FileInputStream(file);
 		     DataInputStream dis = new DataInputStream(fis)) {
+			print.setLength(file.length());
 			count = Magic.BYTES;
 			Magic.getMagic(dis);
 			print.u2(readU2(dis), "Minor version", ConsoleColors.BLUE, true);
@@ -314,7 +315,7 @@ public class Parser {
 		int value = dis.readUnsignedShort();
 		if (addSymbolicName && !constantPool.isEmpty()) {
 			if (value > 0) {
-				symbolic = " " + constantPool.get(value - 1).getAdditional();
+				symbolic += constantPool.get(value - 1).getAdditional();
 			} else {
 				symbolic = "java/lang/Object";
 			}
@@ -338,7 +339,7 @@ public class Parser {
 		for (int i = 0; i < numberOf.getValue(); i++) {
 			bootstrapArguments[i] = readU2(dis, true);
 		}
-		return new Attribute.BootstrapMethod(index, bootstrapMethodRef, bootstrapArguments);
+		return new Attribute.BootstrapMethod(index, bootstrapMethodRef, numberOf, bootstrapArguments);
 	}
 
 	public Attribute.InnerClass getInnerClass(DataInputStream dis) throws IOException {
@@ -400,6 +401,10 @@ public class Parser {
 		@Override
 		public void print(Print.ConstantPrinter printer) {
 			printer.format(this);
+		}
+
+		protected String toHex(int i) {
+			return Integer.toHexString(i).toUpperCase();
 		}
 	}
 
@@ -534,7 +539,7 @@ public class Parser {
 
 		@Override
 		String getAdditional() {
-			return "(" + stringIndex + ") " + getString();
+			return "(" + toHex(stringIndex) + ") " + getString();
 		}
 
 		public int getStringIndex() {
@@ -565,8 +570,8 @@ public class Parser {
 
 		@Override
 		String getAdditional() {
-			return "(" + classIndex + ") " + getClassIndexString()
-					+ " (" + nameAndTypeIndex + ") " + getNameAndTypeIndexString();
+			return "(" + toHex(classIndex) + ") " + getClassIndexString()
+					+ " (" + toHex(nameAndTypeIndex) + ") " + getNameAndTypeIndexString();
 		}
 
 		public int getClassIndex() {
@@ -605,8 +610,8 @@ public class Parser {
 
 		@Override
 		String getAdditional() {
-			return "(" + nameIndex + ") " + getNameIndexString()
-					+ " (" + descriptorIndex + ") " + getDescriptorIndexString();
+			return "(" + toHex(nameIndex) + ") " + getNameIndexString()
+					+ " (" + toHex(descriptorIndex) + ") " + getDescriptorIndexString();
 		}
 
 		public int getNameIndex() {
@@ -645,8 +650,8 @@ public class Parser {
 
 		@Override
 		String getAdditional() {
-			return "(" + bootstrapMethodAttrIndex + ") "
-					+ " (" + nameAndTypeIndex + ") " + constants.get(nameAndTypeIndex - 1).getAdditional();
+			return "(" + toHex(bootstrapMethodAttrIndex) + ") "
+					+ " (" + toHex(nameAndTypeIndex) + ") " + constants.get(nameAndTypeIndex - 1).getAdditional();
 		}
 
 		public int getBootstrapMethodAttrIndex() {
@@ -691,7 +696,7 @@ public class Parser {
 		@Override
 		String getAdditional() {
 			return MHRef.values()[referenceKind].name().replaceFirst("REF_", "")
-					+ " (" + referenceIndex + ")" + constants.get(referenceIndex - 1).getAdditional();
+					+ " (" + toHex(referenceIndex) + ")" + constants.get(referenceIndex - 1).getAdditional();
 		}
 
 		public int getReferenceKind() {

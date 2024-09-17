@@ -214,7 +214,7 @@ public class Attribute implements Print.Printable<Print.AttributePrinter> {
 		}
 	}
 
-	public record BootstrapMethod(int index, Parser.U2 bootstrapMethodRef,
+	public record BootstrapMethod(int index, Parser.U2 bootstrapMethodRef, Parser.U2 numberOf,
 	                              Parser.U2[] bootstrapArguments) implements Print.Printable<Print.AttributePrinter> {
 
 		@Override
