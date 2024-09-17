@@ -200,6 +200,14 @@ public class Print {
 			u2(attr.getConstantValueIndex(), "Attribute constant value index");
 		}
 
+		void print(ExceptionsAttribute attr) {
+			U2[] exceptions = attr.getExceptions();
+			u2(attr.getNumberOf(), "Attribute number of exceptions", "", true);
+			for (int i = 0; i < exceptions.length; i++) {
+				u2(exceptions[i], String.format("%4X ", i) + "Exception");
+			}
+		}
+
 		void print(SourceFileAttribute attr) {
 			u2(attr.getSourceFileIndex(), "Attribute source file index");
 		}

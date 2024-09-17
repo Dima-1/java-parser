@@ -252,6 +252,14 @@ public class Parser {
 				final U2 aShort = readU2(dis, true);
 				yield new Attribute.ConstantValueAttribute(constantPool, attributeNameIndex, attributeLength, aShort);
 			}
+			case "Exceptions" -> {
+				final U2 numberOf = readU2(dis);
+				U2[] exceptions = new U2[numberOf.getValue()];
+				for (int i = 0; i < numberOf.getValue(); i++) {
+					exceptions[i] = readU2(dis, true);
+				}
+				yield new Attribute.ExceptionsAttribute(constantPool, attributeNameIndex, attributeLength, numberOf, exceptions);
+			}
 			case "SourceFile" -> {
 				final U2 aShort = readU2(dis, true);
 				yield new Attribute.SourceFileAttribute(constantPool, attributeNameIndex, attributeLength, aShort);

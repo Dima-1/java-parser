@@ -2,6 +2,8 @@ package com.example.jcparser;
 
 import java.util.List;
 
+import static com.example.jcparser.Parser.ConstantTag.CONSTANT_Class;
+
 public class Attribute implements Print.Printable<Print.AttributePrinter> {
 	private final Parser.U2 nameIndex;
 	private final String name;
@@ -63,6 +65,38 @@ public class Attribute implements Print.Printable<Print.AttributePrinter> {
 
 		public Parser.U2 getConstantValueIndex() {
 			return getConstantPoolIndex();
+		}
+	}
+
+	public static class ExceptionsAttribute extends Attribute {
+		private final Parser.U2 numberOf;
+		private final Parser.U2[] exceptions;
+
+		public ExceptionsAttribute(List<Parser.ConstantPoolEntry> constants, Parser.U2 nameIndex, Parser.U4 length,
+		                           Parser.U2 numberOf, Parser.U2[] exceptions) {
+			super(constants, nameIndex, length);
+			this.numberOf = numberOf;
+			this.exceptions = exceptions;
+			for (Parser.U2 exception : exceptions) {
+				Parser.ConstantPoolEntry entry = constants.get(exception.getValue() - 1);
+				if (entry.getConstantTag() != CONSTANT_Class) {
+					throw new RuntimeException(String.format("%04X ExceptionValue = %s", exception.getOffset(), entry.getConstantTag()));
+				}
+			}
+		}
+
+		@Override
+		public void print(Print.AttributePrinter printer) {
+			super.print(printer);
+			printer.print(this);
+		}
+
+		public Parser.U2 getNumberOf() {
+			return numberOf;
+		}
+
+		public Parser.U2[] getExceptions() {
+			return exceptions;
 		}
 	}
 
