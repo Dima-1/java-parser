@@ -1,6 +1,7 @@
 package com.example.jcparser;
 
 import java.util.List;
+import java.util.Map;
 
 import static com.example.jcparser.Parser.ConstantTag.CONSTANT_Class;
 
@@ -65,6 +66,52 @@ public class Attribute implements Print.Printable<Print.AttributePrinter> {
 
 		public Parser.U2 getConstantValueIndex() {
 			return getConstantPoolIndex();
+		}
+	}
+
+	public static class CodeAttribute extends Attribute {
+		private final Parser.U2 maxStack;
+		private final Parser.U2 maxLocals;
+		private final Parser.U4 codeLength;
+		private final Parser.U2 exceptionTableLength;
+		private final Exception[] exceptions;
+
+		public CodeAttribute(List<Parser.ConstantPoolEntry> constants, Parser.U2 nameIndex,
+		                     Parser.U4 length, Parser.U2 maxStack, Parser.U2 maxLocals,
+		                     Parser.U4 codeLength, Parser.U2 exceptionTableLength, Exception[] exceptions, Parser.U2 numberOf,
+		                     Map<String, Attribute> attributes) {
+			super(constants, nameIndex, length);
+			this.maxStack = maxStack;
+			this.maxLocals = maxLocals;
+			this.codeLength = codeLength;
+			this.exceptionTableLength = exceptionTableLength;
+			this.exceptions = exceptions;
+		}
+
+		@Override
+		public void print(Print.AttributePrinter printer) {
+			super.print(printer);
+			printer.print(this);
+		}
+
+		public Parser.U2 getMaxStack() {
+			return maxStack;
+		}
+
+		public Parser.U2 getMaxLocals() {
+			return maxLocals;
+		}
+
+		public Parser.U4 getCodeLength() {
+			return codeLength;
+		}
+
+		public Parser.U2 getExceptionTableLength() {
+			return exceptionTableLength;
+		}
+
+		public Exception[] getExceptions() {
+			return exceptions;
 		}
 	}
 
@@ -225,6 +272,15 @@ public class Attribute implements Print.Printable<Print.AttributePrinter> {
 
 	public record InnerClass(Parser.U2 innerClassInfoIndex, Parser.U2 outerClassInfoIndex, Parser.U2 innerNameIndex,
 	                         Parser.U2 innerClassAccessFlags) implements Print.Printable<Print.AttributePrinter> {
+
+		@Override
+		public void print(Print.AttributePrinter printer) {
+			printer.print(this);
+		}
+	}
+
+	public record Exception(Parser.U2 startPc, Parser.U2 endPc, Parser.U2 handlerPc,
+	                        Parser.U2 catchType) implements Print.Printable<Print.AttributePrinter> {
 
 		@Override
 		public void print(Print.AttributePrinter printer) {

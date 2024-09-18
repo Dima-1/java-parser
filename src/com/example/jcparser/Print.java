@@ -34,11 +34,11 @@ public class Print {
 				u2.getOffset(), splitHexValue, title, decimalValue, u2.getSymbolic());
 	}
 
-	void u4(U4 u4) {
+	void u4(U4 u4, String title) {
 		String hexValue = String.format("%08X", u4.getValue());
 		StringBuilder splitHexValue = getSplitHexValue(hexValue);
 		System.out.printf(OFFSET_FORMAT + "%s %s" + YELLOW_STRING + "\n",
-				u4.getOffset(), splitHexValue, "Attribute length", u4.getSymbolic());
+				u4.getOffset(), splitHexValue, title, u4.getSymbolic());
 	}
 
 	private static StringBuilder getSplitHexValue(String hexValue) {
@@ -211,11 +211,28 @@ public class Print {
 	public class AttributePrinter {
 		void print(Attribute attr) {
 			u2(attr.getNameIndex(), "Attribute name index");
-			u4(attr.getLength());
+			u4(attr.getLength(), "Attribute length");
 		}
 
 		void print(ConstantValueAttribute attr) {
 			u2(attr.getConstantValueIndex(), "Attribute constant value index");
+		}
+
+		void print(CodeAttribute attr) {
+			u2(attr.getMaxStack(), "Attribute max stack");
+			u2(attr.getMaxLocals(), "Attribute max local");
+			u4(attr.getCodeLength(), "Code length");
+			u2(attr.getExceptionTableLength(), "Exception table length");
+			for (Attribute.Exception exception : attr.getExceptions()) {
+				exception.print(this);
+			}
+		}
+
+		void print(Attribute.Exception attr) {
+			u2(attr.startPc(), "Attribute exception start pc");
+			u2(attr.endPc(), "Attribute exception end pc");
+			u2(attr.handlerPc(), "Attribute handler start pc");
+			u2(attr.catchType(), "Exception handler class");
 		}
 
 		void print(ExceptionsAttribute attr) {

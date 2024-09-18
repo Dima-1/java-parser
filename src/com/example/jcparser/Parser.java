@@ -253,6 +253,24 @@ public class Parser {
 				final U2 aShort = readU2(dis, true);
 				yield new Attribute.ConstantValueAttribute(constantPool, attributeNameIndex, attributeLength, aShort);
 			}
+			case "Code" -> {
+				final U2 maxStack = readU2(dis);
+				final U2 maxLocals = readU2(dis);
+				final U4 codeLength = readU4(dis);
+				for (int j = 0; j < codeLength.getValue(); j++) {
+					dis.readByte();
+					count++;
+				}
+				final U2 exceptionTableLength = readU2(dis);
+				Attribute.Exception[] exceptions = new Attribute.Exception[exceptionTableLength.getValue()];
+				for (int i = 0; i < exceptionTableLength.getValue(); i++) {
+					exceptions[i] = readException(dis);
+				}
+				final U2 numberOf = readU2(dis);
+				Map<String, Attribute> attributes = new LinkedHashMap<>(readAttributes(dis, numberOf.value));
+				yield new Attribute.CodeAttribute(constantPool, attributeNameIndex, attributeLength, maxStack, maxLocals,
+						codeLength, exceptionTableLength, exceptions, numberOf, attributes);
+			}
 			case "Exceptions" -> {
 				final U2 numberOf = readU2(dis);
 				U2[] exceptions = new U2[numberOf.getValue()];
@@ -351,6 +369,14 @@ public class Parser {
 		final U2 innerClassAccessFlags = readU2(dis);
 		innerClassAccessFlags.clearZeroSymbolic();
 		return new Attribute.InnerClass(innerClassInfoIndex, outerClassInfoIndex, innerNameIndex, innerClassAccessFlags);
+	}
+
+	public Attribute.Exception readException(DataInputStream dis) throws IOException {
+		final U2 startPc = readU2(dis);
+		final U2 endPc = readU2(dis);
+		final U2 handlerPc = readU2(dis);
+		final U2 catchType = readU2(dis, true);
+		return new Attribute.Exception(startPc, endPc, handlerPc, catchType);
 	}
 
 	private static final class Magic {
