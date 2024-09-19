@@ -151,7 +151,7 @@ public class Print {
 		}
 
 		void format(ConstantPoolUtf8 cpe) {
-			formatedString += " " + cpe.getUTF8();
+			formatedString += " " + String.format(YELLOW_STRING, cpe.getUTF8());
 		}
 
 		void format(ConstantPoolInteger cpe) {
