@@ -75,6 +75,8 @@ public class Attribute implements Print.Printable<Print.AttributePrinter> {
 		private final Parser.U4 codeLength;
 		private final Parser.U2 exceptionTableLength;
 		private final Exception[] exceptions;
+		private final Parser.U2 numberOf;
+		private final Map<String, Attribute> attributes;
 
 		public CodeAttribute(List<Parser.ConstantPoolEntry> constants, Parser.U2 nameIndex,
 		                     Parser.U4 length, Parser.U2 maxStack, Parser.U2 maxLocals,
@@ -86,6 +88,8 @@ public class Attribute implements Print.Printable<Print.AttributePrinter> {
 			this.codeLength = codeLength;
 			this.exceptionTableLength = exceptionTableLength;
 			this.exceptions = exceptions;
+			this.numberOf = numberOf;
+			this.attributes = attributes;
 		}
 
 		@Override
@@ -112,6 +116,14 @@ public class Attribute implements Print.Printable<Print.AttributePrinter> {
 
 		public Exception[] getExceptions() {
 			return exceptions;
+		}
+
+		public Parser.U2 getNumberOf() {
+			return numberOf;
+		}
+
+		public Map<String, Attribute> getAttributes() {
+			return attributes;
 		}
 	}
 

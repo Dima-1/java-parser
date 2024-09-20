@@ -226,6 +226,8 @@ public class Print {
 			for (Attribute.Exception exception : attr.getExceptions()) {
 				exception.print(this);
 			}
+			u2(attr.getNumberOf(), "Attribute table length");
+			Print.this.attributes(attr.getAttributes());
 		}
 
 		void print(Attribute.Exception attr) {
