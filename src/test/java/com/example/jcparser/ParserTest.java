@@ -1,19 +1,19 @@
 package com.example.jcparser;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 import java.io.*;
 import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ParserTest {
 	private final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
 	private final ByteArrayOutputStream errContent = new ByteArrayOutputStream();
 	private final PrintStream originalOut = System.out;
 	private final PrintStream originalErr = System.err;
+	private String[] lines;
 
 	@BeforeEach
 	public void setUpStreams() {
@@ -29,18 +29,20 @@ class ParserTest {
 
 	private final String[] args = new String[]{System.getenv("FILE")};
 
+	@BeforeAll
+	public void runParsing() {
+		System.setOut(new PrintStream(outContent));
+		System.setErr(new PrintStream(errContent));
+		Parser.main(args);
+		lines = outContent.toString().split("\n");
+	}
+
 	@Test
 	void whole_file_parsed() throws IOException {
-
-		Parser.main(args);
-
 		File file = new File(args[0]);
-		String[] lines = outContent.toString().split("\n");
 		String[] lastLine = lines[lines.length - 1].split(" ");
 		String lastOffset = lastLine[0];
-		String[] lastBytes = Arrays.stream(lastLine, 1, lastLine.length)
-				.takeWhile(aByte -> aByte.length() == 2 && aByte.matches("-?[0-9A-F]{2}"))
-				.toArray(String[]::new);
+		String[] lastBytes = getBytes(lastLine);
 
 		int length = lastBytes.length;
 		long offset = file.length() - length;
@@ -58,5 +60,29 @@ class ParserTest {
 
 		assertEquals(expectedLastOffset, lastOffset);
 		assertArrayEquals(expectedLastBytes, lastBytes);
+	}
+
+	private static String[] getBytes(String[] line) {
+		return Arrays.stream(line, 1, line.length)
+				.takeWhile(aByte -> aByte.length() == 2 && aByte.matches("-?[0-9A-F]{2}"))
+				.toArray(String[]::new);
+	}
+
+	@Test
+	void check_every_byte_present() {
+		System.setOut(originalOut);
+		System.setErr(originalErr);
+		assertFalse(lines.length < 2, "Wrong file size < 2 lines");
+		String[] bytes = getBytes(lines[2].split(" "));
+		int constantCount = Integer.parseInt(bytes[0] + bytes[1], 16);
+		for (int i = 2 + constantCount; i < lines.length - 1; i++) {
+			String[] splitLine = lines[i].split(" ");
+			int offset = Integer.parseInt(splitLine[0], 16);
+			int next = Integer.parseInt(lines[i + 1].split(" ")[0], 16);
+			int bytesCount = getBytes(splitLine).length;
+			if (next - offset != bytesCount) {
+				System.out.printf("Incorrect number of bytes : %s\n", Arrays.toString(splitLine));
+			}
+		}
 	}
 }
