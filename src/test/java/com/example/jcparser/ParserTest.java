@@ -75,14 +75,17 @@ class ParserTest {
 		assertFalse(lines.length < 2, "Wrong file size < 2 lines");
 		String[] bytes = getBytes(lines[2].split(" "));
 		int constantCount = Integer.parseInt(bytes[0] + bytes[1], 16);
+		int errorCount = 0;
 		for (int i = 2 + constantCount; i < lines.length - 1; i++) {
 			String[] splitLine = lines[i].split(" ");
 			int offset = Integer.parseInt(splitLine[0], 16);
 			int next = Integer.parseInt(lines[i + 1].split(" ")[0], 16);
 			int bytesCount = getBytes(splitLine).length;
 			if (next - offset != bytesCount) {
+				errorCount++;
 				System.out.printf("Incorrect number of bytes : %s\n", Arrays.toString(splitLine));
 			}
 		}
+		System.out.println("Total errors: " + errorCount);
 	}
 }

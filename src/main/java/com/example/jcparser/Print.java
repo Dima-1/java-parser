@@ -1,10 +1,12 @@
 package com.example.jcparser;
 
+import com.example.jcparser.attribute.Attribute;
+import com.example.jcparser.attribute.AttributePrinter;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.example.jcparser.Attribute.*;
 import static com.example.jcparser.Parser.*;
 
 public class Print {
@@ -14,7 +16,7 @@ public class Print {
 	public static final String SP_5 = " ".repeat(5);
 	public static final String HEX_2 = " (%02X)";
 
-	private final AttributePrinter attributePrinter = new AttributePrinter();
+	private final AttributePrinter attributePrinter = new AttributePrinter(this);
 	private final ConstantPrinter constantPrinter = new ConstantPrinter();
 	private String OFFSET_FORMAT = "%04X ";
 
@@ -22,11 +24,11 @@ public class Print {
 		OFFSET_FORMAT = "%0" + Long.toHexString(length).length() + "X ";
 	}
 
-	void u2(U2 u2, String title) {
+	public void u2(U2 u2, String title) {
 		u2(u2, title, "", false);
 	}
 
-	void u2(U2 u2, String title, String titleColor, boolean addDecimal) {
+	public void u2(U2 u2, String title, String titleColor, boolean addDecimal) {
 		String hexValue = String.format("%04X", u2.getValue());
 		StringBuilder splitHexValue = getSplitHexValue(hexValue);
 		String decimalValue = String.format(addDecimal ? "(%02d)" : "", u2.getValue());
@@ -34,7 +36,7 @@ public class Print {
 				u2.getOffset(), splitHexValue, title, decimalValue, u2.getSymbolic());
 	}
 
-	void u4(U4 u4, String title) {
+	public void u4(U4 u4, String title) {
 		String hexValue = String.format("%08X", u4.getValue());
 		StringBuilder splitHexValue = getSplitHexValue(hexValue);
 		System.out.printf(OFFSET_FORMAT + "%s %s" + YELLOW_STRING + "\n",
@@ -63,11 +65,11 @@ public class Print {
 		}
 	}
 
-	void accessFlags(U2 u2, Type type) {
+	public void accessFlags(U2 u2, Type type) {
 		accessFlags(u2, type, "Access flags");
 	}
 
-	void accessFlags(U2 u2, Type type, String title) {
+	public void accessFlags(U2 u2, Type type, String title) {
 		Map<Integer, String> flagsMap = switch (type) {
 			case CLASS -> Map.ofEntries(
 					Map.entry(0x0001, "ACC_PUBLIC"),     //   Declared public; may be accessed from outside its package.
@@ -205,90 +207,6 @@ public class Print {
 		void print() {
 			System.out.println(formatedString);
 			printGeneral = true;
-		}
-	}
-
-	public class AttributePrinter {
-		void print(Attribute attr) {
-			u2(attr.getNameIndex(), "Attribute name index");
-			u4(attr.getLength(), "Attribute length");
-		}
-
-		void print(ConstantValueAttribute attr) {
-			u2(attr.getConstantValueIndex(), "Attribute constant value index");
-		}
-
-		void print(CodeAttribute attr) {
-			u2(attr.getMaxStack(), "Attribute max stack");
-			u2(attr.getMaxLocals(), "Attribute max local");
-			u4(attr.getCodeLength(), "Code length");
-			u2(attr.getExceptionTableLength(), "Exception table length");
-			for (Attribute.Exception exception : attr.getExceptions()) {
-				exception.print(this);
-			}
-			u2(attr.getNumberOf(), "Attribute table length");
-			Print.this.attributes(attr.getAttributes());
-		}
-
-		void print(Attribute.Exception attr) {
-			u2(attr.startPc(), "Attribute exception start pc");
-			u2(attr.endPc(), "Attribute exception end pc");
-			u2(attr.handlerPc(), "Attribute handler start pc");
-			u2(attr.catchType(), "Exception handler class");
-		}
-
-		void print(ExceptionsAttribute attr) {
-			U2[] exceptions = attr.getExceptions();
-			u2(attr.getNumberOf(), "Attribute number of exceptions", "", true);
-			for (int i = 0; i < exceptions.length; i++) {
-				u2(exceptions[i], String.format("%4X ", i) + "Exception");
-			}
-		}
-
-		void print(SourceFileAttribute attr) {
-			u2(attr.getSourceFileIndex(), "Attribute source file index");
-		}
-
-		void print(NestMembersAttribute attr) {
-			U2[] classes = attr.getClasses();
-			u2(attr.getNumberOfClasses(), "Attribute number of classes", "", true);
-			for (int i = 0; i < classes.length; i++) {
-				u2(classes[i], String.format("%4X ", i) + "Nest");
-			}
-		}
-
-		void print(InnerClassesAttribute attr) {
-			u2(attr.getNumberOf(), "Attribute number of inner classes", "", true);
-			for (InnerClass innerClass : attr.getInnerClasses()) {
-				innerClass.print(this);
-			}
-		}
-
-		void print(SignatureAttribute attr) {
-			u2(attr.getSignatureIndex(), "Attribute signature index");
-		}
-
-		void print(BootstrapMethodsAttribute attr) {
-			u2(attr.getNumberOf(), "Attribute number of bootstrap methods", "", true);
-			for (BootstrapMethod bootstrapMethod : attr.getBootstrapMethods()) {
-				bootstrapMethod.print(this);
-			}
-		}
-
-		void print(BootstrapMethod bootstrapMethod) {
-			var formatedIndex = String.format("%4X ", bootstrapMethod.index());
-			u2(bootstrapMethod.bootstrapMethodRef(), formatedIndex + "Bootstrap method");
-			u2(bootstrapMethod.numberOf(), SP_5 + "Number of arguments", "", true);
-			for (U2 u2 : bootstrapMethod.bootstrapArguments()) {
-				u2(u2, SP_5 + "Argument");
-			}
-		}
-
-		public void print(InnerClass innerClass) {
-			u2(innerClass.innerClassInfoIndex(), SP_5 + "Inner class");
-			u2(innerClass.outerClassInfoIndex(), SP_5 + "Outer class");
-			u2(innerClass.innerNameIndex(), SP_5 + "Inner name index");
-			accessFlags(innerClass.innerClassAccessFlags(), Type.CLASS, SP_5 + "Inner class access flags");
 		}
 	}
 }

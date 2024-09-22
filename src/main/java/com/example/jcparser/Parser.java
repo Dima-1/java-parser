@@ -1,9 +1,12 @@
 package com.example.jcparser;
 
+import com.example.jcparser.attribute.*;
 import org.apache.commons.text.StringEscapeUtils;
 
 import java.io.*;
 import java.util.*;
+
+import static java.util.Arrays.asList;
 
 /**
  * <a href="https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-4.html#jvms-4.1">4.1. The ClassFile Structure</a>
@@ -136,27 +139,28 @@ public class Parser {
 		CONSTANT_Package(20);            //20 53.0	9
 
 		private final int tag;
+		private static final List<ConstantTag> VALUES = asList(values());
 
 		ConstantTag(int tag) {
 			this.tag = tag;
 		}
 
-		boolean isTwoEntriesTakeUp() {
+		public boolean isConstantClass() {
+			return this == CONSTANT_Class;
+		}
+
+		public boolean isTwoEntriesTakeUp() {
 			return this == CONSTANT_Double | this == CONSTANT_Long;
 		}
 
-		boolean isConstantValueAttribute() {
+		public boolean isConstantValueAttribute() {
 			return this == CONSTANT_Integer | this == CONSTANT_Float | this == CONSTANT_Long
 					| this == CONSTANT_Double | this == CONSTANT_String;
 		}
 
-		static ConstantTag getConstant(int tag) {
-			for (ConstantTag constantTag : values()) {
-				if (constantTag.tag == tag) {
-					return constantTag;
-				}
-			}
-			throw new RuntimeException("Wrong constant tag : " + tag);
+		public static ConstantTag getConstant(int tag) {
+			return VALUES.stream().filter(v -> v.tag == tag).findFirst().orElseThrow(() ->
+					new IllegalArgumentException("Unknown constant tag: " + tag));
 		}
 	}
 
@@ -251,7 +255,7 @@ public class Parser {
 		return switch (name) {
 			case "ConstantValue" -> {
 				final U2 aShort = readU2(dis, true);
-				yield new Attribute.ConstantValueAttribute(constantPool, attributeNameIndex, attributeLength, aShort);
+				yield new ConstantValueAttribute(constantPool, attributeNameIndex, attributeLength, aShort);
 			}
 			case "Code" -> {
 				final U2 maxStack = readU2(dis);
@@ -262,13 +266,13 @@ public class Parser {
 					count++;
 				}
 				final U2 exceptionTableLength = readU2(dis);
-				Attribute.Exception[] exceptions = new Attribute.Exception[exceptionTableLength.getValue()];
+				ExceptionsAttribute.Exception[] exceptions = new ExceptionsAttribute.Exception[exceptionTableLength.getValue()];
 				for (int i = 0; i < exceptionTableLength.getValue(); i++) {
 					exceptions[i] = readException(dis);
 				}
 				final U2 numberOf = readU2(dis);
 				Map<String, Attribute> attributes = new LinkedHashMap<>(readAttributes(dis, numberOf.value));
-				yield new Attribute.CodeAttribute(constantPool, attributeNameIndex, attributeLength, maxStack, maxLocals,
+				yield new CodeAttribute(constantPool, attributeNameIndex, attributeLength, maxStack, maxLocals,
 						codeLength, exceptionTableLength, exceptions, numberOf, attributes);
 			}
 			case "Exceptions" -> {
@@ -277,32 +281,42 @@ public class Parser {
 				for (int i = 0; i < numberOf.getValue(); i++) {
 					exceptions[i] = readU2(dis, true);
 				}
-				yield new Attribute.ExceptionsAttribute(constantPool, attributeNameIndex, attributeLength, numberOf, exceptions);
+				yield new ExceptionsAttribute(constantPool, attributeNameIndex, attributeLength, numberOf, exceptions);
 			}
 			case "SourceFile" -> {
 				final U2 aShort = readU2(dis, true);
-				yield new Attribute.SourceFileAttribute(constantPool, attributeNameIndex, attributeLength, aShort);
+				yield new SourceFileAttribute(constantPool, attributeNameIndex, attributeLength, aShort);
 			}
+			case "LineNumberTable" -> {
+				final U2 numberOf = readU2(dis);
+				LineNumberTableAttribute.LineNumber[] lineNumberTable = new LineNumberTableAttribute.LineNumber[numberOf.getValue()];
+				for (int i = 0; i < numberOf.getValue(); i++) {
+					lineNumberTable[i] = getLineNumber(dis);
+				}
+				yield new LineNumberTableAttribute(constantPool, attributeNameIndex, attributeLength, numberOf,
+						lineNumberTable);
+			}
+
 			case "InnerClasses" -> {
 				final U2 numberOf = readU2(dis);
-				Attribute.InnerClass[] classes = new Attribute.InnerClass[numberOf.getValue()];
+				InnerClassesAttribute.InnerClass[] classes = new InnerClassesAttribute.InnerClass[numberOf.getValue()];
 				for (int i = 0; i < numberOf.getValue(); i++) {
 					classes[i] = getInnerClass(dis);
 				}
-				yield new Attribute.InnerClassesAttribute(constantPool, attributeNameIndex, attributeLength,
+				yield new InnerClassesAttribute(constantPool, attributeNameIndex, attributeLength,
 						numberOf, classes);
 			}
 			case "Signature" -> {
 				final U2 aShort = readU2(dis, true);
-				yield new Attribute.SignatureAttribute(constantPool, attributeNameIndex, attributeLength, aShort);
+				yield new SignatureAttribute(constantPool, attributeNameIndex, attributeLength, aShort);
 			}
 			case "BootstrapMethods" -> {
 				final U2 numberOf = readU2(dis);
-				Attribute.BootstrapMethod[] bootstrapMethods = new Attribute.BootstrapMethod[numberOf.getValue()];
+				BootstrapMethodsAttribute.BootstrapMethod[] bootstrapMethods = new BootstrapMethodsAttribute.BootstrapMethod[numberOf.getValue()];
 				for (int i = 0; i < numberOf.getValue(); i++) {
 					bootstrapMethods[i] = getBootstrapMethod(i, dis);
 				}
-				yield new Attribute.BootstrapMethodsAttribute(constantPool, attributeNameIndex, attributeLength,
+				yield new BootstrapMethodsAttribute(constantPool, attributeNameIndex, attributeLength,
 						numberOf, bootstrapMethods);
 			}
 			case "NestMembers" -> {
@@ -311,7 +325,7 @@ public class Parser {
 				for (int i = 0; i < numberOf.getValue(); i++) {
 					classes[i] = readU2(dis, true);
 				}
-				yield new Attribute.NestMembersAttribute(constantPool, attributeNameIndex, attributeLength,
+				yield new NestMembersAttribute(constantPool, attributeNameIndex, attributeLength,
 						numberOf, classes);
 			}
 			default -> {
@@ -350,17 +364,17 @@ public class Parser {
 		return u4;
 	}
 
-	public Attribute.BootstrapMethod getBootstrapMethod(int index, DataInputStream dis) throws IOException {
+	public BootstrapMethodsAttribute.BootstrapMethod getBootstrapMethod(int index, DataInputStream dis) throws IOException {
 		final U2 bootstrapMethodRef = readU2(dis, true);
 		final U2 numberOf = readU2(dis);
 		U2[] bootstrapArguments = new U2[numberOf.getValue()];
 		for (int i = 0; i < numberOf.getValue(); i++) {
 			bootstrapArguments[i] = readU2(dis, true);
 		}
-		return new Attribute.BootstrapMethod(index, bootstrapMethodRef, numberOf, bootstrapArguments);
+		return new BootstrapMethodsAttribute.BootstrapMethod(index, bootstrapMethodRef, numberOf, bootstrapArguments);
 	}
 
-	public Attribute.InnerClass getInnerClass(DataInputStream dis) throws IOException {
+	public InnerClassesAttribute.InnerClass getInnerClass(DataInputStream dis) throws IOException {
 		final U2 innerClassInfoIndex = readU2(dis, true);
 		final U2 outerClassInfoIndex = readU2(dis, true);
 		outerClassInfoIndex.clearZeroSymbolic();
@@ -368,15 +382,21 @@ public class Parser {
 		innerNameIndex.clearZeroSymbolic();
 		final U2 innerClassAccessFlags = readU2(dis);
 		innerClassAccessFlags.clearZeroSymbolic();
-		return new Attribute.InnerClass(innerClassInfoIndex, outerClassInfoIndex, innerNameIndex, innerClassAccessFlags);
+		return new InnerClassesAttribute.InnerClass(innerClassInfoIndex, outerClassInfoIndex, innerNameIndex, innerClassAccessFlags);
 	}
 
-	public Attribute.Exception readException(DataInputStream dis) throws IOException {
+	public LineNumberTableAttribute.LineNumber getLineNumber(DataInputStream dis) throws IOException {
+		final U2 startPC = readU2(dis);
+		final U2 lineNumber = readU2(dis);
+		return new LineNumberTableAttribute.LineNumber(startPC, lineNumber);
+	}
+
+	public ExceptionsAttribute.Exception readException(DataInputStream dis) throws IOException {
 		final U2 startPc = readU2(dis);
 		final U2 endPc = readU2(dis);
 		final U2 handlerPc = readU2(dis);
 		final U2 catchType = readU2(dis, true);
-		return new Attribute.Exception(startPc, endPc, handlerPc, catchType);
+		return new ExceptionsAttribute.Exception(startPc, endPc, handlerPc, catchType);
 	}
 
 	private static final class Magic {
@@ -408,7 +428,7 @@ public class Parser {
 			this.constantTag = constantTag;
 		}
 
-		String getAdditional() {
+		public String getAdditional() {
 			return "";
 		}
 
@@ -447,7 +467,7 @@ public class Parser {
 		}
 
 		@Override
-		String getAdditional() {
+		public String getAdditional() {
 			return UTF8;
 		}
 
@@ -467,7 +487,7 @@ public class Parser {
 		}
 
 		@Override
-		String getAdditional() {
+		public String getAdditional() {
 			return String.valueOf(value);
 		}
 
@@ -491,7 +511,7 @@ public class Parser {
 		}
 
 		@Override
-		String getAdditional() {
+		public String getAdditional() {
 			return String.valueOf(value);
 		}
 
@@ -515,7 +535,7 @@ public class Parser {
 		}
 
 		@Override
-		String getAdditional() {
+		public String getAdditional() {
 			return String.valueOf(value);
 		}
 
@@ -539,7 +559,7 @@ public class Parser {
 		}
 
 		@Override
-		String getAdditional() {
+		public String getAdditional() {
 			return String.valueOf(value);
 		}
 
@@ -564,7 +584,7 @@ public class Parser {
 		}
 
 		@Override
-		String getAdditional() {
+		public String getAdditional() {
 			return "(" + toHex(stringIndex) + ") " + getString();
 		}
 
@@ -595,7 +615,7 @@ public class Parser {
 		}
 
 		@Override
-		String getAdditional() {
+		public String getAdditional() {
 			return "(" + toHex(classIndex) + ") " + getClassIndexString()
 					+ " (" + toHex(nameAndTypeIndex) + ") " + getNameAndTypeIndexString();
 		}
@@ -635,7 +655,7 @@ public class Parser {
 		}
 
 		@Override
-		String getAdditional() {
+		public String getAdditional() {
 			return "(" + toHex(nameIndex) + ") " + getNameIndexString()
 					+ " (" + toHex(descriptorIndex) + ") " + getDescriptorIndexString();
 		}
@@ -675,7 +695,7 @@ public class Parser {
 		}
 
 		@Override
-		String getAdditional() {
+		public String getAdditional() {
 			return "(" + toHex(bootstrapMethodAttrIndex) + ") "
 					+ " (" + toHex(nameAndTypeIndex) + ") " + constants.get(nameAndTypeIndex - 1).getAdditional();
 		}
@@ -720,7 +740,7 @@ public class Parser {
 		}
 
 		@Override
-		String getAdditional() {
+		public String getAdditional() {
 			return MHRef.values()[referenceKind].name().replaceFirst("REF_", "")
 					+ " (" + toHex(referenceIndex) + ")" + constants.get(referenceIndex - 1).getAdditional();
 		}
