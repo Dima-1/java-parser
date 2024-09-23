@@ -63,6 +63,21 @@ public class AttributePrinter {
 		print.u2(lineNumber.lineNumber(), Print.SP_5 + "Line number", "", true);
 	}
 
+	void print(LocalVariableTableAttribute attr) {
+		print.u2(attr.getNumberOf(), "Attribute number of local variables", "", true);
+		for (LocalVariableTableAttribute.LocalVariable localVariable : attr.getLocalVariables()) {
+			localVariable.print(this);
+		}
+	}
+
+	void print(LocalVariableTableAttribute.LocalVariable localVariable) {
+		print.u2(localVariable.startPC(), Print.SP_5 + "Start PC");
+		print.u2(localVariable.length(), Print.SP_5 + "Length", "", true);
+		print.u2(localVariable.nameIndex(), Print.SP_5 + "Name index");
+		print.u2(localVariable.descriptorIndex(), Print.SP_5 + "Descriptor index");
+		print.u2(localVariable.index(), Print.SP_5 + "Index", "", true);
+	}
+
 	void print(NestMembersAttribute attr) {
 		Parser.U2[] classes = attr.getClasses();
 		print.u2(attr.getNumberOfClasses(), "Attribute number of classes", "", true);
@@ -104,8 +119,4 @@ public class AttributePrinter {
 			print.u2(u2, Print.SP_5 + "Argument");
 		}
 	}
-
-
-
-
 }
