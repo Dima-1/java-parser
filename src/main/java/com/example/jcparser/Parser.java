@@ -298,12 +298,22 @@ public class Parser {
 			}
 			case "LocalVariableTable" -> {
 				final U2 numberOf = readU2(dis);
-				LocalVariableTableAttribute.LocalVariable[] localVariables
-						= new LocalVariableTableAttribute.LocalVariable[numberOf.getValue()];
+				LocalVariableAttribute.LocalVariable[] localVariables
+						= new LocalVariableAttribute.LocalVariable[numberOf.getValue()];
 				for (int i = 0; i < numberOf.getValue(); i++) {
 					localVariables[i] = getLocalVariable(dis);
 				}
 				yield new LocalVariableTableAttribute(constantPool, attributeNameIndex, attributeLength, numberOf,
+						localVariables);
+			}
+			case "LocalVariableTypeTable" -> {
+				final U2 numberOf = readU2(dis);
+				LocalVariableAttribute.LocalVariable[] localVariables
+						= new LocalVariableAttribute.LocalVariable[numberOf.getValue()];
+				for (int i = 0; i < numberOf.getValue(); i++) {
+					localVariables[i] = getLocalVariable(dis);
+				}
+				yield new LocalVariableTypeTableAttribute(constantPool, attributeNameIndex, attributeLength, numberOf,
 						localVariables);
 			}
 			case "InnerClasses" -> {
@@ -400,13 +410,13 @@ public class Parser {
 		return new LineNumberTableAttribute.LineNumber(startPC, lineNumber);
 	}
 
-	private LocalVariableTableAttribute.LocalVariable getLocalVariable(DataInputStream dis) throws IOException {
+	private LocalVariableAttribute.LocalVariable getLocalVariable(DataInputStream dis) throws IOException {
 		final U2 startPC = readU2(dis);
 		final U2 length = readU2(dis);
 		final U2 nameIndex = readU2(dis, true);
 		final U2 descriptorIndex = readU2(dis, true);
 		final U2 index = readU2(dis);
-		return new LocalVariableTableAttribute.LocalVariable(startPC, length, nameIndex, descriptorIndex, index);
+		return new LocalVariableAttribute.LocalVariable(startPC, length, nameIndex, descriptorIndex, index);
 	}
 
 	public ExceptionsAttribute.Exception readException(DataInputStream dis) throws IOException {
