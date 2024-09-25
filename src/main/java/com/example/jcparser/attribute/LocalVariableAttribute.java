@@ -30,8 +30,8 @@ public class LocalVariableAttribute extends Attribute {
 		super.print(printer);
 	}
 
-	public record LocalVariable(U2 startPC, U2 length, U2 nameIndex, U2 descriptorIndex, U2 index)
-			implements Print.Printable<AttributePrinter> {
+	public record LocalVariable(U2 startPC, U2 length, U2 nameIndex, U2 descriptorIndex, U2 index,
+	                            String descriptorTitle) implements Print.Printable<AttributePrinter> {
 
 		@Override
 		public void print(AttributePrinter printer) {

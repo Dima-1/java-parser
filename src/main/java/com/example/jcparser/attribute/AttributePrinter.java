@@ -74,7 +74,7 @@ public class AttributePrinter {
 		print.u2(localVariable.startPC(), Print.SP_5 + "Start PC");
 		print.u2(localVariable.length(), Print.SP_5 + "Length", "", true);
 		print.u2(localVariable.nameIndex(), Print.SP_5 + "Name index");
-		print.u2(localVariable.descriptorIndex(), Print.SP_5 + "Descriptor index");
+		print.u2(localVariable.descriptorIndex(), Print.SP_5 + localVariable.descriptorTitle() + " index");
 		print.u2(localVariable.index(), Print.SP_5 + "Index", "", true);
 	}
 
@@ -83,14 +83,6 @@ public class AttributePrinter {
 		for (LocalVariableAttribute.LocalVariable localVariable : attr.getLocalVariables()) {
 			localVariable.print(this);
 		}
-	}
-
-	void print(LocalVariableTypeTableAttribute.LocalVariable localVariable) {
-		print.u2(localVariable.startPC(), Print.SP_5 + "Start PC");
-		print.u2(localVariable.length(), Print.SP_5 + "Length", "", true);
-		print.u2(localVariable.nameIndex(), Print.SP_5 + "Name index");
-		print.u2(localVariable.descriptorIndex(), Print.SP_5 + "Signature index");
-		print.u2(localVariable.index(), Print.SP_5 + "Index", "", true);
 	}
 
 	void print(NestMembersAttribute attr) {

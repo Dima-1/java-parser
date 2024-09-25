@@ -301,7 +301,7 @@ public class Parser {
 				LocalVariableAttribute.LocalVariable[] localVariables
 						= new LocalVariableAttribute.LocalVariable[numberOf.getValue()];
 				for (int i = 0; i < numberOf.getValue(); i++) {
-					localVariables[i] = getLocalVariable(dis);
+					localVariables[i] = getLocalVariable(dis, "Descriptor");
 				}
 				yield new LocalVariableTableAttribute(constantPool, attributeNameIndex, attributeLength, numberOf,
 						localVariables);
@@ -311,7 +311,7 @@ public class Parser {
 				LocalVariableAttribute.LocalVariable[] localVariables
 						= new LocalVariableAttribute.LocalVariable[numberOf.getValue()];
 				for (int i = 0; i < numberOf.getValue(); i++) {
-					localVariables[i] = getLocalVariable(dis);
+					localVariables[i] = getLocalVariable(dis, "Signature");
 				}
 				yield new LocalVariableTypeTableAttribute(constantPool, attributeNameIndex, attributeLength, numberOf,
 						localVariables);
@@ -410,13 +410,13 @@ public class Parser {
 		return new LineNumberTableAttribute.LineNumber(startPC, lineNumber);
 	}
 
-	private LocalVariableAttribute.LocalVariable getLocalVariable(DataInputStream dis) throws IOException {
+	private LocalVariableAttribute.LocalVariable getLocalVariable(DataInputStream dis, String descriptorTitle) throws IOException {
 		final U2 startPC = readU2(dis);
 		final U2 length = readU2(dis);
 		final U2 nameIndex = readU2(dis, true);
 		final U2 descriptorIndex = readU2(dis, true);
 		final U2 index = readU2(dis);
-		return new LocalVariableAttribute.LocalVariable(startPC, length, nameIndex, descriptorIndex, index);
+		return new LocalVariableAttribute.LocalVariable(startPC, length, nameIndex, descriptorIndex, index, descriptorTitle);
 	}
 
 	public ExceptionsAttribute.Exception readException(DataInputStream dis) throws IOException {
