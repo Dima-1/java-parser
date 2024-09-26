@@ -261,10 +261,12 @@ public class Parser {
 				final U2 maxStack = readU2(dis);
 				final U2 maxLocals = readU2(dis);
 				final U4 codeLength = readU4(dis);
-				for (int j = 0; j < codeLength.getValue(); j++) {
-					dis.readByte();
-					count++;
-				}
+				List<Opcode> opcodes = new ArrayList<>();
+				int startCodeCount = count;
+				int endCodeCount = startCodeCount + codeLength.getValue();
+				do {
+					opcodes.add(readOpcode(dis, startCodeCount));
+				} while (count < endCodeCount);
 				final U2 exceptionTableLength = readU2(dis);
 				ExceptionsAttribute.Exception[] exceptions = new ExceptionsAttribute.Exception[exceptionTableLength.getValue()];
 				for (int i = 0; i < exceptionTableLength.getValue(); i++) {
@@ -273,7 +275,7 @@ public class Parser {
 				final U2 numberOf = readU2(dis);
 				Map<String, Attribute> attributes = new LinkedHashMap<>(readAttributes(dis, numberOf.value));
 				yield new CodeAttribute(constantPool, attributeNameIndex, attributeLength, maxStack, maxLocals,
-						codeLength, exceptionTableLength, exceptions, numberOf, attributes);
+						codeLength, opcodes, exceptionTableLength, exceptions, numberOf, attributes);
 			}
 			case "Exceptions" -> {
 				final U2 numberOf = readU2(dis);
@@ -381,6 +383,51 @@ public class Parser {
 		U4 u4 = new U4(count, value, "");
 		count += Integer.BYTES;
 		return u4;
+	}
+
+	private Opcode readOpcode(DataInputStream dis, int startCodeCount) throws IOException {
+		int offset = count;
+		int value = dis.readUnsignedByte();
+		count += Byte.BYTES;
+		int size = Instruction.getArgumentSize(value);
+		List<Integer> arguments = new ArrayList<>();
+		if (value == 0xC4) {
+			int additionalOpcode = dis.readUnsignedByte();
+			count += Byte.BYTES;
+			size = additionalOpcode == 0x84 ? 5 : 3;
+			arguments.add(additionalOpcode);
+		}
+		if (value == 0xAA) {
+			size = (count - startCodeCount) % 4;
+			readNBytes(dis, arguments, size);
+			size += 3 * 4;
+			U4 defaultValue = readU4(dis);
+			arguments.addAll(Arrays.stream(defaultValue.getByteArray()).boxed().toList());
+			U4 low = readU4(dis);
+			arguments.addAll(Arrays.stream(low.getByteArray()).boxed().toList());
+			U4 high = readU4(dis);
+			arguments.addAll(Arrays.stream(high.getByteArray()).boxed().toList());
+			size += (high.getValue() - low.getValue() + 1) * 4;
+		}
+		if (value == 0xAB) {
+			size = (count - startCodeCount) % 4;
+			readNBytes(dis, arguments, size);
+			size += 2 * 4;
+			U4 defaultValue = readU4(dis);
+			arguments.addAll(Arrays.stream(defaultValue.getByteArray()).boxed().toList());
+			U4 nPairs = readU4(dis);
+			arguments.addAll(Arrays.stream(nPairs.getByteArray()).boxed().toList());
+			size += nPairs.getValue() * 8;
+		}
+		readNBytes(dis, arguments, size);
+		return new Opcode(offset, value, arguments.stream().mapToInt(i -> i).toArray());
+	}
+
+	private void readNBytes(DataInputStream dis, List<Integer> arguments, int n) throws IOException {
+		for (int i = arguments.size(); i < n; i++) {
+			arguments.add(dis.readUnsignedByte());
+			count += Byte.BYTES;
+		}
 	}
 
 	public BootstrapMethodsAttribute.BootstrapMethod getBootstrapMethod(int index, DataInputStream dis) throws IOException {
@@ -790,7 +837,7 @@ public class Parser {
 
 	public static class U2 {
 		private final int offset;
-		private final int value;
+		protected final int value;
 		private String symbolic;
 
 		public U2(int offset, int value, String symbolic) {
@@ -816,11 +863,19 @@ public class Parser {
 				symbolic = "";
 			}
 		}
+
+		public int[] getByteArray() {
+			return new int[]{(value >> 8) & 0xFF, value & 0xFF};
+		}
 	}
 
 	public static class U4 extends U2 {
 		public U4(int offset, int value, String symbolic) {
 			super(offset, value, symbolic);
+		}
+
+		public int[] getByteArray() {
+			return new int[]{(value >> 24) & 0xFF, (value >> 16) & 0xFF, (value >> 8) & 0xFF, value & 0xFF};
 		}
 	}
 }

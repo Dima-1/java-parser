@@ -24,6 +24,7 @@ public class AttributePrinter {
 		print.u2(attr.getMaxStack(), "Attribute max stack");
 		print.u2(attr.getMaxLocals(), "Attribute max local");
 		print.u4(attr.getCodeLength(), "Code length");
+		print.opcodes(attr.getOpcodes());
 		print.u2(attr.getExceptionTableLength(), "Exception table length");
 		for (ExceptionsAttribute.Exception exception : attr.getExceptions()) {
 			exception.print(this);

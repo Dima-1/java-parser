@@ -2,10 +2,13 @@ package com.example.jcparser;
 
 import com.example.jcparser.attribute.Attribute;
 import com.example.jcparser.attribute.AttributePrinter;
+import com.example.jcparser.attribute.Opcode;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.example.jcparser.Parser.*;
 
@@ -31,8 +34,8 @@ public class Print {
 	public void u2(U2 u2, String title, String titleColor, boolean addDecimal) {
 		String hexValue = String.format("%04X", u2.getValue());
 		StringBuilder splitHexValue = getSplitHexValue(hexValue);
-		String decimalValue = String.format(addDecimal ? "(%02d)" : "", u2.getValue());
-		System.out.printf(OFFSET_FORMAT + "%s " + titleColor + "%s" + ConsoleColors.RESET + " %s" + YELLOW_STRING + "\n",
+		String decimalValue = String.format(addDecimal ? " (%02d)" : "", u2.getValue());
+		System.out.printf(OFFSET_FORMAT + "%s " + titleColor + "%s" + ConsoleColors.RESET + "%s" + YELLOW_STRING + "\n",
 				u2.getOffset(), splitHexValue, title, decimalValue, u2.getSymbolic());
 	}
 
@@ -133,6 +136,16 @@ public class Print {
 		for (Map.Entry<String, Attribute> entry : attributes.entrySet()) {
 			Attribute attr = entry.getValue();
 			attr.print(attributePrinter);
+		}
+	}
+
+	public void opcodes(List<Opcode> opcodes) {
+		for (Opcode opcode : opcodes) {
+			String arguments = opcode.arguments().length > 0
+					? " " + Arrays.stream(opcode.arguments()).mapToObj(num -> String.format("%02X ", num))
+					.collect(Collectors.joining()).trim()
+					: "";
+			System.out.printf(OFFSET_FORMAT + "%02X%s\n", opcode.offset(), opcode.opcode(), arguments);
 		}
 	}
 

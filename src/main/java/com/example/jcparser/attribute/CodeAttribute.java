@@ -9,18 +9,20 @@ public class CodeAttribute extends Attribute {
 	private final U2 maxStack;
 	private final U2 maxLocals;
 	private final U4 codeLength;
+	private final List<Opcode> opcodes;
 	private final U2 exceptionTableLength;
 	private final ExceptionsAttribute.Exception[] exceptions;
 	private final U2 numberOf;
 	private final Map<String, Attribute> attributes;
 
 	public CodeAttribute(List<ConstantPoolEntry> constants, U2 nameIndex, U4 length, U2 maxStack, U2 maxLocals,
-	                     U4 codeLength, U2 exceptionTableLength, ExceptionsAttribute.Exception[] exceptions, U2 numberOf,
+	                     U4 codeLength, List<Opcode> opcodes ,U2 exceptionTableLength, ExceptionsAttribute.Exception[] exceptions, U2 numberOf,
 	                     Map<String, Attribute> attributes) {
 		super(constants, nameIndex, length);
 		this.maxStack = maxStack;
 		this.maxLocals = maxLocals;
 		this.codeLength = codeLength;
+		this.opcodes = opcodes;
 		this.exceptionTableLength = exceptionTableLength;
 		this.exceptions = exceptions;
 		this.numberOf = numberOf;
@@ -43,6 +45,10 @@ public class CodeAttribute extends Attribute {
 
 	public U4 getCodeLength() {
 		return codeLength;
+	}
+
+	public List<Opcode> getOpcodes() {
+		return opcodes;
 	}
 
 	public U2 getExceptionTableLength() {
