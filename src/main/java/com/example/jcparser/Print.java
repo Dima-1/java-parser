@@ -35,14 +35,16 @@ public class Print {
 		String hexValue = String.format("%04X", u2.getValue());
 		StringBuilder splitHexValue = getSplitHexValue(hexValue);
 		String decimalValue = String.format(addDecimal ? " (%02d)" : "", u2.getValue());
-		System.out.printf(OFFSET_FORMAT + "%s " + titleColor + "%s" + ConsoleColors.RESET + "%s" + YELLOW_STRING + "\n",
+		String yellowString = u2.getSymbolic().isEmpty() ? YELLOW_STRING : " " + YELLOW_STRING;
+		System.out.printf(OFFSET_FORMAT + "%s " + titleColor + "%s" + ConsoleColors.RESET + "%s" + yellowString + "\n",
 				u2.getOffset(), splitHexValue, title, decimalValue, u2.getSymbolic());
 	}
 
 	public void u4(U4 u4, String title) {
 		String hexValue = String.format("%08X", u4.getValue());
 		StringBuilder splitHexValue = getSplitHexValue(hexValue);
-		System.out.printf(OFFSET_FORMAT + "%s %s" + YELLOW_STRING + "\n",
+		String yellowString =  u4.getSymbolic().isEmpty() ? YELLOW_STRING : " " + YELLOW_STRING;
+		System.out.printf(OFFSET_FORMAT + "%s %s" + yellowString + "\n",
 				u4.getOffset(), splitHexValue, title, u4.getSymbolic());
 	}
 

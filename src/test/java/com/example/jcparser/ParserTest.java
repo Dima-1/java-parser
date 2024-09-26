@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ParserTest {
+	public static final int CONSTANT_COUNT_LINE = 2;
 	private final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
 	private final ByteArrayOutputStream errContent = new ByteArrayOutputStream();
 	private final PrintStream originalOut = System.out;
@@ -72,18 +73,19 @@ class ParserTest {
 	void check_every_byte_present() {
 		System.setOut(originalOut);
 		System.setErr(originalErr);
-		assertFalse(lines.length < 2, "Wrong file size < 2 lines");
-		String[] bytes = getBytes(lines[2].split(" "));
+		assertFalse(lines.length < CONSTANT_COUNT_LINE, "Wrong file size < 2 lines");
+		String[] bytes = getBytes(lines[CONSTANT_COUNT_LINE].split(" "));
 		int constantCount = Integer.parseInt(bytes[0] + bytes[1], 16);
 		int errorCount = 0;
-		for (int i = 2 + constantCount; i < lines.length - 1; i++) {
+		for (int i = CONSTANT_COUNT_LINE + constantCount; i < lines.length - 1; i++) {
 			String[] splitLine = lines[i].split(" ");
 			int offset = Integer.parseInt(splitLine[0], 16);
-			int next = Integer.parseInt(lines[i + 1].split(" ")[0], 16);
+			int nextOffset = Integer.parseInt(lines[i + 1].split(" ")[0], 16);
 			int bytesCount = getBytes(splitLine).length;
-			if (next - offset != bytesCount) {
+			if (nextOffset - offset != bytesCount) {
 				errorCount++;
-				System.out.printf("Incorrect number of bytes : %s\n", Arrays.toString(splitLine));
+				System.out.printf("Incorrect number of bytes : %s\n", Arrays.toString(splitLine)
+						+ "(Previous " + lines[i - 1] + ")");
 			}
 		}
 		System.out.println("Total errors: " + errorCount);
