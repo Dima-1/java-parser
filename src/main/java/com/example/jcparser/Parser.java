@@ -277,6 +277,14 @@ public class Parser {
 				yield new CodeAttribute(constantPool, attributeNameIndex, attributeLength, maxStack, maxLocals,
 						codeLength, opcodes, exceptionTableLength, exceptions, numberOf, attributes);
 			}
+//			case "StackMapTable" -> {
+//				final U2 numberOf = readU2(dis);
+//				List<StackMapTableAttribute.Entry> entries = new ArrayList<>();
+//				for (int i = 0; i < numberOf.getValue(); i++) {
+//					entries.add(readEntry(dis));
+//				}
+//				yield new StackMapTableAttribute(constantPool, attributeNameIndex, attributeLength, numberOf, entries);
+//			}
 			case "Exceptions" -> {
 				final U2 numberOf = readU2(dis);
 				U2[] exceptions = new U2[numberOf.getValue()];
@@ -351,8 +359,7 @@ public class Parser {
 			}
 			default -> {
 				for (int j = 0; j < attributeLength.getValue(); j++) {
-					dis.readByte();
-					count++;
+					readByte(dis);
 				}
 				yield new Attribute(constantPool, attributeNameIndex, attributeLength);
 			}
@@ -387,13 +394,11 @@ public class Parser {
 
 	private Opcode readOpcode(DataInputStream dis, int startCodeCount) throws IOException {
 		int offset = count;
-		int value = dis.readUnsignedByte();
-		count += Byte.BYTES;
+		int value = readByte(dis);
 		int size = Instruction.getArgumentSize(value);
 		List<Integer> arguments = new ArrayList<>();
 		if (value == 0xC4) {
-			int additionalOpcode = dis.readUnsignedByte();
-			count += Byte.BYTES;
+			int additionalOpcode = readByte(dis);
 			size = additionalOpcode == 0x84 ? 5 : 3;
 			arguments.add(additionalOpcode);
 		}
@@ -423,11 +428,35 @@ public class Parser {
 		return new Opcode(offset, value, arguments.stream().mapToInt(i -> i).toArray());
 	}
 
+	private int readByte(DataInputStream dis) throws IOException {
+		int value = dis.readUnsignedByte();
+		count += Byte.BYTES;
+		return value;
+	}
+
 	private void readNBytes(DataInputStream dis, List<Integer> arguments, int n) throws IOException {
 		for (int i = arguments.size(); i < n; i++) {
-			arguments.add(dis.readUnsignedByte());
-			count += Byte.BYTES;
+			arguments.add(readByte(dis));
 		}
+	}
+
+	private StackMapTableAttribute.Entry readEntry(DataInputStream dis) throws IOException {
+		StackMapTableAttribute.TypeInfo typeInfo = getVerificationTypeInfo(dis);
+		StackMapTableAttribute.StackMapFrame stackMapFrame = getStackMapFrame(dis);
+		return new StackMapTableAttribute.Entry(typeInfo, stackMapFrame);
+	}
+
+	private StackMapTableAttribute.StackMapFrame getStackMapFrame(DataInputStream dis) {
+		return new StackMapTableAttribute.StackMapFrame();
+	}
+
+	private StackMapTableAttribute.TypeInfo getVerificationTypeInfo(DataInputStream dis) throws IOException {
+		int typeInfo = readByte(dis);
+		U2 typeInfoAdditional = null;
+		if (typeInfo == 7 || typeInfo == 8) {
+			typeInfoAdditional = readU2(dis);
+		}
+		return new StackMapTableAttribute.TypeInfo(typeInfo, typeInfoAdditional);
 	}
 
 	public BootstrapMethodsAttribute.BootstrapMethod getBootstrapMethod(int index, DataInputStream dis) throws IOException {
