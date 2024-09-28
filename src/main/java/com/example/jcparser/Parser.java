@@ -6,8 +6,6 @@ import org.apache.commons.text.StringEscapeUtils;
 import java.io.*;
 import java.util.*;
 
-import static java.util.Arrays.asList;
-
 /**
  * <a href="https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-4.html#jvms-4.1">4.1. The ClassFile Structure</a>
  */
@@ -139,7 +137,6 @@ public class Parser {
 		CONSTANT_Package(20);            //20 53.0	9
 
 		private final int tag;
-		private static final List<ConstantTag> VALUES = asList(values());
 
 		ConstantTag(int tag) {
 			this.tag = tag;
@@ -159,7 +156,7 @@ public class Parser {
 		}
 
 		public static ConstantTag getConstant(int tag) {
-			return VALUES.stream().filter(v -> v.tag == tag).findFirst().orElseThrow(() ->
+			return Arrays.stream(values()).filter(v -> v.tag == tag).findFirst().orElseThrow(() ->
 					new IllegalArgumentException("Unknown constant tag: " + tag));
 		}
 	}
@@ -277,14 +274,14 @@ public class Parser {
 				yield new CodeAttribute(constantPool, attributeNameIndex, attributeLength, maxStack, maxLocals,
 						codeLength, opcodes, exceptionTableLength, exceptions, numberOf, attributes);
 			}
-//			case "StackMapTable" -> {
-//				final U2 numberOf = readU2(dis);
-//				List<StackMapTableAttribute.Entry> entries = new ArrayList<>();
-//				for (int i = 0; i < numberOf.getValue(); i++) {
-//					entries.add(readEntry(dis));
-//				}
-//				yield new StackMapTableAttribute(constantPool, attributeNameIndex, attributeLength, numberOf, entries);
-//			}
+			case "StackMapTable" -> {
+				final U2 numberOf = readU2(dis);
+				List<StackMapTableAttribute.StackMapFrame> entries = new ArrayList<>();
+				for (int i = 0; i < numberOf.getValue(); i++) {
+					entries.add(readStackMapFrame(dis));
+				}
+				yield new StackMapTableAttribute(constantPool, attributeNameIndex, attributeLength, numberOf, entries);
+			}
 			case "Exceptions" -> {
 				final U2 numberOf = readU2(dis);
 				U2[] exceptions = new U2[numberOf.getValue()];
@@ -440,14 +437,49 @@ public class Parser {
 		}
 	}
 
-	private StackMapTableAttribute.Entry readEntry(DataInputStream dis) throws IOException {
-		StackMapTableAttribute.TypeInfo typeInfo = getVerificationTypeInfo(dis);
-		StackMapTableAttribute.StackMapFrame stackMapFrame = getStackMapFrame(dis);
-		return new StackMapTableAttribute.Entry(typeInfo, stackMapFrame);
-	}
-
-	private StackMapTableAttribute.StackMapFrame getStackMapFrame(DataInputStream dis) {
-		return new StackMapTableAttribute.StackMapFrame();
+	private StackMapTableAttribute.StackMapFrame readStackMapFrame(DataInputStream dis) throws IOException {
+		int frameType = readByte(dis);
+		return switch (StackMapTableAttribute.FrameType.getType(frameType)) {
+			case SAME -> new StackMapTableAttribute.StackMapFrame();
+			case SAME_LOCALS_1_STACK_ITEM ->
+					new StackMapTableAttribute.SameLocals1StackItemStackMapFrame(getVerificationTypeInfo(dis));
+			case SAME_LOCALS_1_STACK_ITEM_EXTENDED -> {
+				U2 offsetDelta = readU2(dis);
+				yield new StackMapTableAttribute.SameLocals1StackItemStackMapFrameExtended(offsetDelta,
+						getVerificationTypeInfo(dis));
+			}
+			case CHOP -> {
+				U2 offsetDelta = readU2(dis);
+				yield new StackMapTableAttribute.ChopStackMapFrame(offsetDelta);
+			}
+			case SAME_FRAME_EXTENDED -> {
+				U2 offsetDelta = readU2(dis);
+				yield new StackMapTableAttribute.SameStackMapFrameExtended(offsetDelta);
+			}
+			case APPEND -> {
+				U2 offsetDelta = readU2(dis);
+				int size = frameType - 251;
+				StackMapTableAttribute.TypeInfo[] stack = new StackMapTableAttribute.TypeInfo[size];
+				for (int i = 0; i < size; i++) {
+					stack[i] = getVerificationTypeInfo(dis);
+				}
+				yield new StackMapTableAttribute.AppendStackMapFrame(offsetDelta, stack);
+			}
+			case FULL_FRAME -> {
+				U2 offsetDelta = readU2(dis);
+				U2 numberOfLocal = readU2(dis);
+				StackMapTableAttribute.TypeInfo[] local = new StackMapTableAttribute.TypeInfo[numberOfLocal.getValue()];
+				for (int i = 0; i < local.length; i++) {
+					local[i] = getVerificationTypeInfo(dis);
+				}
+				U2 numberOfStack = readU2(dis);
+				StackMapTableAttribute.TypeInfo[] stack = new StackMapTableAttribute.TypeInfo[numberOfStack.getValue()];
+				for (int i = 0; i < stack.length; i++) {
+					stack[i] = getVerificationTypeInfo(dis);
+				}
+				yield new StackMapTableAttribute.FullStackMapFrame(offsetDelta, numberOfLocal, local, numberOfStack, stack);
+			}
+		};
 	}
 
 	private StackMapTableAttribute.TypeInfo getVerificationTypeInfo(DataInputStream dis) throws IOException {
