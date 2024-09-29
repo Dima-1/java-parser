@@ -3,6 +3,7 @@ package com.example.jcparser;
 import com.example.jcparser.attribute.Attribute;
 import com.example.jcparser.attribute.AttributePrinter;
 import com.example.jcparser.attribute.Opcode;
+import com.example.jcparser.attribute.stackmapframe.StackFramePrinter;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -18,13 +19,23 @@ public class Print {
 	public static final String YELLOW_STRING = ConsoleColors.YELLOW + "%s" + ConsoleColors.RESET;
 	public static final String SP_5 = " ".repeat(5);
 	public static final String HEX_2 = " (%02X)";
-
+	private final StackFramePrinter stackFramePrinter = new StackFramePrinter(this);
 	private final AttributePrinter attributePrinter = new AttributePrinter(this);
 	private final ConstantPrinter constantPrinter = new ConstantPrinter();
 	private String OFFSET_FORMAT = "%04X ";
 
+	public StackFramePrinter getStackFramePrinter() {
+		return stackFramePrinter;
+	}
+
 	public void setLength(long length) {
 		OFFSET_FORMAT = "%0" + Long.toHexString(length).length() + "X ";
+	}
+
+	public void u1(U1 u1, String title) {
+		String hexValue = String.format("%02X", u1.getValue());
+		System.out.printf(OFFSET_FORMAT + "%s %s\n",
+				u1.getOffset(), hexValue, title);
 	}
 
 	public void u2(U2 u2, String title) {
@@ -43,7 +54,7 @@ public class Print {
 	public void u4(U4 u4, String title) {
 		String hexValue = String.format("%08X", u4.getValue());
 		StringBuilder splitHexValue = getSplitHexValue(hexValue);
-		String yellowString =  u4.getSymbolic().isEmpty() ? YELLOW_STRING : " " + YELLOW_STRING;
+		String yellowString = u4.getSymbolic().isEmpty() ? YELLOW_STRING : " " + YELLOW_STRING;
 		System.out.printf(OFFSET_FORMAT + "%s %s" + yellowString + "\n",
 				u4.getOffset(), splitHexValue, title, u4.getSymbolic());
 	}

@@ -3,6 +3,7 @@ package com.example.jcparser.attribute;
 import com.example.jcparser.Parser;
 import com.example.jcparser.Print;
 import com.example.jcparser.Type;
+import com.example.jcparser.attribute.stackmapframe.StackMapFrame;
 
 public class AttributePrinter {
 	private final Print print;
@@ -31,6 +32,13 @@ public class AttributePrinter {
 		}
 		print.u2(attr.getNumberOf(), "Attribute table length");
 		print.attributes(attr.getAttributes());
+	}
+
+	void print(StackMapTableAttribute attr) {
+		print.u2(attr.getNumberOf(), "Attribute number of stack maps", "", true);
+		for (StackMapFrame stackMapFrame : attr.getEntries()) {
+			stackMapFrame.print(print.getStackFramePrinter());
+		}
 	}
 
 	void print(ExceptionsAttribute.Exception attr) {

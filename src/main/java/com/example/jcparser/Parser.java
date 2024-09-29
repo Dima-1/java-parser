@@ -1,6 +1,8 @@
 package com.example.jcparser;
 
 import com.example.jcparser.attribute.*;
+import com.example.jcparser.attribute.StackMapTableAttribute;
+import com.example.jcparser.attribute.stackmapframe.*;
 import org.apache.commons.text.StringEscapeUtils;
 
 import java.io.*;
@@ -276,7 +278,7 @@ public class Parser {
 			}
 			case "StackMapTable" -> {
 				final U2 numberOf = readU2(dis);
-				List<StackMapTableAttribute.StackMapFrame> entries = new ArrayList<>();
+				List<StackMapFrame> entries = new ArrayList<>();
 				for (int i = 0; i < numberOf.getValue(); i++) {
 					entries.add(readStackMapFrame(dis));
 				}
@@ -363,6 +365,13 @@ public class Parser {
 		};
 	}
 
+	private U1 readU1(DataInputStream dis) throws IOException {
+		int value = dis.readUnsignedByte();
+		U1 u1 = new U1(count, value, "");
+		count += Byte.BYTES;
+		return u1;
+	}
+
 	private U2 readU2(DataInputStream dis) throws IOException {
 		return readU2(dis, false);
 	}
@@ -437,58 +446,58 @@ public class Parser {
 		}
 	}
 
-	private StackMapTableAttribute.StackMapFrame readStackMapFrame(DataInputStream dis) throws IOException {
-		int frameType = readByte(dis);
-		return switch (StackMapTableAttribute.FrameType.getType(frameType)) {
-			case SAME -> new StackMapTableAttribute.StackMapFrame();
+	private StackMapFrame readStackMapFrame(DataInputStream dis) throws IOException {
+		U1 tag = readU1(dis);
+		return switch (FrameType.getType(tag.getValue())) {
+			case SAME -> new StackMapFrame(tag);
 			case SAME_LOCALS_1_STACK_ITEM ->
-					new StackMapTableAttribute.SameLocals1StackItemStackMapFrame(getVerificationTypeInfo(dis));
+					new SameLocals1StackItemStackMapFrame(tag, new TypeInfo[]{getVerificationTypeInfo(dis)});
 			case SAME_LOCALS_1_STACK_ITEM_EXTENDED -> {
 				U2 offsetDelta = readU2(dis);
-				yield new StackMapTableAttribute.SameLocals1StackItemStackMapFrameExtended(offsetDelta,
-						getVerificationTypeInfo(dis));
+				yield new SameLocals1StackItemStackMapFrameExtended(tag, offsetDelta,
+						new TypeInfo[]{getVerificationTypeInfo(dis)});
 			}
 			case CHOP -> {
 				U2 offsetDelta = readU2(dis);
-				yield new StackMapTableAttribute.ChopStackMapFrame(offsetDelta);
+				yield new ChopStackMapFrame(tag, offsetDelta);
 			}
 			case SAME_FRAME_EXTENDED -> {
 				U2 offsetDelta = readU2(dis);
-				yield new StackMapTableAttribute.SameStackMapFrameExtended(offsetDelta);
+				yield new SameStackMapFrameExtended(tag, offsetDelta);
 			}
 			case APPEND -> {
 				U2 offsetDelta = readU2(dis);
-				int size = frameType - 251;
-				StackMapTableAttribute.TypeInfo[] stack = new StackMapTableAttribute.TypeInfo[size];
+				int size = tag.getValue() - 251;
+				TypeInfo[] stack = new TypeInfo[size];
 				for (int i = 0; i < size; i++) {
 					stack[i] = getVerificationTypeInfo(dis);
 				}
-				yield new StackMapTableAttribute.AppendStackMapFrame(offsetDelta, stack);
+				yield new AppendStackMapFrame(tag, offsetDelta, stack);
 			}
 			case FULL_FRAME -> {
 				U2 offsetDelta = readU2(dis);
 				U2 numberOfLocal = readU2(dis);
-				StackMapTableAttribute.TypeInfo[] local = new StackMapTableAttribute.TypeInfo[numberOfLocal.getValue()];
+				TypeInfo[] local = new TypeInfo[numberOfLocal.getValue()];
 				for (int i = 0; i < local.length; i++) {
 					local[i] = getVerificationTypeInfo(dis);
 				}
 				U2 numberOfStack = readU2(dis);
-				StackMapTableAttribute.TypeInfo[] stack = new StackMapTableAttribute.TypeInfo[numberOfStack.getValue()];
+				TypeInfo[] stack = new TypeInfo[numberOfStack.getValue()];
 				for (int i = 0; i < stack.length; i++) {
 					stack[i] = getVerificationTypeInfo(dis);
 				}
-				yield new StackMapTableAttribute.FullStackMapFrame(offsetDelta, numberOfLocal, local, numberOfStack, stack);
+				yield new FullStackMapFrame(tag, offsetDelta, numberOfLocal, local, numberOfStack, stack);
 			}
 		};
 	}
 
-	private StackMapTableAttribute.TypeInfo getVerificationTypeInfo(DataInputStream dis) throws IOException {
-		int typeInfo = readByte(dis);
+	private TypeInfo getVerificationTypeInfo(DataInputStream dis) throws IOException {
+		U1 typeInfo = readU1(dis);
 		U2 typeInfoAdditional = null;
-		if (typeInfo == 7 || typeInfo == 8) {
+		if (typeInfo.getValue() == 7 || typeInfo.getValue() == 8) {
 			typeInfoAdditional = readU2(dis);
 		}
-		return new StackMapTableAttribute.TypeInfo(typeInfo, typeInfoAdditional);
+		return new TypeInfo(typeInfo, typeInfoAdditional);
 	}
 
 	public BootstrapMethodsAttribute.BootstrapMethod getBootstrapMethod(int index, DataInputStream dis) throws IOException {
@@ -896,12 +905,12 @@ public class Parser {
 		}
 	}
 
-	public static class U2 {
+	public static class U1 {
 		private final int offset;
 		protected final int value;
 		private String symbolic;
 
-		public U2(int offset, int value, String symbolic) {
+		public U1(int offset, int value, String symbolic) {
 			this.offset = offset;
 			this.value = value;
 			this.symbolic = symbolic;
@@ -923,6 +932,17 @@ public class Parser {
 			if (value == 0) {
 				symbolic = "";
 			}
+		}
+
+		public int[] getByteArray() {
+			return new int[]{value & 0xFF};
+		}
+	}
+
+	public static class U2 extends U1 {
+
+		public U2(int offset, int value, String symbolic) {
+			super(offset, value, symbolic);
 		}
 
 		public int[] getByteArray() {
