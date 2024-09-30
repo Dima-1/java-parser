@@ -292,6 +292,21 @@ public class Parser {
 				}
 				yield new ExceptionsAttribute(constantPool, attributeNameIndex, attributeLength, numberOf, exceptions);
 			}
+			case "InnerClasses" -> {
+				final U2 numberOf = readU2(dis);
+				InnerClassesAttribute.InnerClass[] classes = new InnerClassesAttribute.InnerClass[numberOf.getValue()];
+				for (int i = 0; i < numberOf.getValue(); i++) {
+					classes[i] = getInnerClass(dis);
+				}
+				yield new InnerClassesAttribute(constantPool, attributeNameIndex, attributeLength,
+						numberOf, classes);
+			}
+			case "EnclosingMethod" -> {
+				final U2 classIndex = readU2(dis, true);
+				final U2 methodIndex = readU2(dis, true);
+				yield new EnclosingMethodAttribute(constantPool, attributeNameIndex, attributeLength,
+						classIndex, methodIndex);
+			}
 			case "SourceFile" -> {
 				final U2 aShort = readU2(dis, true);
 				yield new SourceFileAttribute(constantPool, attributeNameIndex, attributeLength, aShort);
@@ -325,15 +340,7 @@ public class Parser {
 				yield new LocalVariableTypeTableAttribute(constantPool, attributeNameIndex, attributeLength, numberOf,
 						localVariables);
 			}
-			case "InnerClasses" -> {
-				final U2 numberOf = readU2(dis);
-				InnerClassesAttribute.InnerClass[] classes = new InnerClassesAttribute.InnerClass[numberOf.getValue()];
-				for (int i = 0; i < numberOf.getValue(); i++) {
-					classes[i] = getInnerClass(dis);
-				}
-				yield new InnerClassesAttribute(constantPool, attributeNameIndex, attributeLength,
-						numberOf, classes);
-			}
+
 			case "Signature" -> {
 				final U2 aShort = readU2(dis, true);
 				yield new SignatureAttribute(constantPool, attributeNameIndex, attributeLength, aShort);

@@ -56,6 +56,19 @@ public class AttributePrinter {
 		}
 	}
 
+
+	void print(InnerClassesAttribute attr) {
+		print.u2(attr.getNumberOf(), "Attribute number of inner classes", "", true);
+		for (InnerClassesAttribute.InnerClass innerClass : attr.getInnerClasses()) {
+			innerClass.print(this);
+		}
+	}
+
+	void print(EnclosingMethodAttribute attr) {
+		print.u2(attr.getClassIndex(), "Attribute class index");
+		print.u2(attr.getMethodIndex(), "Attribute method index");
+	}
+
 	void print(SourceFileAttribute attr) {
 		print.u2(attr.getSourceFileIndex(), "Attribute source file index");
 	}
@@ -102,12 +115,6 @@ public class AttributePrinter {
 		}
 	}
 
-	void print(InnerClassesAttribute attr) {
-		print.u2(attr.getNumberOf(), "Attribute number of inner classes", "", true);
-		for (InnerClassesAttribute.InnerClass innerClass : attr.getInnerClasses()) {
-			innerClass.print(this);
-		}
-	}
 
 	void print(InnerClassesAttribute.InnerClass innerClass) {
 		print.u2(innerClass.innerClassInfoIndex(), Print.SP_5 + "Inner class");
