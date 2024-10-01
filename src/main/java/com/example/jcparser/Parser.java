@@ -307,9 +307,18 @@ public class Parser {
 				yield new EnclosingMethodAttribute(constantPool, attributeNameIndex, attributeLength,
 						classIndex, methodIndex);
 			}
+			case "Synthetic" -> new Attribute(constantPool, attributeNameIndex, attributeLength);
+			case "Signature" -> {
+				final U2 aShort = readU2(dis, true);
+				yield new SignatureAttribute(constantPool, attributeNameIndex, attributeLength, aShort);
+			}
 			case "SourceFile" -> {
 				final U2 aShort = readU2(dis, true);
 				yield new SourceFileAttribute(constantPool, attributeNameIndex, attributeLength, aShort);
+			}
+			case "SourceDebugExtension" -> {
+				String utf8 = new String(dis.readNBytes(attributeLength.getValue()));
+				yield new SourceDebugExtensionAttribute(constantPool, attributeNameIndex, attributeLength, utf8);
 			}
 			case "LineNumberTable" -> {
 				final U2 numberOf = readU2(dis);
@@ -339,11 +348,6 @@ public class Parser {
 				}
 				yield new LocalVariableTypeTableAttribute(constantPool, attributeNameIndex, attributeLength, numberOf,
 						localVariables);
-			}
-
-			case "Signature" -> {
-				final U2 aShort = readU2(dis, true);
-				yield new SignatureAttribute(constantPool, attributeNameIndex, attributeLength, aShort);
 			}
 			case "BootstrapMethods" -> {
 				final U2 numberOf = readU2(dis);
@@ -418,24 +422,24 @@ public class Parser {
 		if (value == 0xAA) {
 			size = (count - startCodeCount) % 4;
 			readNBytes(dis, arguments, size);
-			size += 3 * 4;
+			size += 3 * U4.getSize();
 			U4 defaultValue = readU4(dis);
-			arguments.addAll(Arrays.stream(defaultValue.getByteArray()).boxed().toList());
+			arguments.addAll(defaultValue.getIntList());
 			U4 low = readU4(dis);
-			arguments.addAll(Arrays.stream(low.getByteArray()).boxed().toList());
+			arguments.addAll(low.getIntList());
 			U4 high = readU4(dis);
-			arguments.addAll(Arrays.stream(high.getByteArray()).boxed().toList());
-			size += (high.getValue() - low.getValue() + 1) * 4;
+			arguments.addAll(high.getIntList());
+			size += (high.getValue() - low.getValue() + 1) * U4.getSize();
 		}
 		if (value == 0xAB) {
 			size = (count - startCodeCount) % 4;
 			readNBytes(dis, arguments, size);
-			size += 2 * 4;
+			size += 2 * U4.getSize();
 			U4 defaultValue = readU4(dis);
-			arguments.addAll(Arrays.stream(defaultValue.getByteArray()).boxed().toList());
+			arguments.addAll(defaultValue.getIntList());
 			U4 nPairs = readU4(dis);
-			arguments.addAll(Arrays.stream(nPairs.getByteArray()).boxed().toList());
-			size += nPairs.getValue() * 8;
+			arguments.addAll(nPairs.getIntList());
+			size += nPairs.getValue() * 2 * U4.getSize();
 		}
 		readNBytes(dis, arguments, size);
 		return new Opcode(offset, value, arguments.stream().mapToInt(i -> i).toArray());
@@ -607,20 +611,20 @@ public class Parser {
 	}
 
 	public static final class ConstantPoolUtf8 extends ConstantPoolEntry {
-		private final String UTF8;
+		private final String utf8;
 
-		public ConstantPoolUtf8(List<ConstantPoolEntry> constants, int offset, int idx, ConstantTag constantTag, String UTF8) {
+		public ConstantPoolUtf8(List<ConstantPoolEntry> constants, int offset, int idx, ConstantTag constantTag, String utf8) {
 			super(constants, offset, idx, constantTag);
-			this.UTF8 = StringEscapeUtils.escapeJava(UTF8);
+			this.utf8 = StringEscapeUtils.escapeJava(utf8);
 		}
 
-		public String getUTF8() {
-			return UTF8;
+		public String getUtf8() {
+			return utf8;
 		}
 
 		@Override
 		public String getAdditional() {
-			return UTF8;
+			return utf8;
 		}
 
 		@Override
@@ -745,7 +749,7 @@ public class Parser {
 		}
 
 		public String getString() {
-			return ((ConstantPoolUtf8) constants.get(stringIndex - 1)).getUTF8();
+			return ((ConstantPoolUtf8) constants.get(stringIndex - 1)).getUtf8();
 		}
 
 		@Override
@@ -817,7 +821,7 @@ public class Parser {
 		}
 
 		public String getNameIndexString() {
-			return ((ConstantPoolUtf8) constants.get(nameIndex - 1)).getUTF8();
+			return ((ConstantPoolUtf8) constants.get(nameIndex - 1)).getUtf8();
 		}
 
 		public int getDescriptorIndex() {
@@ -825,7 +829,7 @@ public class Parser {
 		}
 
 		public String getDescriptorIndexString() {
-			return ((ConstantPoolUtf8) constants.get(descriptorIndex - 1)).getUTF8();
+			return ((ConstantPoolUtf8) constants.get(descriptorIndex - 1)).getUtf8();
 		}
 
 		@Override
@@ -935,6 +939,14 @@ public class Parser {
 			return symbolic;
 		}
 
+		public static int getSize() {
+			return 1;
+		}
+
+		public List<Integer> getIntList() {
+			return Arrays.stream(getByteArray()).boxed().toList();
+		}
+
 		public void clearZeroSymbolic() {
 			if (value == 0) {
 				symbolic = "";
@@ -952,6 +964,11 @@ public class Parser {
 			super(offset, value, symbolic);
 		}
 
+		public static int getSize() {
+			return 2;
+		}
+
+		@Override
 		public int[] getByteArray() {
 			return new int[]{(value >> 8) & 0xFF, value & 0xFF};
 		}
@@ -962,6 +979,11 @@ public class Parser {
 			super(offset, value, symbolic);
 		}
 
+		public static int getSize() {
+			return 4;
+		}
+
+		@Override
 		public int[] getByteArray() {
 			return new int[]{(value >> 24) & 0xFF, (value >> 16) & 0xFF, (value >> 8) & 0xFF, value & 0xFF};
 		}

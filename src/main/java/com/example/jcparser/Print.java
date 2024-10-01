@@ -59,6 +59,10 @@ public class Print {
 				u4.getOffset(), splitHexValue, title, u4.getSymbolic());
 	}
 
+	public void debugInfo(int offset, String info) {
+		System.out.printf(OFFSET_FORMAT + "%s\n", offset, info);
+	}
+
 	private static StringBuilder getSplitHexValue(String hexValue) {
 		StringBuilder splitHexValue = new StringBuilder(hexValue);
 		for (var i = 2; i < splitHexValue.length(); i += 3) {
@@ -179,7 +183,7 @@ public class Print {
 		}
 
 		void format(ConstantPoolUtf8 cpe) {
-			formatedString += " " + String.format(YELLOW_STRING, cpe.getUTF8());
+			formatedString += " " + String.format(YELLOW_STRING, cpe.getUtf8());
 		}
 
 		void format(ConstantPoolInteger cpe) {

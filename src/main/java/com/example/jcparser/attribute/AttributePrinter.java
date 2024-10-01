@@ -56,7 +56,6 @@ public class AttributePrinter {
 		}
 	}
 
-
 	void print(InnerClassesAttribute attr) {
 		print.u2(attr.getNumberOf(), "Attribute number of inner classes", "", true);
 		for (InnerClassesAttribute.InnerClass innerClass : attr.getInnerClasses()) {
@@ -71,6 +70,10 @@ public class AttributePrinter {
 
 	void print(SourceFileAttribute attr) {
 		print.u2(attr.getSourceFileIndex(), "Attribute source file index");
+	}
+
+	void print(SourceDebugExtensionAttribute attr) {
+		print.debugInfo(attr.getLength().getOffset() + Parser.U4.getSize(), attr.getUtf8());
 	}
 
 	void print(LineNumberTableAttribute attr) {
@@ -114,7 +117,6 @@ public class AttributePrinter {
 			print.u2(classes[i], String.format("%4X ", i) + "Nest");
 		}
 	}
-
 
 	void print(InnerClassesAttribute.InnerClass innerClass) {
 		print.u2(innerClass.innerClassInfoIndex(), Print.SP_5 + "Inner class");
