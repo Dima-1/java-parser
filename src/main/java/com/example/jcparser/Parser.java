@@ -23,16 +23,23 @@ public class Parser {
 	}
 
 	public static void main(String[] args) {
+		File file;
 		if (args.length == 0) {
-			System.out.println("Use [/path/file.class] as first argument");
-			System.exit(0);
+			System.err.println("Use [/path/file.class] as first argument");
+			System.exit(1);
+		}
+		String fileName = args[0];
+		file = new File(fileName);
+		if (!file.exists()) {
+			System.err.printf("File %s not exist\n", fileName);
+			System.exit(1);
 		}
 		Parser parser = new Parser(new Print());
-		parser.process(args[0]);
+		parser.process(file);
 	}
 
-	private void process(String fileName) {
-		File file = new File(fileName);
+	private void process(File file) {
+
 		try (FileInputStream fis = new FileInputStream(file);
 		     DataInputStream dis = new DataInputStream(fis)) {
 			print.setLength(file.length());
@@ -307,7 +314,7 @@ public class Parser {
 				yield new EnclosingMethodAttribute(constantPool, attributeNameIndex, attributeLength,
 						classIndex, methodIndex);
 			}
-			case "Synthetic" -> new Attribute(constantPool, attributeNameIndex, attributeLength);
+			case "Synthetic", "Deprecated" -> new Attribute(constantPool, attributeNameIndex, attributeLength);
 			case "Signature" -> {
 				final U2 aShort = readU2(dis, true);
 				yield new SignatureAttribute(constantPool, attributeNameIndex, attributeLength, aShort);
