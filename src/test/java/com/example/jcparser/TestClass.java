@@ -6,6 +6,11 @@ public class TestClass {
 		testClassVar.testMethod();
 	}
 
+	@Deprecated
+	private int oldCodeMethod() {
+		return 10;
+	}
+	
 	private void testMethod() {
 		class TestLocalClass {
 

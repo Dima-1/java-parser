@@ -17,7 +17,6 @@ public class Print {
 
 	public static final boolean PRINT_CONSTANT_POOL = true;
 	public static final String YELLOW_STRING = ConsoleColors.YELLOW + "%s" + ConsoleColors.RESET;
-	public static final String SP_5 = " ".repeat(5);
 	public static final String HEX_2 = " (%02X)";
 	private final StackFramePrinter stackFramePrinter = new StackFramePrinter(this);
 	private final AttributePrinter attributePrinter = new AttributePrinter(this);
@@ -150,10 +149,12 @@ public class Print {
 	}
 
 	public void attributes(Map<String, Attribute> attributes) {
+		attributePrinter.indent++;
 		for (Map.Entry<String, Attribute> entry : attributes.entrySet()) {
 			Attribute attr = entry.getValue();
 			attr.print(attributePrinter);
 		}
+		attributePrinter.indent--;
 	}
 
 	public void opcodes(List<Opcode> opcodes) {

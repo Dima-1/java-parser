@@ -31,7 +31,7 @@ public class InnerClassesAttribute extends Attribute {
 		return innerClasses;
 	}
 
-	public record InnerClass(U2 innerClassInfoIndex, U2 outerClassInfoIndex, U2 innerNameIndex,
+	public record InnerClass(int index, U2 innerClassInfoIndex, U2 outerClassInfoIndex, U2 innerNameIndex,
 	                         U2 innerClassAccessFlags) implements Print.Printable<AttributePrinter> {
 
 		@Override

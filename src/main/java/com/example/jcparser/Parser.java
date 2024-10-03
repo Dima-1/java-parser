@@ -303,7 +303,7 @@ public class Parser {
 				final U2 numberOf = readU2(dis);
 				InnerClassesAttribute.InnerClass[] classes = new InnerClassesAttribute.InnerClass[numberOf.getValue()];
 				for (int i = 0; i < numberOf.getValue(); i++) {
-					classes[i] = getInnerClass(dis);
+					classes[i] = getInnerClass(i, dis);
 				}
 				yield new InnerClassesAttribute(constantPool, attributeNameIndex, attributeLength,
 						numberOf, classes);
@@ -378,6 +378,7 @@ public class Parser {
 				for (int j = 0; j < attributeLength.getValue(); j++) {
 					readByte(dis);
 				}
+				attributeLength = new U4(attributeLength.getOffset(), 0, "");//mark non-implemented attr, to show in the test 
 				yield new Attribute(constantPool, attributeNameIndex, attributeLength);
 			}
 		};
@@ -528,7 +529,7 @@ public class Parser {
 		return new BootstrapMethodsAttribute.BootstrapMethod(index, bootstrapMethodRef, numberOf, bootstrapArguments);
 	}
 
-	public InnerClassesAttribute.InnerClass getInnerClass(DataInputStream dis) throws IOException {
+	public InnerClassesAttribute.InnerClass getInnerClass(int index, DataInputStream dis) throws IOException {
 		final U2 innerClassInfoIndex = readU2(dis, true);
 		final U2 outerClassInfoIndex = readU2(dis, true);
 		outerClassInfoIndex.clearZeroSymbolic();
@@ -536,7 +537,7 @@ public class Parser {
 		innerNameIndex.clearZeroSymbolic();
 		final U2 innerClassAccessFlags = readU2(dis);
 		innerClassAccessFlags.clearZeroSymbolic();
-		return new InnerClassesAttribute.InnerClass(innerClassInfoIndex, outerClassInfoIndex, innerNameIndex, innerClassAccessFlags);
+		return new InnerClassesAttribute.InnerClass(index, innerClassInfoIndex, outerClassInfoIndex, innerNameIndex, innerClassAccessFlags);
 	}
 
 	public LineNumberTableAttribute.LineNumber getLineNumber(DataInputStream dis) throws IOException {
