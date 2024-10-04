@@ -8,6 +8,8 @@ import org.apache.commons.text.StringEscapeUtils;
 import java.io.*;
 import java.util.*;
 
+import static com.example.jcparser.AccessFlag.*;
+
 /**
  * <a href="https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-4.html#jvms-4.1">4.1. The ClassFile Structure</a>
  */

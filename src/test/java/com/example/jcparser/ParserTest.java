@@ -84,7 +84,7 @@ class ParserTest {
 			int bytesCount = getBytes(splitLine).length;
 			if (nextOffset - offset != bytesCount) {
 				errorCount++;
-				System.out.printf("Incorrect number of bytes : %s\n", Arrays.toString(splitLine)
+				System.out.printf("Incorrect number of bytes (expected %d) : %s\n", bytesCount, Arrays.toString(splitLine)
 						+ "(Previous " + lines[i - 1] + ")");
 			}
 		}

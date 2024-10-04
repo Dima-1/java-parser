@@ -6,11 +6,11 @@ import com.example.jcparser.attribute.Opcode;
 import com.example.jcparser.attribute.stackmapframe.StackFramePrinter;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static com.example.jcparser.AccessFlag.getAccessFlags;
 import static com.example.jcparser.Parser.*;
 
 public class Print {
@@ -18,10 +18,12 @@ public class Print {
 	public static final boolean PRINT_CONSTANT_POOL = true;
 	public static final String YELLOW_STRING = ConsoleColors.YELLOW + "%s" + ConsoleColors.RESET;
 	public static final String HEX_2 = " (%02X)";
+	public static final int SPACES_IN_INTENT = 6;
 	private final StackFramePrinter stackFramePrinter = new StackFramePrinter(this);
 	private final AttributePrinter attributePrinter = new AttributePrinter(this);
 	private final ConstantPrinter constantPrinter = new ConstantPrinter();
 	private String OFFSET_FORMAT = "%04X ";
+	private int indent;
 
 	public StackFramePrinter getStackFramePrinter() {
 		return stackFramePrinter;
@@ -47,7 +49,7 @@ public class Print {
 		String decimalValue = String.format(addDecimal ? " (%02d)" : "", u2.getValue());
 		String yellowString = u2.getSymbolic().isEmpty() ? YELLOW_STRING : " " + YELLOW_STRING;
 		System.out.printf(OFFSET_FORMAT + "%s " + titleColor + "%s" + ConsoleColors.RESET + "%s" + yellowString + "\n",
-				u2.getOffset(), splitHexValue, title, decimalValue, u2.getSymbolic());
+				u2.getOffset(), splitHexValue, title.indent(getIndents()).stripTrailing(), decimalValue, u2.getSymbolic());
 	}
 
 	public void u4(U4 u4, String title) {
@@ -55,7 +57,7 @@ public class Print {
 		StringBuilder splitHexValue = getSplitHexValue(hexValue);
 		String yellowString = u4.getSymbolic().isEmpty() ? YELLOW_STRING : " " + YELLOW_STRING;
 		System.out.printf(OFFSET_FORMAT + "%s %s" + yellowString + "\n",
-				u4.getOffset(), splitHexValue, title, u4.getSymbolic());
+				u4.getOffset(), splitHexValue, title.indent(getIndents() - 6).stripTrailing(), u4.getSymbolic());
 	}
 
 	public void debugInfo(int offset, String info) {
@@ -84,77 +86,20 @@ public class Print {
 		}
 	}
 
-	public void accessFlags(U2 u2, Type type) {
-		accessFlags(u2, type, "Access flags");
-	}
-
-	public void accessFlags(U2 u2, Type type, String title) {
-		Map<Integer, String> flagsMap = switch (type) {
-			case CLASS -> Map.ofEntries(
-					Map.entry(0x0001, "ACC_PUBLIC"),     //   Declared public; may be accessed from outside its package.
-					Map.entry(0x0002, "ACC_PRIVATE"),    //   Marked private in source. (Nested)
-					Map.entry(0x0004, "ACC_PROTECTED"),  //   Marked protected in source. (Nested)
-					Map.entry(0x0008, "ACC_STATIC"),     //   Marked or implicitly static in source. (Nested)
-					Map.entry(0x0010, "ACC_FINAL"),      //   Declared final; no subclasses allowed.
-					Map.entry(0x0020, "ACC_SUPER"),      //   Treat superclass methods specially when invoked by the invokespecial instruction.
-					Map.entry(0x0200, "ACC_INTERFACE"),  //   Is an interface, not a class.
-					Map.entry(0x0400, "ACC_ABSTRACT"),   //   Declared abstract; must not be instantiated.
-					Map.entry(0x1000, "ACC_SYNTHETIC"),  //   Declared synthetic; not present in the source code.
-					Map.entry(0x2000, "ACC_ANNOTATION"), //   Declared as an annotation type.
-					Map.entry(0x4000, "ACC_ENUM"),       //   Declared as an enum type.
-					Map.entry(0x8000, "ACC_MODULE")      //   Is a module, not a class or interface.*/
-			);
-			case FIELD -> Map.of(
-					0x0001, "ACC_PUBLIC",    // Declared public; may be accessed from outside its package.
-					0x0002, "ACC_PRIVATE",   // Declared private; accessible only within the defining class and other classes belonging to the same nest (§5.4.4).
-					0x0004, "ACC_PROTECTED", // Declared protected; may be accessed within subclasses.
-					0x0008, "ACC_STATIC",    // Declared static.
-					0x0010, "ACC_FINAL",     // Declared final; never directly assigned to after object construction (JLS §17.5).
-					0x0040, "ACC_VOLATILE",  // Declared volatile; cannot be cached.
-					0x0080, "ACC_TRANSIENT", // Declared transient; not written or read by a persistent object manager.
-					0x1000, "ACC_SYNTHETIC", // Declared synthetic; not present in the source code.
-					0x4000, "ACC_ENUM"       // Declared as an element of an enum.
-			);
-			case METHOD -> Map.ofEntries(
-					Map.entry(0x0001, "ACC_PUBLIC"),       //Declared public; may be accessed from outside its package.
-					Map.entry(0x0002, "ACC_PRIVATE"),      //Declared private; accessible only within the defining class and other classes belonging to the same nest (§5.4.4).
-					Map.entry(0x0004, "ACC_PROTECTED"),    //Declared protected; may be accessed within subclasses.
-					Map.entry(0x0008, "ACC_STATIC"),       //Declared static.
-					Map.entry(0x0010, "ACC_FINAL"),        //Declared final; must not be overridden (§5.4.5).
-					Map.entry(0x0020, "ACC_SYNCHRONIZED"), //Declared synchronized; invocation is wrapped by a monitor use.
-					Map.entry(0x0040, "ACC_BRIDGE"),       //A bridge method, generated by the compiler.
-					Map.entry(0x0080, "ACC_VARARGS"),      //Declared with variable number of arguments.
-					Map.entry(0x0100, "ACC_NATIVE"),       //Declared native; implemented in a language other than the Java programming language.
-					Map.entry(0x0400, "ACC_ABSTRACT"),     //Declared abstract; no implementation is provided.
-					Map.entry(0x0800, "ACC_STRICT"),       //Declared strictfp; floating-point mode is FP-strict.
-					Map.entry(0x1000, "ACC_SYNTHETIC")     //Declared synthetic; not present in the source code.
-			);
-			default -> new HashMap<>();
-		};
-
-		String flags = getAccessFlags(u2.getValue(), flagsMap);
+	public void accessFlags(U2 u2, AccessFlag.Type type) {
+		String flags = getAccessFlags(u2.getValue(), type);
+		String title = type.getTitle() + " access flags";
 		System.out.printf(OFFSET_FORMAT + "%s %s" + YELLOW_STRING + "\n", u2.getOffset(),
-				getSplitHexValue(String.format("%04X", u2.getValue())), title, flags);
-	}
-
-	private String getAccessFlags(int value, Map<Integer, String> flagsMap) {
-		StringBuilder res = new StringBuilder();
-		for (int bit = 1; bit < 0x100000; bit <<= 1) {
-			String flag = flagsMap.get(value & bit);
-			if (flag != null && !flag.isEmpty()) {
-				res.append(" ").append(flag.replaceFirst("ACC_", ""));
-			}
-		}
-		return res.toString().toLowerCase();
+				getSplitHexValue(String.format("%04X", u2.getValue())), title.indent(getIndents()).stripTrailing(), flags);
 	}
 
 	public void attributes(Map<String, Attribute> attributes) {
-		attributePrinter.indent++;
+		indent++;
 		for (Map.Entry<String, Attribute> entry : attributes.entrySet()) {
 			Attribute attr = entry.getValue();
 			attr.print(attributePrinter);
 		}
-		attributePrinter.indent--;
+		indent--;
 	}
 
 	public void opcodes(List<Opcode> opcodes) {
@@ -165,6 +110,18 @@ public class Print {
 					: "";
 			System.out.printf(OFFSET_FORMAT + "%02X%s\n", opcode.offset(), opcode.opcode(), arguments);
 		}
+	}
+
+	public void incIndent() {
+		indent++;
+	}
+
+	public void decIndent() {
+		indent--;
+	}
+
+	private int getIndents() {
+		return SPACES_IN_INTENT * indent;
 	}
 
 	public interface Printable<T> {

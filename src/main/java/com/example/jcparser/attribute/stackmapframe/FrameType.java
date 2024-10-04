@@ -1,7 +1,5 @@
 package com.example.jcparser.attribute.stackmapframe;
 
-import com.example.jcparser.attribute.StackMapTableAttribute;
-
 import java.util.Arrays;
 
 public enum FrameType {
