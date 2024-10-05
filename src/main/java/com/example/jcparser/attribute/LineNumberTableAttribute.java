@@ -31,7 +31,7 @@ public class LineNumberTableAttribute extends Attribute {
 		printer.print(this);
 	}
 
-	public record LineNumber(U2 startPC, U2 lineNumber) implements Print.Printable<AttributePrinter> {
+	public record LineNumber(int index, U2 startPC, U2 lineNumber) implements Print.Printable<AttributePrinter> {
 		@Override
 		public void print(AttributePrinter printer) {
 			printer.print(this);

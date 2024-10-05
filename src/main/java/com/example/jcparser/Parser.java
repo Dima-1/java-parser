@@ -333,7 +333,7 @@ public class Parser {
 				final U2 numberOf = readU2(dis);
 				LineNumberTableAttribute.LineNumber[] lineNumbers = new LineNumberTableAttribute.LineNumber[numberOf.getValue()];
 				for (int i = 0; i < numberOf.getValue(); i++) {
-					lineNumbers[i] = getLineNumber(dis);
+					lineNumbers[i] = getLineNumber(i, dis);
 				}
 				yield new LineNumberTableAttribute(constantPool, attributeNameIndex, attributeLength, numberOf,
 						lineNumbers);
@@ -367,6 +367,15 @@ public class Parser {
 				yield new BootstrapMethodsAttribute(constantPool, attributeNameIndex, attributeLength,
 						numberOf, bootstrapMethods);
 			}
+			case "MethodParameters" -> {
+				final U1 numberOf = readU1(dis);
+				MethodParameterAttribute.MethodParameter[] methodParameters = new MethodParameterAttribute.MethodParameter[numberOf.getValue()];
+				for (int i = 0; i < numberOf.getValue(); i++) {
+					methodParameters[i] = getMethodParameter(i, dis);
+				}
+				yield new MethodParameterAttribute(constantPool, attributeNameIndex, attributeLength,
+						numberOf, methodParameters);
+			}
 			case "NestMembers" -> {
 				final U2 numberOf = readU2(dis);
 				U2[] classes = new U2[numberOf.getValue()];
@@ -385,6 +394,7 @@ public class Parser {
 			}
 		};
 	}
+
 
 	private U1 readU1(DataInputStream dis) throws IOException {
 		int value = dis.readUnsignedByte();
@@ -531,6 +541,12 @@ public class Parser {
 		return new BootstrapMethodsAttribute.BootstrapMethod(index, bootstrapMethodRef, numberOf, bootstrapArguments);
 	}
 
+	private MethodParameterAttribute.MethodParameter getMethodParameter(int index, DataInputStream dis) throws IOException {
+		final U2 nameIndex = readU2(dis, true);
+		final U2 accessFlag = readU2(dis);
+		return new MethodParameterAttribute.MethodParameter(index, nameIndex, accessFlag);
+	}
+
 	public InnerClassesAttribute.InnerClass getInnerClass(int index, DataInputStream dis) throws IOException {
 		final U2 innerClassInfoIndex = readU2(dis, true);
 		final U2 outerClassInfoIndex = readU2(dis, true);
@@ -542,10 +558,10 @@ public class Parser {
 		return new InnerClassesAttribute.InnerClass(index, innerClassInfoIndex, outerClassInfoIndex, innerNameIndex, innerClassAccessFlags);
 	}
 
-	public LineNumberTableAttribute.LineNumber getLineNumber(DataInputStream dis) throws IOException {
+	public LineNumberTableAttribute.LineNumber getLineNumber(int index, DataInputStream dis) throws IOException {
 		final U2 startPC = readU2(dis);
 		final U2 lineNumber = readU2(dis);
-		return new LineNumberTableAttribute.LineNumber(startPC, lineNumber);
+		return new LineNumberTableAttribute.LineNumber(index, startPC, lineNumber);
 	}
 
 	private LocalVariableAttribute.LocalVariable getLocalVariable(DataInputStream dis, String descriptorTitle) throws IOException {

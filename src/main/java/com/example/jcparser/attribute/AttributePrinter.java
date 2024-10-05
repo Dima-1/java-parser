@@ -51,9 +51,11 @@ public class AttributePrinter {
 	void print(ExceptionsAttribute attr) {
 		Parser.U2[] exceptions = attr.getExceptions();
 		print.u2(attr.getNumberOf(), "Attribute number of exceptions", "", true);
+		print.incIndent();
 		for (int i = 0; i < exceptions.length; i++) {
-			print.u2(exceptions[i], String.format("%5X ", i) + "Exception");
+			print.u2WithIndex(i, exceptions[i], "Exception");
 		}
+		print.decIndent();
 	}
 
 	void print(InnerClassesAttribute attr) {
@@ -88,7 +90,7 @@ public class AttributePrinter {
 	}
 
 	void print(LineNumberTableAttribute.LineNumber lineNumber) {
-		print.u2(lineNumber.startPC(), "Start PC");
+		print.u2WithIndex(lineNumber.index(), lineNumber.startPC(), "Start PC");
 		print.u2(lineNumber.lineNumber(), "Line number", "", true);
 	}
 
@@ -102,7 +104,7 @@ public class AttributePrinter {
 	}
 
 	void print(LocalVariableAttribute.LocalVariable localVariable) {
-		print.u2(localVariable.startPC(), "Start PC");
+		print.u2WithIndex(localVariable.index().getValue(), localVariable.startPC(), "Start PC");
 		print.u2(localVariable.length(), "Length", "", true);
 		print.u2(localVariable.nameIndex(), "Name index");
 		print.u2(localVariable.descriptorIndex(), localVariable.descriptorTitle() + " index");
@@ -119,16 +121,15 @@ public class AttributePrinter {
 	void print(NestMembersAttribute attr) {
 		Parser.U2[] classes = attr.getClasses();
 		print.u2(attr.getNumberOfClasses(), "Attribute number of classes", "", true);
+		print.incIndent();
 		for (int i = 0; i < classes.length; i++) {
-			print.u2(classes[i], String.format("%5X ", i) + "Nest");
+			print.u2WithIndex(i, classes[i], "Nest");
 		}
+		print.decIndent();
 	}
 
 	void print(InnerClassesAttribute.InnerClass innerClass) {
-		var formatedIndex = String.format("%5X ", innerClass.index());
-		print.decIndent();
-		print.u2(innerClass.innerClassInfoIndex(), formatedIndex + "Inner class");
-		print.incIndent();
+		print.u2WithIndex(innerClass.index(), innerClass.innerClassInfoIndex(), "Inner class");
 		print.u2(innerClass.outerClassInfoIndex(), "Outer class");
 		print.u2(innerClass.innerNameIndex(), "Inner name index");
 		print.accessFlags(innerClass.innerClassAccessFlags(), AccessFlag.Type.INNERCLASS);
@@ -146,11 +147,24 @@ public class AttributePrinter {
 	}
 
 	void print(BootstrapMethodsAttribute.BootstrapMethod bootstrapMethod) {
-		var formatedIndex = String.format("%5X ", bootstrapMethod.index());
-		print.u2(bootstrapMethod.bootstrapMethodRef(), formatedIndex + "Bootstrap method");
+		print.u2WithIndex(bootstrapMethod.index(), bootstrapMethod.bootstrapMethodRef(), "Bootstrap method");
 		print.u2(bootstrapMethod.numberOf(), "Number of arguments", "", true);
 		for (Parser.U2 u2 : bootstrapMethod.bootstrapArguments()) {
 			print.u2(u2, "Argument");
 		}
+	}
+
+	void print(MethodParameterAttribute attr) {
+		print.u1(attr.getNumberOf(), "Parameter count", true);
+		print.incIndent();
+		for (MethodParameterAttribute.MethodParameter methodParameter : attr.getMethodParameters()) {
+			methodParameter.print(this);
+		}
+		print.decIndent();
+	}
+
+	void print(MethodParameterAttribute.MethodParameter methodParameter) {
+		print.u2WithIndex(methodParameter.index(), methodParameter.nameIndex(), "Method parameter");
+		print.accessFlags(methodParameter.accessFlag(), AccessFlag.Type.PARAMETERS);
 	}
 }

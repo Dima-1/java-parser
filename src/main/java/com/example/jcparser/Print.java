@@ -34,9 +34,14 @@ public class Print {
 	}
 
 	public void u1(U1 u1, String title) {
+		u1(u1, title, false);
+	}
+
+	public void u1(U1 u1, String title, boolean addDecimal) {
 		String hexValue = String.format("%02X", u1.getValue());
-		System.out.printf(OFFSET_FORMAT + "%s %s\n",
-				u1.getOffset(), hexValue, title);
+		String decimalValue = String.format(addDecimal ? " (%02d)" : "", u1.getValue());
+		System.out.printf(OFFSET_FORMAT + "%s    %s %s\n", u1.getOffset(), hexValue,
+				title.indent(getIndents()).stripTrailing(), decimalValue);
 	}
 
 	public void u2(U2 u2, String title) {
@@ -50,6 +55,13 @@ public class Print {
 		String yellowString = u2.getSymbolic().isEmpty() ? YELLOW_STRING : " " + YELLOW_STRING;
 		System.out.printf(OFFSET_FORMAT + "%s " + titleColor + "%s" + ConsoleColors.RESET + "%s" + yellowString + "\n",
 				u2.getOffset(), splitHexValue, title.indent(getIndents()).stripTrailing(), decimalValue, u2.getSymbolic());
+	}
+
+	public void u2WithIndex(int index, Parser.U2 u2, String title) {
+		var formatedIndex = String.format("%5X ", index);
+		decIndent();
+		u2(u2, formatedIndex + title);
+		incIndent();
 	}
 
 	public void u4(U4 u4, String title) {

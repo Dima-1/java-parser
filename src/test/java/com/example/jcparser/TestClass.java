@@ -1,16 +1,19 @@
 package com.example.jcparser;
 
+import java.security.InvalidParameterException;
+
 public class TestClass {
 	public static void main(String[] args) {
 		TestClass testClassVar = new TestClass();
 		testClassVar.testMethod();
+		testClassVar.testMethodWithParameters(1, "test");
 	}
 
 	@Deprecated
 	private int oldCodeMethod() {
 		return 10;
 	}
-	
+
 	private void testMethod() {
 		class TestLocalClass {
 
@@ -28,6 +31,12 @@ public class TestClass {
 		System.out.println(testInnerClass.getFieldInt());
 		TestLocalClass testLocalClass = new TestLocalClass("local string");
 		System.out.println(testLocalClass.getStr());
+	}
+
+	private void testMethodWithParameters(int i, final String test) throws InvalidParameterException {
+		if (i == 0) {
+			throw new InvalidParameterException(test);
+		}
 	}
 
 	public class TestInnerClass {
