@@ -431,16 +431,16 @@ public class Parser {
 
 	private Opcode readOpcode(DataInputStream dis, int startCodeCount) throws IOException {
 		int offset = count;
-		int value = readByte(dis);
-		int size = Instruction.getArgumentSize(value);
+		int opcode = readByte(dis);
+		int size = Instruction.getArgumentsSize(opcode);
 		List<Integer> arguments = new ArrayList<>();
-		if (value == 0xC4) {
+		if (opcode == Instruction.WIDE.getCode()) {
 			int additionalOpcode = readByte(dis);
-			size = additionalOpcode == 0x84 ? 5 : 3;
+			size = additionalOpcode == Instruction.IINC.getCode() ? 5 : 3;
 			arguments.add(additionalOpcode);
 		}
-		if (value == 0xAA) {
-			size = (count - startCodeCount) % 4;
+		if (opcode == Instruction.TABLESWITCH.getCode()) {
+			size = getFirstBytePadding(startCodeCount);
 			readNBytes(dis, arguments, size);
 			size += 3 * U4.getSize();
 			U4 defaultValue = readU4(dis);
@@ -451,8 +451,8 @@ public class Parser {
 			arguments.addAll(high.getIntList());
 			size += (high.getValue() - low.getValue() + 1) * U4.getSize();
 		}
-		if (value == 0xAB) {
-			size = (count - startCodeCount) % 4;
+		if (opcode == Instruction.LOOKUPSWITCH.getCode()) {
+			size = getFirstBytePadding(startCodeCount);
 			readNBytes(dis, arguments, size);
 			size += 2 * U4.getSize();
 			U4 defaultValue = readU4(dis);
@@ -462,7 +462,11 @@ public class Parser {
 			size += nPairs.getValue() * 2 * U4.getSize();
 		}
 		readNBytes(dis, arguments, size);
-		return new Opcode(offset, value, arguments.stream().mapToInt(i -> i).toArray());
+		return new Opcode(offset, opcode, arguments.stream().mapToInt(i -> i).toArray());
+	}
+
+	private int getFirstBytePadding(int startCodeCount) {
+		return (count - startCodeCount) % 4;
 	}
 
 	private int readByte(DataInputStream dis) throws IOException {
