@@ -1,5 +1,6 @@
-package com.example.jcparser;
+package com.example.jcparser.test;
 
+import com.example.jcparser.Parser;
 import org.junit.jupiter.api.*;
 
 import java.io.*;
@@ -59,8 +60,9 @@ class ParserTest {
 		}
 		String expectedLastOffset = Long.toHexString(offset).toUpperCase();
 
-		assertEquals(expectedLastOffset, lastOffset);
-		assertArrayEquals(expectedLastBytes, lastBytes);
+		String lastParsedLine = "(Last parsed line " + lines[lines.length - 1] + ")";
+		assertEquals(expectedLastOffset, lastOffset, "Last offset " + lastParsedLine);
+		assertArrayEquals(expectedLastBytes, lastBytes, "Last bytes" + lastParsedLine);
 	}
 
 	private static String[] getBytes(String[] line) {
@@ -88,6 +90,6 @@ class ParserTest {
 						+ "(Previous " + lines[i - 1] + ")");
 			}
 		}
-		System.out.println("Total errors: " + errorCount);
+		System.out.printf("Total line parsed: %s Total errors: %s\n", lines.length, errorCount);
 	}
 }

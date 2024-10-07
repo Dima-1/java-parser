@@ -376,6 +376,39 @@ public class Parser {
 				yield new MethodParameterAttribute(constantPool, attributeNameIndex, attributeLength,
 						numberOf, methodParameters);
 			}
+			case "Module" -> {
+				final U2 moduleNameIndex = readU2(dis, true);
+				final U2 moduleFlags = readU2(dis);
+				final U2 moduleVersionIndex = readU2(dis, true);
+				final U2 requiresCount = readU2(dis);
+				ModuleAttribute.Requires[] requires = new ModuleAttribute.Requires[requiresCount.getValue()];
+				for (int i = 0; i < requiresCount.getValue(); i++) {
+					requires[i] = readRequires(i, dis);
+				}
+				final U2 exportsCount = readU2(dis);
+				ModuleAttribute.Exports[] exports = new ModuleAttribute.Exports[exportsCount.getValue()];
+				for (int i = 0; i < exportsCount.getValue(); i++) {
+					exports[i] = readExports(i, dis);
+				}
+				final U2 opensCount = readU2(dis);
+				ModuleAttribute.Opens[] opens = new ModuleAttribute.Opens[opensCount.getValue()];
+				for (int i = 0; i < opensCount.getValue(); i++) {
+					opens[i] = readOpens(i, dis);
+				}
+				final U2 usesCount = readU2(dis);
+				U2[] uses = new U2[usesCount.getValue()];
+				for (int i = 0; i < usesCount.getValue(); i++) {
+					uses[i] = readU2(dis);
+				}
+				final U2 providesCount = readU2(dis);
+				ModuleAttribute.Provides[] provides = new ModuleAttribute.Provides[opensCount.getValue()];
+				for (int i = 0; i < opensCount.getValue(); i++) {
+					provides[i] = readProvides(i, dis);
+				}
+				yield new ModuleAttribute(constantPool, attributeNameIndex, attributeLength,
+						moduleNameIndex, moduleFlags, moduleVersionIndex, requiresCount, requires, exportsCount, exports,
+						opensCount, opens, usesCount, uses, providesCount, provides);
+			}
 			case "NestMembers" -> {
 				final U2 numberOf = readU2(dis);
 				U2[] classes = new U2[numberOf.getValue()];
@@ -549,6 +582,45 @@ public class Parser {
 		final U2 nameIndex = readU2(dis, true);
 		final U2 accessFlag = readU2(dis);
 		return new MethodParameterAttribute.MethodParameter(index, nameIndex, accessFlag);
+	}
+
+	private ModuleAttribute.Requires readRequires(int index, DataInputStream dis) throws IOException {
+		final U2 requiresIndex = readU2(dis, true);
+		final U2 accessFlag = readU2(dis);
+		final U2 requiresVersionIndex = readU2(dis, true);
+		return new ModuleAttribute.Requires(index, requiresIndex, accessFlag, requiresVersionIndex);
+	}
+
+	private ModuleAttribute.Exports readExports(int index, DataInputStream dis) throws IOException {
+		final U2 exportsIndex = readU2(dis, true);
+		final U2 accessFlag = readU2(dis);
+		final U2 exportsToCount = readU2(dis, true);
+		U2[] exportsToIndex = new U2[exportsToCount.getValue()];
+		for (int i = 0; i < exportsToCount.getValue(); i++) {
+			exportsToIndex[i] = readU2(dis);
+		}
+		return new ModuleAttribute.Exports(index, exportsIndex, accessFlag, exportsToCount, exportsToIndex);
+	}
+
+	private ModuleAttribute.Opens readOpens(int index, DataInputStream dis) throws IOException {
+		final U2 opensIndex = readU2(dis, true);
+		final U2 accessFlag = readU2(dis);
+		final U2 opensToCount = readU2(dis, true);
+		U2[] opensToIndex = new U2[opensToCount.getValue()];
+		for (int i = 0; i < opensToCount.getValue(); i++) {
+			opensToIndex[i] = readU2(dis);
+		}
+		return new ModuleAttribute.Opens(index, opensIndex, accessFlag, opensToCount, opensToIndex);
+	}
+
+	private ModuleAttribute.Provides readProvides(int index, DataInputStream dis) throws IOException {
+		final U2 providesIndex = readU2(dis, true);
+		final U2 providesWithCount = readU2(dis, true);
+		U2[] providesWithIndex = new U2[providesWithCount.getValue()];
+		for (int i = 0; i < providesWithCount.getValue(); i++) {
+			providesWithIndex[i] = readU2(dis);
+		}
+		return new ModuleAttribute.Provides(index, providesIndex, providesWithCount, providesWithIndex);
 	}
 
 	public InnerClassesAttribute.InnerClass getInnerClass(int index, DataInputStream dis) throws IOException {

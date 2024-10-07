@@ -8,7 +8,11 @@ public class AccessFlag {
 		FIELD("Field"),
 		METHOD("Method"),
 		PARAMETERS("Parameter"),
-		INNERCLASS("Inner class");
+		INNERCLASS("Inner class"),
+		MODULE("Module"),
+		REQUIRES("Requires"),
+		EXPORTS("Exports"),
+		OPENS("Opens");
 
 		private final String title;
 
@@ -67,6 +71,17 @@ public class AccessFlag {
 					0x1000, "ACC_SYNTHETIC", // Declared synthetic; not present in the source code.
 					0x8000, "ACC_MANDATED"   // Implicitly declared in source code
 			);
+			case MODULE -> Map.of(
+					0x0020, "ACC_OPEN",      // Indicates that this module is open.
+					0x1000, "ACC_SYNTHETIC", // Indicates that this module was not explicitly or implicitly declared.
+					0x8000, "ACC_MANDATED"   // Indicates that this module was implicitly declared. 
+			);
+			case REQUIRES, EXPORTS, OPENS -> Map.of(
+					0x0020, "ACC_TRANSITIVE",   // Indicates that any module which depends on the current module, implicitly declares a dependence on the module indicated by this entry. 
+					0x0040, "ACC_STATIC_PHASE", // Indicates that this dependence is mandatory in the static phase, i.e., at compile time, but is optional in the dynamic phase, i.e., at run time. 
+					0x1000, "ACC_SYNTHETIC",    // Indicates that this module was not explicitly or implicitly declared.
+					0x8000, "ACC_MANDATED"      // Indicates that this module was implicitly declared. 
+			);
 		};
 	}
 
@@ -75,7 +90,7 @@ public class AccessFlag {
 		var res = new StringBuilder();
 		for (int bit = 1; bit < 0x100000; bit <<= 1) {
 			res.append((String) flagsMap.getOrDefault(value & bit, "")
-					.transform(s -> s.isEmpty() ? s : " " + s.replaceFirst("ACC_", "")));
+					.transform(s -> s.isEmpty() ? s : " " + s.replaceFirst("ACC_", "").replace("_", " ")));
 		}
 		return res.toString().toLowerCase();
 	}
