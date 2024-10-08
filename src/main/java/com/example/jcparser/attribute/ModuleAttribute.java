@@ -1,5 +1,7 @@
 package com.example.jcparser.attribute;
 
+import com.example.jcparser.Print;
+
 import java.util.List;
 
 import static com.example.jcparser.Parser.*;
@@ -37,6 +39,12 @@ public class ModuleAttribute extends Attribute {
 		this.uses = uses;
 		this.providesCount = providesCount;
 		this.provides = provides;
+	}
+
+	@Override
+	public void print(AttributePrinter printer) {
+		super.print(printer);
+		printer.print(this);
 	}
 
 	public U2 getModuleNameIndex() {
@@ -91,15 +99,36 @@ public class ModuleAttribute extends Attribute {
 		return provides;
 	}
 
-	public record Requires(int index, U2 requiresIndex, U2 accessFlag, U2 requiresVersionIndex) {
+	public record Requires(int index, U2 requiresIndex, U2 accessFlag,
+	                       U2 requiresVersionIndex) implements Print.Printable<AttributePrinter> {
+
+		@Override
+		public void print(AttributePrinter printer) {
+			printer.print(this);
+		}
 	}
 
-	public record Exports(int index, U2 exportsIndex, U2 accessFlag, U2 exportsToCount, U2[] exportsToIndex) {
+	public record Exports(int index, U2 exportsIndex, U2 accessFlag, U2 exportsToCount,
+	                      U2[] exportsToIndex) implements Print.Printable<AttributePrinter> {
+		@Override
+		public void print(AttributePrinter printer) {
+			printer.print(this);
+		}
 	}
 
-	public record Opens(int index, U2 opensIndex, U2 accessFlag, U2 opensToCount, U2[] opensToIndex) {
+	public record Opens(int index, U2 opensIndex, U2 accessFlag, U2 opensToCount,
+	                    U2[] opensToIndex) implements Print.Printable<AttributePrinter> {
+		@Override
+		public void print(AttributePrinter printer) {
+			printer.print(this);
+		}
 	}
 
-	public record Provides(int index, U2 providesIndex, U2 providesWithCount, U2[] providesWithIndex) {
+	public record Provides(int index, U2 providesIndex, U2 providesWithCount,
+	                       U2[] providesWithIndex) implements Print.Printable<AttributePrinter> {
+		@Override
+		public void print(AttributePrinter printer) {
+			printer.print(this);
+		}
 	}
 }

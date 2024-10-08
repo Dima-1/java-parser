@@ -401,8 +401,8 @@ public class Parser {
 					uses[i] = readU2(dis);
 				}
 				final U2 providesCount = readU2(dis);
-				ModuleAttribute.Provides[] provides = new ModuleAttribute.Provides[opensCount.getValue()];
-				for (int i = 0; i < opensCount.getValue(); i++) {
+				ModuleAttribute.Provides[] provides = new ModuleAttribute.Provides[providesCount.getValue()];
+				for (int i = 0; i < providesCount.getValue(); i++) {
 					provides[i] = readProvides(i, dis);
 				}
 				yield new ModuleAttribute(constantPool, attributeNameIndex, attributeLength,

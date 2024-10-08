@@ -34,18 +34,18 @@ public class AttributePrinter {
 		print.attributes(attr.getAttributes());
 	}
 
-	void print(StackMapTableAttribute attr) {
-		print.u2(attr.getNumberOf(), "Attribute number of stack maps", "", true);
-		for (StackMapFrame stackMapFrame : attr.getEntries()) {
-			stackMapFrame.print(print.getStackFramePrinter());
-		}
-	}
-
 	void print(ExceptionsAttribute.Exception attr) {
 		print.u2(attr.startPc(), "Attribute exception start pc");
 		print.u2(attr.endPc(), "Attribute exception end pc");
 		print.u2(attr.handlerPc(), "Attribute handler start pc");
 		print.u2(attr.catchType(), "Exception handler class");
+	}
+
+	void print(StackMapTableAttribute attr) {
+		print.u2(attr.getNumberOf(), "Attribute number of stack maps", "", true);
+		for (StackMapFrame stackMapFrame : attr.getEntries()) {
+			stackMapFrame.print(print.getStackFramePrinter());
+		}
 	}
 
 	void print(ExceptionsAttribute attr) {
@@ -67,9 +67,20 @@ public class AttributePrinter {
 		print.decIndent();
 	}
 
+	void print(InnerClassesAttribute.InnerClass innerClass) {
+		print.u2WithIndex(innerClass.index(), innerClass.innerClassInfoIndex(), "Inner class");
+		print.u2(innerClass.outerClassInfoIndex(), "Outer class");
+		print.u2(innerClass.innerNameIndex(), "Inner name index");
+		print.accessFlags(innerClass.innerClassAccessFlags(), AccessFlag.Type.INNERCLASS);
+	}
+
 	void print(EnclosingMethodAttribute attr) {
 		print.u2(attr.getClassIndex(), "Attribute class index");
 		print.u2(attr.getMethodIndex(), "Attribute method index");
+	}
+
+	void print(SignatureAttribute attr) {
+		print.u2(attr.getSignatureIndex(), "Attribute signature index");
 	}
 
 	void print(SourceFileAttribute attr) {
@@ -118,27 +129,6 @@ public class AttributePrinter {
 		}
 	}
 
-	void print(NestMembersAttribute attr) {
-		Parser.U2[] classes = attr.getClasses();
-		print.u2(attr.getNumberOfClasses(), "Attribute number of classes", "", true);
-		print.incIndent();
-		for (int i = 0; i < classes.length; i++) {
-			print.u2WithIndex(i, classes[i], "Nest");
-		}
-		print.decIndent();
-	}
-
-	void print(InnerClassesAttribute.InnerClass innerClass) {
-		print.u2WithIndex(innerClass.index(), innerClass.innerClassInfoIndex(), "Inner class");
-		print.u2(innerClass.outerClassInfoIndex(), "Outer class");
-		print.u2(innerClass.innerNameIndex(), "Inner name index");
-		print.accessFlags(innerClass.innerClassAccessFlags(), AccessFlag.Type.INNERCLASS);
-	}
-
-	void print(SignatureAttribute attr) {
-		print.u2(attr.getSignatureIndex(), "Attribute signature index");
-	}
-
 	void print(BootstrapMethodsAttribute attr) {
 		print.u2(attr.getNumberOf(), "Attribute number of bootstrap methods", "", true);
 		for (BootstrapMethodsAttribute.BootstrapMethod bootstrapMethod : attr.getBootstrapMethods()) {
@@ -166,5 +156,63 @@ public class AttributePrinter {
 	void print(MethodParameterAttribute.MethodParameter methodParameter) {
 		print.u2WithIndex(methodParameter.index(), methodParameter.nameIndex(), "Method parameter");
 		print.accessFlags(methodParameter.accessFlag(), AccessFlag.Type.PARAMETERS);
+	}
+
+	void print(ModuleAttribute attr) {
+		print.u2(attr.getModuleNameIndex(), "Attribute module name index", "", true);
+		print.accessFlags(attr.getModuleFlags(), AccessFlag.Type.MODULE);
+		print.u2(attr.getModuleVersionIndex(), "Attribute module version index", "", true);
+		print.u2(attr.getRequiresCount(), "Requires count", "", true);
+		print.incIndent();
+		for (ModuleAttribute.Requires require : attr.getRequires()) {
+			require.print(this);
+		}
+		print.decIndent();
+		print.u2(attr.getExportsCount(), "Exports count", "", true);
+		print.incIndent();
+		for (ModuleAttribute.Exports export : attr.getExports()) {
+			export.print(this);
+		}
+		print.decIndent();
+		print.u2(attr.getOpensCount(), "Opens count", "", true);
+		print.incIndent();
+		for (ModuleAttribute.Opens open : attr.getOpens()) {
+			open.print(this);
+		}
+		print.decIndent();
+		print.u2(attr.getUsesCount(), "Uses count", "", true);
+		Parser.U2[] uses = attr.getUses();
+		print.incIndent();
+		for (int i = 0; i < uses.length; i++) {
+			print.u2WithIndex(i, uses[i], "Uses");
+		}
+		print.decIndent();
+		print.u2(attr.getProvidesCount(), "Provides count", "", true);
+		print.incIndent();
+		for (ModuleAttribute.Provides provide : attr.getProvides()) {
+			provide.print(this);
+		}
+	}
+
+	void print(ModuleAttribute.Requires attr) {
+	}
+
+	void print(ModuleAttribute.Exports attr) {
+	}
+
+	void print(ModuleAttribute.Opens attr) {
+	}
+
+	void print(ModuleAttribute.Provides attr) {
+	}
+
+	void print(NestMembersAttribute attr) {
+		Parser.U2[] classes = attr.getClasses();
+		print.u2(attr.getNumberOfClasses(), "Attribute number of classes", "", true);
+		print.incIndent();
+		for (int i = 0; i < classes.length; i++) {
+			print.u2WithIndex(i, classes[i], "Nest");
+		}
+		print.decIndent();
 	}
 }
