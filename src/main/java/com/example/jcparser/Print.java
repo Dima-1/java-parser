@@ -64,6 +64,16 @@ public class Print {
 		incIndent();
 	}
 
+	public void u2array(Parser.U2Array u2Array, String title, String itemTitle) {
+		u2(u2Array.numberOf(), title, "", true);
+		incIndent();
+		Parser.U2[] array = u2Array.array();
+		for (int i = 0; i < array.length; i++) {
+			u2WithIndex(i, array[i], itemTitle);
+		}
+		decIndent();
+	}
+
 	public void u4(U4 u4, String title) {
 		String hexValue = String.format("%08X", u4.getValue());
 		StringBuilder splitHexValue = getSplitHexValue(hexValue);

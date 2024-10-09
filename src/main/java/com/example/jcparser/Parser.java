@@ -294,12 +294,8 @@ public class Parser {
 				yield new StackMapTableAttribute(constantPool, attributeNameIndex, attributeLength, numberOf, entries);
 			}
 			case "Exceptions" -> {
-				final U2 numberOf = readU2(dis);
-				U2[] exceptions = new U2[numberOf.getValue()];
-				for (int i = 0; i < numberOf.getValue(); i++) {
-					exceptions[i] = readU2(dis, true);
-				}
-				yield new ExceptionsAttribute(constantPool, attributeNameIndex, attributeLength, numberOf, exceptions);
+				U2Array exceptions = readU2Array(dis);
+				yield new ExceptionsAttribute(constantPool, attributeNameIndex, attributeLength, exceptions);
 			}
 			case "InnerClasses" -> {
 				final U2 numberOf = readU2(dis);
@@ -426,6 +422,16 @@ public class Parser {
 				yield new Attribute(constantPool, attributeNameIndex, attributeLength);
 			}
 		};
+	}
+
+	private U2Array readU2Array(DataInputStream dis) throws IOException {
+		final U2 numberOf = readU2(dis);
+		int arrayLength = numberOf.getValue();
+		U2[] array = new U2[arrayLength];
+		for (int i = 0; i < arrayLength; i++) {
+			array[i] = readU2(dis, true);
+		}
+		return new U2Array(numberOf, array);
 	}
 
 
@@ -1089,5 +1095,8 @@ public class Parser {
 		public int[] getByteArray() {
 			return new int[]{(value >> 24) & 0xFF, (value >> 16) & 0xFF, (value >> 8) & 0xFF, value & 0xFF};
 		}
+	}
+
+	public record U2Array(U2 numberOf, U2[] array) {
 	}
 }

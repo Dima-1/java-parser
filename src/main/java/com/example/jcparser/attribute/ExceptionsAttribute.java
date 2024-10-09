@@ -7,15 +7,12 @@ import java.util.List;
 import static com.example.jcparser.Parser.*;
 
 public class ExceptionsAttribute extends Attribute {
-	private final U2 numberOf;
-	private final U2[] exceptions;
+	private final U2Array exceptions;
 
-	public ExceptionsAttribute(List<ConstantPoolEntry> constants, U2 nameIndex, U4 length, U2 numberOf,
-	                           U2[] exceptions) {
+	public ExceptionsAttribute(List<ConstantPoolEntry> constants, U2 nameIndex, U4 length, U2Array exceptions) {
 		super(constants, nameIndex, length);
-		this.numberOf = numberOf;
 		this.exceptions = exceptions;
-		for (U2 exception : exceptions) {
+		for (U2 exception : exceptions.array()) {
 			ConstantPoolEntry entry = constants.get(exception.getValue() - 1);
 			if (!entry.getConstantTag().isConstantClass()) {
 				String message = String.format("%04X ExceptionValue = %s", exception.getOffset(), entry.getConstantTag());
@@ -30,11 +27,7 @@ public class ExceptionsAttribute extends Attribute {
 		printer.print(this);
 	}
 
-	public U2 getNumberOf() {
-		return numberOf;
-	}
-
-	public U2[] getExceptions() {
+	public U2Array getExceptions() {
 		return exceptions;
 	}
 

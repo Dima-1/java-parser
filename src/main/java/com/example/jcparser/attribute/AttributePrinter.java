@@ -49,13 +49,7 @@ public class AttributePrinter {
 	}
 
 	void print(ExceptionsAttribute attr) {
-		Parser.U2[] exceptions = attr.getExceptions();
-		print.u2(attr.getNumberOf(), "Attribute number of exceptions", "", true);
-		print.incIndent();
-		for (int i = 0; i < exceptions.length; i++) {
-			print.u2WithIndex(i, exceptions[i], "Exception");
-		}
-		print.decIndent();
+		print.u2array(attr.getExceptions(), "Attribute number of exceptions", "Exception");
 	}
 
 	void print(InnerClassesAttribute attr) {
