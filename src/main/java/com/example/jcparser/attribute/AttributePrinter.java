@@ -132,10 +132,7 @@ public class AttributePrinter {
 
 	void print(BootstrapMethodsAttribute.BootstrapMethod bootstrapMethod) {
 		print.u2WithIndex(bootstrapMethod.index(), bootstrapMethod.bootstrapMethodRef(), "Bootstrap method");
-		print.u2(bootstrapMethod.numberOf(), "Number of arguments", "", true);
-		for (Parser.U2 u2 : bootstrapMethod.bootstrapArguments()) {
-			print.u2(u2, "Argument");
-		}
+		print.u2array(bootstrapMethod.bootstrapArguments(), "Number of arguments", "Argument");
 	}
 
 	void print(MethodParameterAttribute attr) {
@@ -174,13 +171,7 @@ public class AttributePrinter {
 			open.print(this);
 		}
 		print.decIndent();
-		print.u2(attr.getUsesCount(), "Uses count", "", true);
-		Parser.U2[] uses = attr.getUses();
-		print.incIndent();
-		for (int i = 0; i < uses.length; i++) {
-			print.u2WithIndex(i, uses[i], "Uses");
-		}
-		print.decIndent();
+		print.u2array(attr.getUses(), "Uses count", "Uses");
 		print.u2(attr.getProvidesCount(), "Provides count", "", true);
 		print.incIndent();
 		for (ModuleAttribute.Provides provide : attr.getProvides()) {
@@ -201,12 +192,6 @@ public class AttributePrinter {
 	}
 
 	void print(NestMembersAttribute attr) {
-		Parser.U2[] classes = attr.getClasses();
-		print.u2(attr.getNumberOfClasses(), "Attribute number of classes", "", true);
-		print.incIndent();
-		for (int i = 0; i < classes.length; i++) {
-			print.u2WithIndex(i, classes[i], "Nest");
-		}
-		print.decIndent();
+		print.u2array(attr.getClasses(), "Attribute number of classes", "Nest");
 	}
 }

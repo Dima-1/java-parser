@@ -16,15 +16,14 @@ public class ModuleAttribute extends Attribute {
 	private final Exports[] exports;
 	private final U2 opensCount;
 	private final Opens[] opens;
-	private final U2 usesCount;
-	private final U2[] uses;
+	private final U2Array uses;
 	private final U2 providesCount;
 	private final Provides[] provides;
 
 	public ModuleAttribute(List<ConstantPoolEntry> constantPool, U2 attributeNameIndex, U4 attributeLength,
 	                       U2 moduleNameIndex, U2 moduleFlags, U2 moduleVersionIndex,
 	                       U2 requiresCount, Requires[] requires, U2 exportsCount, Exports[] exports,
-	                       U2 opensCount, Opens[] opens, U2 usesCount, U2[] uses, U2 providesCount, Provides[] provides) {
+	                       U2 opensCount, Opens[] opens, U2Array uses, U2 providesCount, Provides[] provides) {
 		super(constantPool, attributeNameIndex, attributeLength);
 		this.moduleNameIndex = moduleNameIndex;
 		this.moduleFlags = moduleFlags;
@@ -35,7 +34,6 @@ public class ModuleAttribute extends Attribute {
 		this.exports = exports;
 		this.opensCount = opensCount;
 		this.opens = opens;
-		this.usesCount = usesCount;
 		this.uses = uses;
 		this.providesCount = providesCount;
 		this.provides = provides;
@@ -83,11 +81,7 @@ public class ModuleAttribute extends Attribute {
 		return opens;
 	}
 
-	public U2 getUsesCount() {
-		return usesCount;
-	}
-
-	public U2[] getUses() {
+	public U2Array getUses() {
 		return uses;
 	}
 
@@ -99,8 +93,8 @@ public class ModuleAttribute extends Attribute {
 		return provides;
 	}
 
-	public record Requires(int index, U2 requiresIndex, U2 accessFlag,
-	                       U2 requiresVersionIndex) implements Print.Printable<AttributePrinter> {
+	public record Requires(int index, U2 requiresIndex, U2 accessFlag, U2 requiresVersionIndex)
+			implements Print.Printable<AttributePrinter> {
 
 		@Override
 		public void print(AttributePrinter printer) {
@@ -108,24 +102,24 @@ public class ModuleAttribute extends Attribute {
 		}
 	}
 
-	public record Exports(int index, U2 exportsIndex, U2 accessFlag, U2 exportsToCount,
-	                      U2[] exportsToIndex) implements Print.Printable<AttributePrinter> {
+	public record Exports(int index, U2 exportsIndex, U2 accessFlag, U2Array exportsToIndex)
+			implements Print.Printable<AttributePrinter> {
 		@Override
 		public void print(AttributePrinter printer) {
 			printer.print(this);
 		}
 	}
 
-	public record Opens(int index, U2 opensIndex, U2 accessFlag, U2 opensToCount,
-	                    U2[] opensToIndex) implements Print.Printable<AttributePrinter> {
+	public record Opens(int index, U2 opensIndex, U2 accessFlag, U2Array opensToIndex)
+			implements Print.Printable<AttributePrinter> {
 		@Override
 		public void print(AttributePrinter printer) {
 			printer.print(this);
 		}
 	}
 
-	public record Provides(int index, U2 providesIndex, U2 providesWithCount,
-	                       U2[] providesWithIndex) implements Print.Printable<AttributePrinter> {
+	public record Provides(int index, U2 providesIndex, U2Array providesWithIndex)
+			implements Print.Printable<AttributePrinter> {
 		@Override
 		public void print(AttributePrinter printer) {
 			printer.print(this);

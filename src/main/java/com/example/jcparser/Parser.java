@@ -294,7 +294,7 @@ public class Parser {
 				yield new StackMapTableAttribute(constantPool, attributeNameIndex, attributeLength, numberOf, entries);
 			}
 			case "Exceptions" -> {
-				U2Array exceptions = readU2Array(dis);
+				U2Array exceptions = readU2Array(dis, true);
 				yield new ExceptionsAttribute(constantPool, attributeNameIndex, attributeLength, exceptions);
 			}
 			case "InnerClasses" -> {
@@ -391,11 +391,7 @@ public class Parser {
 				for (int i = 0; i < opensCount.getValue(); i++) {
 					opens[i] = readOpens(i, dis);
 				}
-				final U2 usesCount = readU2(dis);
-				U2[] uses = new U2[usesCount.getValue()];
-				for (int i = 0; i < usesCount.getValue(); i++) {
-					uses[i] = readU2(dis);
-				}
+				U2Array uses = readU2Array(dis, false);
 				final U2 providesCount = readU2(dis);
 				ModuleAttribute.Provides[] provides = new ModuleAttribute.Provides[providesCount.getValue()];
 				for (int i = 0; i < providesCount.getValue(); i++) {
@@ -403,16 +399,11 @@ public class Parser {
 				}
 				yield new ModuleAttribute(constantPool, attributeNameIndex, attributeLength,
 						moduleNameIndex, moduleFlags, moduleVersionIndex, requiresCount, requires, exportsCount, exports,
-						opensCount, opens, usesCount, uses, providesCount, provides);
+						opensCount, opens, uses, providesCount, provides);
 			}
 			case "NestMembers" -> {
-				final U2 numberOf = readU2(dis);
-				U2[] classes = new U2[numberOf.getValue()];
-				for (int i = 0; i < numberOf.getValue(); i++) {
-					classes[i] = readU2(dis, true);
-				}
-				yield new NestMembersAttribute(constantPool, attributeNameIndex, attributeLength,
-						numberOf, classes);
+				U2Array classes = readU2Array(dis, true);
+				yield new NestMembersAttribute(constantPool, attributeNameIndex, attributeLength, classes);
 			}
 			default -> {
 				for (int j = 0; j < attributeLength.getValue(); j++) {
@@ -424,16 +415,15 @@ public class Parser {
 		};
 	}
 
-	private U2Array readU2Array(DataInputStream dis) throws IOException {
+	private U2Array readU2Array(DataInputStream dis, boolean addSymbolicName) throws IOException {
 		final U2 numberOf = readU2(dis);
-		int arrayLength = numberOf.getValue();
-		U2[] array = new U2[arrayLength];
+		final int arrayLength = numberOf.getValue();
+		final U2[] array = new U2[arrayLength];
 		for (int i = 0; i < arrayLength; i++) {
-			array[i] = readU2(dis, true);
+			array[i] = readU2(dis, addSymbolicName);
 		}
 		return new U2Array(numberOf, array);
 	}
-
 
 	private U1 readU1(DataInputStream dis) throws IOException {
 		int value = dis.readUnsignedByte();
@@ -576,12 +566,8 @@ public class Parser {
 
 	public BootstrapMethodsAttribute.BootstrapMethod getBootstrapMethod(int index, DataInputStream dis) throws IOException {
 		final U2 bootstrapMethodRef = readU2(dis, true);
-		final U2 numberOf = readU2(dis);
-		U2[] bootstrapArguments = new U2[numberOf.getValue()];
-		for (int i = 0; i < numberOf.getValue(); i++) {
-			bootstrapArguments[i] = readU2(dis, true);
-		}
-		return new BootstrapMethodsAttribute.BootstrapMethod(index, bootstrapMethodRef, numberOf, bootstrapArguments);
+		final U2Array bootstrapArguments = readU2Array(dis, true);
+		return new BootstrapMethodsAttribute.BootstrapMethod(index, bootstrapMethodRef, bootstrapArguments);
 	}
 
 	private MethodParameterAttribute.MethodParameter getMethodParameter(int index, DataInputStream dis) throws IOException {
@@ -600,33 +586,21 @@ public class Parser {
 	private ModuleAttribute.Exports readExports(int index, DataInputStream dis) throws IOException {
 		final U2 exportsIndex = readU2(dis, true);
 		final U2 accessFlag = readU2(dis);
-		final U2 exportsToCount = readU2(dis, true);
-		U2[] exportsToIndex = new U2[exportsToCount.getValue()];
-		for (int i = 0; i < exportsToCount.getValue(); i++) {
-			exportsToIndex[i] = readU2(dis);
-		}
-		return new ModuleAttribute.Exports(index, exportsIndex, accessFlag, exportsToCount, exportsToIndex);
+		final U2Array exportsToIndex = readU2Array(dis, false);
+		return new ModuleAttribute.Exports(index, exportsIndex, accessFlag, exportsToIndex);
 	}
 
 	private ModuleAttribute.Opens readOpens(int index, DataInputStream dis) throws IOException {
 		final U2 opensIndex = readU2(dis, true);
 		final U2 accessFlag = readU2(dis);
-		final U2 opensToCount = readU2(dis, true);
-		U2[] opensToIndex = new U2[opensToCount.getValue()];
-		for (int i = 0; i < opensToCount.getValue(); i++) {
-			opensToIndex[i] = readU2(dis);
-		}
-		return new ModuleAttribute.Opens(index, opensIndex, accessFlag, opensToCount, opensToIndex);
+		final U2Array opensToIndex = readU2Array(dis, false);
+		return new ModuleAttribute.Opens(index, opensIndex, accessFlag, opensToIndex);
 	}
 
 	private ModuleAttribute.Provides readProvides(int index, DataInputStream dis) throws IOException {
 		final U2 providesIndex = readU2(dis, true);
-		final U2 providesWithCount = readU2(dis, true);
-		U2[] providesWithIndex = new U2[providesWithCount.getValue()];
-		for (int i = 0; i < providesWithCount.getValue(); i++) {
-			providesWithIndex[i] = readU2(dis);
-		}
-		return new ModuleAttribute.Provides(index, providesIndex, providesWithCount, providesWithIndex);
+		final U2Array providesWithIndex = readU2Array(dis, false);
+		return new ModuleAttribute.Provides(index, providesIndex, providesWithIndex);
 	}
 
 	public InnerClassesAttribute.InnerClass getInnerClass(int index, DataInputStream dis) throws IOException {

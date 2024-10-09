@@ -31,9 +31,9 @@ public class BootstrapMethodsAttribute extends Attribute {
 		return bootstrapMethods;
 	}
 
-	public record BootstrapMethod(int index, U2 bootstrapMethodRef, U2 numberOf,
-	                                     U2[] bootstrapArguments) implements Print.Printable<AttributePrinter> {
-	
+	public record BootstrapMethod(int index, U2 bootstrapMethodRef, U2Array bootstrapArguments)
+			implements Print.Printable<AttributePrinter> {
+
 		@Override
 		public void print(AttributePrinter printer) {
 			printer.print(this);

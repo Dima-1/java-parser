@@ -58,7 +58,7 @@ public class Print {
 	}
 
 	public void u2WithIndex(int index, Parser.U2 u2, String title) {
-		var formatedIndex = String.format("%5X ", index);
+		String formatedIndex = String.format("%5X ", index);
 		decIndent();
 		u2(u2, formatedIndex + title);
 		incIndent();
@@ -88,7 +88,7 @@ public class Print {
 
 	private static StringBuilder getSplitHexValue(String hexValue) {
 		StringBuilder splitHexValue = new StringBuilder(hexValue);
-		for (var i = 2; i < splitHexValue.length(); i += 3) {
+		for (int i = 2; i < splitHexValue.length(); i += 3) {
 			splitHexValue.insert(i, " ");
 		}
 		return splitHexValue;
