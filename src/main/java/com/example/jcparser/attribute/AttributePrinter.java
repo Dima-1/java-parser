@@ -180,15 +180,26 @@ public class AttributePrinter {
 	}
 
 	void print(ModuleAttribute.Requires attr) {
+		print.u2WithIndex(attr.index(), attr.requiresIndex(), "Requires index");
+		print.accessFlags(attr.accessFlag(), AccessFlag.Type.REQUIRES);
+		print.u2(attr.requiresVersionIndex(), "Requires version index");
 	}
 
 	void print(ModuleAttribute.Exports attr) {
+		print.u2WithIndex(attr.index(), attr.exportsIndex(), "Export index");
+		print.accessFlags(attr.accessFlag(), AccessFlag.Type.EXPORTS);
+		print.u2array(attr.exportsToIndex(), "Export to index", "Export");
 	}
 
 	void print(ModuleAttribute.Opens attr) {
+		print.u2WithIndex(attr.index(), attr.opensIndex(), "Open index");
+		print.accessFlags(attr.accessFlag(), AccessFlag.Type.OPENS);
+		print.u2array(attr.opensToIndex(), "Open to index", "Open");
 	}
 
 	void print(ModuleAttribute.Provides attr) {
+		print.u2WithIndex(attr.index(), attr.providesIndex(), "Provides index");
+		print.u2array(attr.providesWithIndex(), "Provides with index", "Provides with");
 	}
 
 	void print(NestMembersAttribute attr) {

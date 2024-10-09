@@ -294,7 +294,7 @@ public class Parser {
 				yield new StackMapTableAttribute(constantPool, attributeNameIndex, attributeLength, numberOf, entries);
 			}
 			case "Exceptions" -> {
-				U2Array exceptions = readU2Array(dis, true);
+				U2Array exceptions = readU2Array(dis);
 				yield new ExceptionsAttribute(constantPool, attributeNameIndex, attributeLength, exceptions);
 			}
 			case "InnerClasses" -> {
@@ -391,7 +391,7 @@ public class Parser {
 				for (int i = 0; i < opensCount.getValue(); i++) {
 					opens[i] = readOpens(i, dis);
 				}
-				U2Array uses = readU2Array(dis, false);
+				U2Array uses = readU2Array(dis);
 				final U2 providesCount = readU2(dis);
 				ModuleAttribute.Provides[] provides = new ModuleAttribute.Provides[providesCount.getValue()];
 				for (int i = 0; i < providesCount.getValue(); i++) {
@@ -402,7 +402,7 @@ public class Parser {
 						opensCount, opens, uses, providesCount, provides);
 			}
 			case "NestMembers" -> {
-				U2Array classes = readU2Array(dis, true);
+				U2Array classes = readU2Array(dis);
 				yield new NestMembersAttribute(constantPool, attributeNameIndex, attributeLength, classes);
 			}
 			default -> {
@@ -415,12 +415,12 @@ public class Parser {
 		};
 	}
 
-	private U2Array readU2Array(DataInputStream dis, boolean addSymbolicName) throws IOException {
+	private U2Array readU2Array(DataInputStream dis) throws IOException {
 		final U2 numberOf = readU2(dis);
 		final int arrayLength = numberOf.getValue();
 		final U2[] array = new U2[arrayLength];
 		for (int i = 0; i < arrayLength; i++) {
-			array[i] = readU2(dis, addSymbolicName);
+			array[i] = readU2(dis, true);
 		}
 		return new U2Array(numberOf, array);
 	}
@@ -566,7 +566,7 @@ public class Parser {
 
 	public BootstrapMethodsAttribute.BootstrapMethod getBootstrapMethod(int index, DataInputStream dis) throws IOException {
 		final U2 bootstrapMethodRef = readU2(dis, true);
-		final U2Array bootstrapArguments = readU2Array(dis, true);
+		final U2Array bootstrapArguments = readU2Array(dis);
 		return new BootstrapMethodsAttribute.BootstrapMethod(index, bootstrapMethodRef, bootstrapArguments);
 	}
 
@@ -586,20 +586,20 @@ public class Parser {
 	private ModuleAttribute.Exports readExports(int index, DataInputStream dis) throws IOException {
 		final U2 exportsIndex = readU2(dis, true);
 		final U2 accessFlag = readU2(dis);
-		final U2Array exportsToIndex = readU2Array(dis, false);
+		final U2Array exportsToIndex = readU2Array(dis);
 		return new ModuleAttribute.Exports(index, exportsIndex, accessFlag, exportsToIndex);
 	}
 
 	private ModuleAttribute.Opens readOpens(int index, DataInputStream dis) throws IOException {
 		final U2 opensIndex = readU2(dis, true);
 		final U2 accessFlag = readU2(dis);
-		final U2Array opensToIndex = readU2Array(dis, false);
+		final U2Array opensToIndex = readU2Array(dis);
 		return new ModuleAttribute.Opens(index, opensIndex, accessFlag, opensToIndex);
 	}
 
 	private ModuleAttribute.Provides readProvides(int index, DataInputStream dis) throws IOException {
 		final U2 providesIndex = readU2(dis, true);
-		final U2Array providesWithIndex = readU2Array(dis, false);
+		final U2Array providesWithIndex = readU2Array(dis);
 		return new ModuleAttribute.Provides(index, providesIndex, providesWithIndex);
 	}
 
