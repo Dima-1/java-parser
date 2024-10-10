@@ -194,7 +194,7 @@ public class Parser {
 
 		return switch (constantTag) {
 			case CONSTANT_Utf8 -> {
-				final int length = dis.readUnsignedShort();
+				int length = dis.readUnsignedShort();
 				count += Short.BYTES;
 				count += length;
 				yield new ConstantPoolUtf8(constantPool, offset, idx, constantTag, new String(dis.readNBytes(length)));
@@ -220,33 +220,33 @@ public class Parser {
 				yield new ConstantPoolDouble(constantPool, offset, idx, constantTag, aDouble);
 			}
 			case CONSTANT_Class, CONSTANT_String, CONSTANT_MethodType, CONSTANT_Module, CONSTANT_Package -> {
-				final int aShort = dis.readUnsignedShort();
+				int aShort = dis.readUnsignedShort();
 				count += Short.BYTES;
 				yield new ConstantPoolString(constantPool, offset, idx, constantTag, aShort);
 			}
 			case CONSTANT_Fieldref, CONSTANT_Methodref, CONSTANT_InterfaceMethodref -> {
-				final int aShort = dis.readUnsignedShort();
+				int aShort = dis.readUnsignedShort();
 				count += Short.BYTES;
 				int bShort = dis.readUnsignedShort();
 				count += Short.BYTES;
 				yield new ConstantPoolMethodRef(constantPool, offset, idx, constantTag, aShort, bShort);
 			}
 			case CONSTANT_NameAndType -> {
-				final int aShort = dis.readUnsignedShort();
+				int aShort = dis.readUnsignedShort();
 				count += Short.BYTES;
 				int bShort = dis.readUnsignedShort();
 				count += Short.BYTES;
 				yield new ConstantPoolNameAndType(constantPool, offset, idx, constantTag, aShort, bShort);
 			}
 			case CONSTANT_Dynamic, CONSTANT_InvokeDynamic -> {
-				final int aShort = dis.readUnsignedShort();
+				int aShort = dis.readUnsignedShort();
 				count += Short.BYTES;
 				int bShort = dis.readUnsignedShort();
 				count += Short.BYTES;
 				yield new ConstantPoolDynamic(constantPool, offset, idx, constantTag, aShort, bShort);
 			}
 			case CONSTANT_MethodHandle -> {
-				final int referenceKind = dis.read();
+				int referenceKind = dis.read();
 				count++;
 				int bShort = dis.readUnsignedShort();
 				count += Short.BYTES;
@@ -262,31 +262,31 @@ public class Parser {
 
 		return switch (name) {
 			case "ConstantValue" -> {
-				final U2 aShort = readU2(dis, true);
-				yield new ConstantValueAttribute(constantPool, attributeNameIndex, attributeLength, aShort);
+				U2 constantValueIndex = readU2(dis, true);
+				yield new ConstantValueAttribute(constantPool, attributeNameIndex, attributeLength, constantValueIndex);
 			}
 			case "Code" -> {
-				final U2 maxStack = readU2(dis);
-				final U2 maxLocals = readU2(dis);
-				final U4 codeLength = readU4(dis);
+				U2 maxStack = readU2(dis);
+				U2 maxLocals = readU2(dis);
+				U4 codeLength = readU4(dis);
 				List<Opcode> opcodes = new ArrayList<>();
 				int startCodeCount = count;
 				int endCodeCount = startCodeCount + codeLength.getValue();
 				do {
 					opcodes.add(readOpcode(dis, startCodeCount));
 				} while (count < endCodeCount);
-				final U2 exceptionTableLength = readU2(dis);
+				U2 exceptionTableLength = readU2(dis);
 				ExceptionsAttribute.Exception[] exceptions = new ExceptionsAttribute.Exception[exceptionTableLength.getValue()];
 				for (int i = 0; i < exceptionTableLength.getValue(); i++) {
 					exceptions[i] = readException(dis);
 				}
-				final U2 numberOf = readU2(dis);
+				U2 numberOf = readU2(dis);
 				Map<String, Attribute> attributes = new LinkedHashMap<>(readAttributes(dis, numberOf.value));
 				yield new CodeAttribute(constantPool, attributeNameIndex, attributeLength, maxStack, maxLocals,
 						codeLength, opcodes, exceptionTableLength, exceptions, numberOf, attributes);
 			}
 			case "StackMapTable" -> {
-				final U2 numberOf = readU2(dis);
+				U2 numberOf = readU2(dis);
 				List<StackMapFrame> entries = new ArrayList<>();
 				for (int i = 0; i < numberOf.getValue(); i++) {
 					entries.add(readStackMapFrame(dis));
@@ -298,7 +298,7 @@ public class Parser {
 				yield new ExceptionsAttribute(constantPool, attributeNameIndex, attributeLength, exceptions);
 			}
 			case "InnerClasses" -> {
-				final U2 numberOf = readU2(dis);
+				U2 numberOf = readU2(dis);
 				InnerClassesAttribute.InnerClass[] classes = new InnerClassesAttribute.InnerClass[numberOf.getValue()];
 				for (int i = 0; i < numberOf.getValue(); i++) {
 					classes[i] = getInnerClass(i, dis);
@@ -307,18 +307,18 @@ public class Parser {
 						numberOf, classes);
 			}
 			case "EnclosingMethod" -> {
-				final U2 classIndex = readU2(dis, true);
-				final U2 methodIndex = readU2(dis, true);
+				U2 classIndex = readU2(dis, true);
+				U2 methodIndex = readU2(dis, true);
 				yield new EnclosingMethodAttribute(constantPool, attributeNameIndex, attributeLength,
 						classIndex, methodIndex);
 			}
 			case "Synthetic", "Deprecated" -> new Attribute(constantPool, attributeNameIndex, attributeLength);
 			case "Signature" -> {
-				final U2 aShort = readU2(dis, true);
+				U2 aShort = readU2(dis, true);
 				yield new SignatureAttribute(constantPool, attributeNameIndex, attributeLength, aShort);
 			}
 			case "SourceFile" -> {
-				final U2 aShort = readU2(dis, true);
+				U2 aShort = readU2(dis, true);
 				yield new SourceFileAttribute(constantPool, attributeNameIndex, attributeLength, aShort);
 			}
 			case "SourceDebugExtension" -> {
@@ -326,7 +326,7 @@ public class Parser {
 				yield new SourceDebugExtensionAttribute(constantPool, attributeNameIndex, attributeLength, utf8);
 			}
 			case "LineNumberTable" -> {
-				final U2 numberOf = readU2(dis);
+				U2 numberOf = readU2(dis);
 				LineNumberTableAttribute.LineNumber[] lineNumbers = new LineNumberTableAttribute.LineNumber[numberOf.getValue()];
 				for (int i = 0; i < numberOf.getValue(); i++) {
 					lineNumbers[i] = getLineNumber(i, dis);
@@ -335,7 +335,7 @@ public class Parser {
 						lineNumbers);
 			}
 			case "LocalVariableTable" -> {
-				final U2 numberOf = readU2(dis);
+				U2 numberOf = readU2(dis);
 				LocalVariableAttribute.LocalVariable[] localVariables
 						= new LocalVariableAttribute.LocalVariable[numberOf.getValue()];
 				for (int i = 0; i < numberOf.getValue(); i++) {
@@ -345,7 +345,7 @@ public class Parser {
 						localVariables);
 			}
 			case "LocalVariableTypeTable" -> {
-				final U2 numberOf = readU2(dis);
+				U2 numberOf = readU2(dis);
 				LocalVariableAttribute.LocalVariable[] localVariables
 						= new LocalVariableAttribute.LocalVariable[numberOf.getValue()];
 				for (int i = 0; i < numberOf.getValue(); i++) {
@@ -355,7 +355,7 @@ public class Parser {
 						localVariables);
 			}
 			case "BootstrapMethods" -> {
-				final U2 numberOf = readU2(dis);
+				U2 numberOf = readU2(dis);
 				BootstrapMethodsAttribute.BootstrapMethod[] bootstrapMethods = new BootstrapMethodsAttribute.BootstrapMethod[numberOf.getValue()];
 				for (int i = 0; i < numberOf.getValue(); i++) {
 					bootstrapMethods[i] = getBootstrapMethod(i, dis);
@@ -364,7 +364,7 @@ public class Parser {
 						numberOf, bootstrapMethods);
 			}
 			case "MethodParameters" -> {
-				final U1 numberOf = readU1(dis);
+				U1 numberOf = readU1(dis);
 				MethodParameterAttribute.MethodParameter[] methodParameters = new MethodParameterAttribute.MethodParameter[numberOf.getValue()];
 				for (int i = 0; i < numberOf.getValue(); i++) {
 					methodParameters[i] = getMethodParameter(i, dis);
@@ -373,26 +373,26 @@ public class Parser {
 						numberOf, methodParameters);
 			}
 			case "Module" -> {
-				final U2 moduleNameIndex = readU2(dis, true);
-				final U2 moduleFlags = readU2(dis);
-				final U2 moduleVersionIndex = readU2(dis, true);
-				final U2 requiresCount = readU2(dis);
+				U2 moduleNameIndex = readU2(dis, true);
+				U2 moduleFlags = readU2(dis);
+				U2 moduleVersionIndex = readU2(dis, true);
+				U2 requiresCount = readU2(dis);
 				ModuleAttribute.Requires[] requires = new ModuleAttribute.Requires[requiresCount.getValue()];
 				for (int i = 0; i < requiresCount.getValue(); i++) {
 					requires[i] = readRequires(i, dis);
 				}
-				final U2 exportsCount = readU2(dis);
+				U2 exportsCount = readU2(dis);
 				ModuleAttribute.Exports[] exports = new ModuleAttribute.Exports[exportsCount.getValue()];
 				for (int i = 0; i < exportsCount.getValue(); i++) {
 					exports[i] = readExports(i, dis);
 				}
-				final U2 opensCount = readU2(dis);
+				U2 opensCount = readU2(dis);
 				ModuleAttribute.Opens[] opens = new ModuleAttribute.Opens[opensCount.getValue()];
 				for (int i = 0; i < opensCount.getValue(); i++) {
 					opens[i] = readOpens(i, dis);
 				}
 				U2Array uses = readU2Array(dis);
-				final U2 providesCount = readU2(dis);
+				U2 providesCount = readU2(dis);
 				ModuleAttribute.Provides[] provides = new ModuleAttribute.Provides[providesCount.getValue()];
 				for (int i = 0; i < providesCount.getValue(); i++) {
 					provides[i] = readProvides(i, dis);
@@ -416,9 +416,9 @@ public class Parser {
 	}
 
 	private U2Array readU2Array(DataInputStream dis) throws IOException {
-		final U2 numberOf = readU2(dis);
-		final int arrayLength = numberOf.getValue();
-		final U2[] array = new U2[arrayLength];
+		U2 numberOf = readU2(dis);
+		int arrayLength = numberOf.getValue();
+		U2[] array = new U2[arrayLength];
 		for (int i = 0; i < arrayLength; i++) {
 			array[i] = readU2(dis, true);
 		}
@@ -565,75 +565,75 @@ public class Parser {
 	}
 
 	public BootstrapMethodsAttribute.BootstrapMethod getBootstrapMethod(int index, DataInputStream dis) throws IOException {
-		final U2 bootstrapMethodRef = readU2(dis, true);
-		final U2Array bootstrapArguments = readU2Array(dis);
+		U2 bootstrapMethodRef = readU2(dis, true);
+		U2Array bootstrapArguments = readU2Array(dis);
 		return new BootstrapMethodsAttribute.BootstrapMethod(index, bootstrapMethodRef, bootstrapArguments);
 	}
 
 	private MethodParameterAttribute.MethodParameter getMethodParameter(int index, DataInputStream dis) throws IOException {
-		final U2 nameIndex = readU2(dis, true);
-		final U2 accessFlag = readU2(dis);
+		U2 nameIndex = readU2(dis, true);
+		U2 accessFlag = readU2(dis);
 		return new MethodParameterAttribute.MethodParameter(index, nameIndex, accessFlag);
 	}
 
 	private ModuleAttribute.Requires readRequires(int index, DataInputStream dis) throws IOException {
-		final U2 requiresIndex = readU2(dis, true);
-		final U2 accessFlag = readU2(dis);
-		final U2 requiresVersionIndex = readU2(dis, true);
+		U2 requiresIndex = readU2(dis, true);
+		U2 accessFlag = readU2(dis);
+		U2 requiresVersionIndex = readU2(dis, true);
 		return new ModuleAttribute.Requires(index, requiresIndex, accessFlag, requiresVersionIndex);
 	}
 
 	private ModuleAttribute.Exports readExports(int index, DataInputStream dis) throws IOException {
-		final U2 exportsIndex = readU2(dis, true);
-		final U2 accessFlag = readU2(dis);
-		final U2Array exportsToIndex = readU2Array(dis);
+		U2 exportsIndex = readU2(dis, true);
+		U2 accessFlag = readU2(dis);
+		U2Array exportsToIndex = readU2Array(dis);
 		return new ModuleAttribute.Exports(index, exportsIndex, accessFlag, exportsToIndex);
 	}
 
 	private ModuleAttribute.Opens readOpens(int index, DataInputStream dis) throws IOException {
-		final U2 opensIndex = readU2(dis, true);
-		final U2 accessFlag = readU2(dis);
-		final U2Array opensToIndex = readU2Array(dis);
+		U2 opensIndex = readU2(dis, true);
+		U2 accessFlag = readU2(dis);
+		U2Array opensToIndex = readU2Array(dis);
 		return new ModuleAttribute.Opens(index, opensIndex, accessFlag, opensToIndex);
 	}
 
 	private ModuleAttribute.Provides readProvides(int index, DataInputStream dis) throws IOException {
-		final U2 providesIndex = readU2(dis, true);
-		final U2Array providesWithIndex = readU2Array(dis);
+		U2 providesIndex = readU2(dis, true);
+		U2Array providesWithIndex = readU2Array(dis);
 		return new ModuleAttribute.Provides(index, providesIndex, providesWithIndex);
 	}
 
 	public InnerClassesAttribute.InnerClass getInnerClass(int index, DataInputStream dis) throws IOException {
-		final U2 innerClassInfoIndex = readU2(dis, true);
-		final U2 outerClassInfoIndex = readU2(dis, true);
+		U2 innerClassInfoIndex = readU2(dis, true);
+		U2 outerClassInfoIndex = readU2(dis, true);
 		outerClassInfoIndex.clearZeroSymbolic();
-		final U2 innerNameIndex = readU2(dis, true);
+		U2 innerNameIndex = readU2(dis, true);
 		innerNameIndex.clearZeroSymbolic();
-		final U2 innerClassAccessFlags = readU2(dis);
+		U2 innerClassAccessFlags = readU2(dis);
 		innerClassAccessFlags.clearZeroSymbolic();
 		return new InnerClassesAttribute.InnerClass(index, innerClassInfoIndex, outerClassInfoIndex, innerNameIndex, innerClassAccessFlags);
 	}
 
 	public LineNumberTableAttribute.LineNumber getLineNumber(int index, DataInputStream dis) throws IOException {
-		final U2 startPC = readU2(dis);
-		final U2 lineNumber = readU2(dis);
+		U2 startPC = readU2(dis);
+		U2 lineNumber = readU2(dis);
 		return new LineNumberTableAttribute.LineNumber(index, startPC, lineNumber);
 	}
 
 	private LocalVariableAttribute.LocalVariable getLocalVariable(DataInputStream dis, String descriptorTitle) throws IOException {
-		final U2 startPC = readU2(dis);
-		final U2 length = readU2(dis);
-		final U2 nameIndex = readU2(dis, true);
-		final U2 descriptorIndex = readU2(dis, true);
-		final U2 index = readU2(dis);
+		U2 startPC = readU2(dis);
+		U2 length = readU2(dis);
+		U2 nameIndex = readU2(dis, true);
+		U2 descriptorIndex = readU2(dis, true);
+		U2 index = readU2(dis);
 		return new LocalVariableAttribute.LocalVariable(startPC, length, nameIndex, descriptorIndex, index, descriptorTitle);
 	}
 
 	public ExceptionsAttribute.Exception readException(DataInputStream dis) throws IOException {
-		final U2 startPc = readU2(dis);
-		final U2 endPc = readU2(dis);
-		final U2 handlerPc = readU2(dis);
-		final U2 catchType = readU2(dis, true);
+		U2 startPc = readU2(dis);
+		U2 endPc = readU2(dis);
+		U2 handlerPc = readU2(dis);
+		U2 catchType = readU2(dis, true);
 		return new ExceptionsAttribute.Exception(startPc, endPc, handlerPc, catchType);
 	}
 
