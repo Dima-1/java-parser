@@ -202,6 +202,18 @@ public class AttributePrinter {
 		print.u2array(attr.providesWithIndex(), "Provides with index", "Provides with");
 	}
 
+	void print(ModulePackagesAttribute attr) {
+		print.u2array(attr.getPackages(), "Attribute number of packages", "Package");
+	}
+
+	void print(ModuleMainClassAttribute attr) {
+		print.u2(attr.getMainClassIndex(), "Module main class");
+	}
+
+	void print(NestHostAttribute attr) {
+		print.u2(attr.getHostClassIndex(), "Host class");
+	}
+
 	void print(NestMembersAttribute attr) {
 		print.u2array(attr.getClasses(), "Attribute number of classes", "Nest");
 	}

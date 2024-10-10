@@ -401,6 +401,19 @@ public class Parser {
 						moduleNameIndex, moduleFlags, moduleVersionIndex, requiresCount, requires, exportsCount, exports,
 						opensCount, opens, uses, providesCount, provides);
 			}
+			case "ModulePackages" -> {
+				U2Array packages = readU2Array(dis);
+				yield new ModulePackagesAttribute(constantPool, attributeNameIndex, attributeLength, packages);
+
+			}
+			case "ModuleMainClass" -> {
+				U2 aShort = readU2(dis, true);
+				yield new ModuleMainClassAttribute(constantPool, attributeNameIndex, attributeLength, aShort);
+			}
+			case "NestHost" -> {
+				U2 aShort = readU2(dis, true);
+				yield new NestHostAttribute(constantPool, attributeNameIndex, attributeLength, aShort);
+			}
 			case "NestMembers" -> {
 				U2Array classes = readU2Array(dis);
 				yield new NestMembersAttribute(constantPool, attributeNameIndex, attributeLength, classes);
