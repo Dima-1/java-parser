@@ -354,6 +354,17 @@ public class Parser {
 				yield new LocalVariableTypeTableAttribute(constantPool, attributeNameIndex, attributeLength, numberOf,
 						localVariables);
 			}
+			case "RuntimeVisibleAnnotations" -> {
+				U2 numberOf = readU2(dis);
+				;
+				RuntimeVisibleAnnotationsAttribute.RuntimeVisibleAnnotation[] annotations
+						= new RuntimeVisibleAnnotationsAttribute.RuntimeVisibleAnnotation[numberOf.getValue()];
+				for (int i = 0; i < numberOf.getValue(); i++) {
+					annotations[i] = getAnnotations(dis);
+				}
+				yield new RuntimeVisibleAnnotationsAttribute(constantPool, attributeNameIndex, attributeLength, numberOf,
+						annotations);
+			}
 			case "BootstrapMethods" -> {
 				U2 numberOf = readU2(dis);
 				BootstrapMethodsAttribute.BootstrapMethod[] bootstrapMethods = new BootstrapMethodsAttribute.BootstrapMethod[numberOf.getValue()];
@@ -640,6 +651,15 @@ public class Parser {
 		U2 descriptorIndex = readU2(dis, true);
 		U2 index = readU2(dis);
 		return new LocalVariableAttribute.LocalVariable(startPC, length, nameIndex, descriptorIndex, index, descriptorTitle);
+	}
+
+	private RuntimeVisibleAnnotationsAttribute.RuntimeVisibleAnnotation getAnnotations(DataInputStream dis) throws IOException {
+		U2 typeIndex = readU2(dis);
+		U2 lengthOfPair = readU2(dis);
+		U2 nameIndex = readU2(dis, true);
+		//todo read value pairs
+		return new RuntimeVisibleAnnotationsAttribute.RuntimeVisibleAnnotation(
+				typeIndex, lengthOfPair, nameIndex);
 	}
 
 	public ExceptionsAttribute.Exception readException(DataInputStream dis) throws IOException {
