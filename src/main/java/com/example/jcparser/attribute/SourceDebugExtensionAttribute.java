@@ -4,7 +4,7 @@ import org.apache.commons.text.StringEscapeUtils;
 
 import java.util.List;
 
-import static com.example.jcparser.Parser.*;
+import com.example.jcparser.Parser.*;
 
 public class SourceDebugExtensionAttribute extends Attribute {
 	private final String utf8;

@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.example.jcparser.AccessFlag.getAccessFlags;
-import static com.example.jcparser.Parser.*;
+import com.example.jcparser.Parser.*;
 
 public class Print {
 
@@ -33,22 +33,22 @@ public class Print {
 		OFFSET_FORMAT = "%0" + Long.toHexString(length).length() + "X ";
 	}
 
-	public void u1(U1 u1, String title) {
+	public void u1(Parser.U1 u1, String title) {
 		u1(u1, title, false);
 	}
 
-	public void u1(U1 u1, String title, boolean addDecimal) {
+	public void u1(Parser.U1 u1, String title, boolean addDecimal) {
 		String hexValue = String.format("%02X", u1.getValue());
 		String decimalValue = String.format(addDecimal ? " (%02d)" : "", u1.getValue());
 		System.out.printf(OFFSET_FORMAT + "%s    %s %s\n", u1.getOffset(), hexValue,
 				title.indent(getIndents()).stripTrailing(), decimalValue);
 	}
 
-	public void u2(U2 u2, String title) {
+	public void u2(Parser.U2 u2, String title) {
 		u2(u2, title, "", false);
 	}
 
-	public void u2(U2 u2, String title, String titleColor, boolean addDecimal) {
+	public void u2(Parser.U2 u2, String title, String titleColor, boolean addDecimal) {
 		String hexValue = String.format("%04X", u2.getValue());
 		StringBuilder splitHexValue = getSplitHexValue(hexValue);
 		String decimalValue = String.format(addDecimal ? " (%02d)" : "", u2.getValue());
@@ -74,7 +74,7 @@ public class Print {
 		decIndent();
 	}
 
-	public void u4(U4 u4, String title) {
+	public void u4(Parser.U4 u4, String title) {
 		String hexValue = String.format("%08X", u4.getValue());
 		StringBuilder splitHexValue = getSplitHexValue(hexValue);
 		String yellowString = u4.getSymbolic().isEmpty() ? YELLOW_STRING : " " + YELLOW_STRING;
@@ -108,7 +108,7 @@ public class Print {
 		}
 	}
 
-	public void accessFlags(U2 u2, AccessFlag.Type type) {
+	public void accessFlags(Parser.U2 u2, AccessFlag.Type type) {
 		String flags = getAccessFlags(u2.getValue(), type);
 		String title = type.getTitle() + " access flags";
 		System.out.printf(OFFSET_FORMAT + "%s %s" + YELLOW_STRING + "\n", u2.getOffset(),

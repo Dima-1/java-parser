@@ -2,6 +2,7 @@ package com.example.jcparser;
 
 import com.example.jcparser.attribute.*;
 import com.example.jcparser.attribute.StackMapTableAttribute;
+import com.example.jcparser.attribute.ElementValue;
 import com.example.jcparser.attribute.stackmapframe.*;
 import org.apache.commons.text.StringEscapeUtils;
 
@@ -38,6 +39,10 @@ public class Parser {
 		}
 		Parser parser = new Parser(new Print());
 		parser.process(file);
+	}
+
+	public List<ConstantPoolEntry> getConstantPool() {
+		return constantPool;
 	}
 
 	private void process(File file) {
@@ -262,7 +267,7 @@ public class Parser {
 
 		return switch (name) {
 			case "ConstantValue" -> {
-				U2 constantValueIndex = readU2(dis, true);
+				U2 constantValueIndex = readU2(dis, true).check(ConstantPoolUtf8.class);
 				yield new ConstantValueAttribute(constantPool, attributeNameIndex, attributeLength, constantValueIndex);
 			}
 			case "Code" -> {
@@ -356,7 +361,6 @@ public class Parser {
 			}
 			case "RuntimeVisibleAnnotations" -> {
 				U2 numberOf = readU2(dis);
-				;
 				RuntimeVisibleAnnotationsAttribute.RuntimeVisibleAnnotation[] annotations
 						= new RuntimeVisibleAnnotationsAttribute.RuntimeVisibleAnnotation[numberOf.getValue()];
 				for (int i = 0; i < numberOf.getValue(); i++) {
@@ -654,19 +658,49 @@ public class Parser {
 	}
 
 	private RuntimeVisibleAnnotationsAttribute.RuntimeVisibleAnnotation getAnnotations(DataInputStream dis) throws IOException {
-		U2 typeIndex = readU2(dis);
+		U2 typeIndex = readU2(dis).check(ConstantPoolUtf8.class);
 		U2 lengthOfPair = readU2(dis);
-		U2 nameIndex = readU2(dis, true);
-		//todo read value pairs
+		ValuePair[] valuePairs = new ValuePair[lengthOfPair.getValue()];
+		for (int i = 0; i < lengthOfPair.getValue(); i++) {
+			valuePairs[i] = readValuePair(dis);
+		}
 		return new RuntimeVisibleAnnotationsAttribute.RuntimeVisibleAnnotation(
-				typeIndex, lengthOfPair, nameIndex);
+				typeIndex, lengthOfPair, valuePairs);
+	}
+
+	private ValuePair readValuePair(DataInputStream dis) throws IOException {
+		U2 nameIndex = readU2(dis, true);
+		ElementValue elementValue = readElementValue(dis);
+		return new ValuePair(nameIndex, elementValue);
+	}
+
+	private ElementValue readElementValue(DataInputStream dis) throws IOException {
+		U2 u2First = null;
+		U2 u2Second = null;
+		ElementValue[] elementValues = null;
+		U1 tag = readU1(dis);
+		switch ((char) tag.getValue()) {
+			case 'B', 'C', 'D', 'F', 'I', 'J', 'S', 'Z', 's' -> u2First = readU2(dis, true);
+			case 'e' -> {
+				u2First = readU2(dis, true);
+				u2Second = readU2(dis, true);
+			}
+
+			case 'c' -> u2First = readU2(dis, true);
+			case '@' -> getAnnotations(dis);
+			case '[' -> {
+				u2First = readU2(dis, true);
+				//	readElementValue(dis);
+			}
+		}
+		return new ElementValue(tag, u2First, u2Second);
 	}
 
 	public ExceptionsAttribute.Exception readException(DataInputStream dis) throws IOException {
 		U2 startPc = readU2(dis);
 		U2 endPc = readU2(dis);
 		U2 handlerPc = readU2(dis);
-		U2 catchType = readU2(dis, true);
+		U2 catchType = readU2(dis, true).check(ConstantPoolString.class);
 		return new ExceptionsAttribute.Exception(startPc, endPc, handlerPc, catchType);
 	}
 
@@ -1031,7 +1065,7 @@ public class Parser {
 		}
 	}
 
-	public static class U1 {
+	public class U1 {
 		private final int offset;
 		protected final int value;
 		private String symbolic;
@@ -1071,9 +1105,13 @@ public class Parser {
 		public int[] getByteArray() {
 			return new int[]{value & 0xFF};
 		}
+
+		public U1 check(Class<?> aClass) {
+			return this;
+		}
 	}
 
-	public static class U2 extends U1 {
+	public class U2 extends U1 {
 
 		public U2(int offset, int value, String symbolic) {
 			super(offset, value, symbolic);
@@ -1087,9 +1125,18 @@ public class Parser {
 		public int[] getByteArray() {
 			return new int[]{(value >> 8) & 0xFF, value & 0xFF};
 		}
+
+		@Override
+		public U2 check(Class<?> clazz) {
+			if (!clazz.isInstance(getConstantPool().get(value))) {
+				String message = String.format("%04X Value = %s not a %s", getOffset(), value, clazz.getName());
+				throw new RuntimeException(message);
+			}
+			return this;
+		}
 	}
 
-	public static class U4 extends U2 {
+	public class U4 extends U2 {
 		public U4(int offset, int value, String symbolic) {
 			super(offset, value, symbolic);
 		}

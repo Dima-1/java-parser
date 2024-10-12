@@ -2,7 +2,7 @@ package com.example.jcparser.attribute.stackmapframe;
 
 import com.example.jcparser.Print;
 
-import static com.example.jcparser.Parser.*;
+import com.example.jcparser.Parser.*;
 
 public class StackMapFrame implements Print.Printable<StackFramePrinter> {
 	private final U1 tag;

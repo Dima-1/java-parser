@@ -2,7 +2,7 @@ package com.example.jcparser.attribute;
 
 import java.util.List;
 
-import static com.example.jcparser.Parser.*;
+import com.example.jcparser.Parser.*;
 
 public class RuntimeVisibleAnnotationsAttribute extends Attribute {
 	private final U2 numberOf;
@@ -24,7 +24,7 @@ public class RuntimeVisibleAnnotationsAttribute extends Attribute {
 	}
 
 	public static class RuntimeVisibleAnnotation {
-		public RuntimeVisibleAnnotation(U2 typeIndex, U2 lengthOfPair, U2 nameIndex) {
+		public RuntimeVisibleAnnotation(U2 typeIndex, U2 lengthOfPair, ValuePair[] valuePairs) {
 		}
 	}
 }

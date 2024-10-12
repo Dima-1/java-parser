@@ -2,7 +2,7 @@ package com.example.jcparser.attribute;
 
 import java.util.List;
 
-import static com.example.jcparser.Parser.*;
+import com.example.jcparser.Parser.*;
 
 public class NestMembersAttribute extends Attribute {
 	private final U2Array classes;

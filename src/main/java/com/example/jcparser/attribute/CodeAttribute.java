@@ -3,7 +3,7 @@ package com.example.jcparser.attribute;
 import java.util.List;
 import java.util.Map;
 
-import static com.example.jcparser.Parser.*;
+import com.example.jcparser.Parser.*;
 
 public class CodeAttribute extends Attribute {
 	private final U2 maxStack;

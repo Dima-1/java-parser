@@ -3,7 +3,7 @@ package com.example.jcparser.attribute;
 
 import java.util.List;
 
-import static com.example.jcparser.Parser.*;
+import com.example.jcparser.Parser.*;
 
 public class LocalVariableTableAttribute extends LocalVariableAttribute {
 

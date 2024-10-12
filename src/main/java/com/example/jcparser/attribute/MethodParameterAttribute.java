@@ -1,17 +1,18 @@
 package com.example.jcparser.attribute;
 
+import com.example.jcparser.Parser;
 import com.example.jcparser.Print;
 
 import java.util.List;
 
-import static com.example.jcparser.Parser.*;
+import com.example.jcparser.Parser.*;
 
 public class MethodParameterAttribute extends Attribute {
-	private final U1 numberOf;
+	private final Parser.U1 numberOf;
 	private final MethodParameterAttribute.MethodParameter[] methodParameters;
 
 	public MethodParameterAttribute(List<ConstantPoolEntry> constantPool, U2 attributeNameIndex, U4 attributeLength,
-	                                U1 numberOf, MethodParameterAttribute.MethodParameter[] methodParameters) {
+	                                Parser.U1 numberOf, MethodParameterAttribute.MethodParameter[] methodParameters) {
 		super(constantPool, attributeNameIndex, attributeLength);
 		this.numberOf = numberOf;
 		this.methodParameters = methodParameters;

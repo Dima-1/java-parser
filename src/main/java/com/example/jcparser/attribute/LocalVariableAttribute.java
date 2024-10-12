@@ -4,7 +4,7 @@ import com.example.jcparser.Print;
 
 import java.util.List;
 
-import static com.example.jcparser.Parser.*;
+import com.example.jcparser.Parser.*;
 
 public class LocalVariableAttribute extends Attribute {
 	private final U2 numberOf;
