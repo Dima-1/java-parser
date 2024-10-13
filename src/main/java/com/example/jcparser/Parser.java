@@ -1,15 +1,19 @@
 package com.example.jcparser;
 
 import com.example.jcparser.attribute.*;
-import com.example.jcparser.attribute.StackMapTableAttribute;
-import com.example.jcparser.attribute.ElementValue;
+import com.example.jcparser.attribute.annotation.ElementValue;
+import com.example.jcparser.attribute.annotation.RuntimeVisibleAnnotationsAttribute;
+import com.example.jcparser.attribute.annotation.ValuePair;
 import com.example.jcparser.attribute.stackmapframe.*;
 import org.apache.commons.text.StringEscapeUtils;
 
-import java.io.*;
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.*;
 
-import static com.example.jcparser.AccessFlag.*;
+import static com.example.jcparser.AccessFlag.Type;
 
 /**
  * <a href="https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-4.html#jvms-4.1">4.1. The ClassFile Structure</a>
@@ -364,7 +368,7 @@ public class Parser {
 				RuntimeVisibleAnnotationsAttribute.RuntimeVisibleAnnotation[] annotations
 						= new RuntimeVisibleAnnotationsAttribute.RuntimeVisibleAnnotation[numberOf.getValue()];
 				for (int i = 0; i < numberOf.getValue(); i++) {
-					annotations[i] = getAnnotations(dis);
+					annotations[i] = getAnnotation(dis);
 				}
 				yield new RuntimeVisibleAnnotationsAttribute(constantPool, attributeNameIndex, attributeLength, numberOf,
 						annotations);
@@ -657,8 +661,8 @@ public class Parser {
 		return new LocalVariableAttribute.LocalVariable(startPC, length, nameIndex, descriptorIndex, index, descriptorTitle);
 	}
 
-	private RuntimeVisibleAnnotationsAttribute.RuntimeVisibleAnnotation getAnnotations(DataInputStream dis) throws IOException {
-		U2 typeIndex = readU2(dis).check(ConstantPoolUtf8.class);
+	private RuntimeVisibleAnnotationsAttribute.RuntimeVisibleAnnotation getAnnotation(DataInputStream dis) throws IOException {
+		U2 typeIndex = readU2(dis, true).check(ConstantPoolUtf8.class);
 		U2 lengthOfPair = readU2(dis);
 		ValuePair[] valuePairs = new ValuePair[lengthOfPair.getValue()];
 		for (int i = 0; i < lengthOfPair.getValue(); i++) {
@@ -678,6 +682,7 @@ public class Parser {
 		U2 u2First = null;
 		U2 u2Second = null;
 		ElementValue[] elementValues = null;
+		RuntimeVisibleAnnotationsAttribute.RuntimeVisibleAnnotation annotation = null;
 		U1 tag = readU1(dis);
 		switch ((char) tag.getValue()) {
 			case 'B', 'C', 'D', 'F', 'I', 'J', 'S', 'Z', 's' -> u2First = readU2(dis, true);
@@ -685,15 +690,18 @@ public class Parser {
 				u2First = readU2(dis, true);
 				u2Second = readU2(dis, true);
 			}
-
 			case 'c' -> u2First = readU2(dis, true);
-			case '@' -> getAnnotations(dis);
+			case '@' -> annotation = getAnnotation(dis);
 			case '[' -> {
 				u2First = readU2(dis, true);
-				//	readElementValue(dis);
+				elementValues = new ElementValue[u2First.getValue()];
+				for (int i = 0; i < u2First.getValue(); i++) {
+					elementValues[i] = readElementValue(dis);
+				}
 			}
+			default -> throw new IllegalStateException("Unexpected value: " + (char) tag.getValue());
 		}
-		return new ElementValue(tag, u2First, u2Second);
+		return new ElementValue(tag, u2First, u2Second, annotation, elementValues);
 	}
 
 	public ExceptionsAttribute.Exception readException(DataInputStream dis) throws IOException {

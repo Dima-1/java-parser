@@ -3,6 +3,8 @@ package com.example.jcparser.attribute;
 import com.example.jcparser.AccessFlag;
 import com.example.jcparser.Parser;
 import com.example.jcparser.Print;
+import com.example.jcparser.attribute.annotation.RuntimeVisibleAnnotationsAttribute;
+import com.example.jcparser.attribute.annotation.ValuePair;
 import com.example.jcparser.attribute.stackmapframe.StackMapFrame;
 
 public class AttributePrinter {
@@ -120,6 +122,23 @@ public class AttributePrinter {
 		print.u2(attr.getNumberOf(), "Attribute number of local variable types", "", true);
 		for (LocalVariableAttribute.LocalVariable localVariable : attr.getLocalVariables()) {
 			localVariable.print(this);
+		}
+	}
+
+	public void print(RuntimeVisibleAnnotationsAttribute attr) {
+		print.u2(attr.getNumberOf(), "Attribute number of visible annotation", "", true);
+		print.incIndent();
+		for (RuntimeVisibleAnnotationsAttribute.RuntimeVisibleAnnotation visibleAnnotation : attr.getAnnotations()) {
+			visibleAnnotation.print(this);
+		}
+		print.decIndent();
+	}
+
+	public void print(RuntimeVisibleAnnotationsAttribute.RuntimeVisibleAnnotation attr) {
+		print.u2(attr.typeIndex(), "Type of annotation", "", true);
+		print.u2(attr.lengthOfPair(), "Number of value pair", "", true);
+		for (ValuePair valuePair : attr.valuePairs()) {
+			//	valuePair.print(this);
 		}
 	}
 
