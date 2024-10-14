@@ -1,5 +1,8 @@
 package com.example.jcparser.test;
 
+import java.lang.annotation.Repeatable;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.security.InvalidParameterException;
 
 public class TestClass {
@@ -33,6 +36,8 @@ public class TestClass {
 		System.out.println(testLocalClass.getStr());
 	}
 
+	@TestAnnotation(name = "New name 1", id = 1)
+	@TestAnnotation(name = "New name 2", id = 2)
 	private void testMethodWithParameters(int i, final String test) throws InvalidParameterException {
 		if (i == 0) {
 			throw new InvalidParameterException(test);
@@ -49,5 +54,18 @@ public class TestClass {
 		public int getFieldInt() {
 			return fieldInt * 11;
 		}
+	}
+
+	@Repeatable(TestRepeatableAnnotations.class)
+	@Retention(RetentionPolicy.RUNTIME)
+	@interface TestAnnotation {
+		String name() default "default name";
+		int id() default 0;
+	}
+	
+
+	@Retention(RetentionPolicy.RUNTIME)
+	@interface TestRepeatableAnnotations {
+		TestAnnotation[] value();
 	}
 }

@@ -3,6 +3,7 @@ package com.example.jcparser;
 import com.example.jcparser.attribute.*;
 import com.example.jcparser.attribute.annotation.ElementValue;
 import com.example.jcparser.attribute.annotation.RuntimeVisibleAnnotationsAttribute;
+import com.example.jcparser.attribute.annotation.TagValueItem;
 import com.example.jcparser.attribute.annotation.ValuePair;
 import com.example.jcparser.attribute.stackmapframe.*;
 import org.apache.commons.text.StringEscapeUtils;
@@ -684,22 +685,20 @@ public class Parser {
 		ElementValue[] elementValues = null;
 		RuntimeVisibleAnnotationsAttribute.RuntimeVisibleAnnotation annotation = null;
 		U1 tag = readU1(dis);
-		switch ((char) tag.getValue()) {
-			case 'B', 'C', 'D', 'F', 'I', 'J', 'S', 'Z', 's' -> u2First = readU2(dis, true);
-			case 'e' -> {
+		switch (TagValueItem.getTagValue(tag.getValue())) {
+			case CONST_VALUE_INDEX, CLASS_INFO_INDEX -> u2First = readU2(dis, true);
+			case ENUM_CONST_VALUE -> {
 				u2First = readU2(dis, true);
 				u2Second = readU2(dis, true);
 			}
-			case 'c' -> u2First = readU2(dis, true);
-			case '@' -> annotation = getAnnotation(dis);
-			case '[' -> {
+			case ANNOTATION_VALUE -> annotation = getAnnotation(dis);
+			case ARRAY_VALUE -> {
 				u2First = readU2(dis, true);
 				elementValues = new ElementValue[u2First.getValue()];
 				for (int i = 0; i < u2First.getValue(); i++) {
 					elementValues[i] = readElementValue(dis);
 				}
 			}
-			default -> throw new IllegalStateException("Unexpected value: " + (char) tag.getValue());
 		}
 		return new ElementValue(tag, u2First, u2Second, annotation, elementValues);
 	}

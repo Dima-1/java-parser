@@ -3,7 +3,9 @@ package com.example.jcparser.attribute;
 import com.example.jcparser.AccessFlag;
 import com.example.jcparser.Parser;
 import com.example.jcparser.Print;
+import com.example.jcparser.attribute.annotation.ElementValue;
 import com.example.jcparser.attribute.annotation.RuntimeVisibleAnnotationsAttribute;
+import com.example.jcparser.attribute.annotation.TagValueItem;
 import com.example.jcparser.attribute.annotation.ValuePair;
 import com.example.jcparser.attribute.stackmapframe.StackMapFrame;
 
@@ -138,7 +140,33 @@ public class AttributePrinter {
 		print.u2(attr.typeIndex(), "Type of annotation", "", true);
 		print.u2(attr.lengthOfPair(), "Number of value pair", "", true);
 		for (ValuePair valuePair : attr.valuePairs()) {
-			//	valuePair.print(this);
+			valuePair.print(this);
+		}
+	}
+
+	public void print(ValuePair valuePair) {
+		print.u2(valuePair.elementNameIndex(), "Type of annotation", "", true);
+		valuePair.elementValue().print(this);
+	}
+
+	public void print(ElementValue elementValue) {
+		print.u1(elementValue.tag(), "Tag");
+		int tag = elementValue.tag().getValue();
+		switch (TagValueItem.getTagValue(tag)) {
+			case CONST_VALUE_INDEX -> print.u2(elementValue.u2First(), "Constant value index");
+			case ENUM_CONST_VALUE -> {
+				print.u2(elementValue.u2First(), "Type name index");
+				print.u2(elementValue.u2Second(), "Constant name index");
+			}
+			case CLASS_INFO_INDEX -> print.u2(elementValue.u2First(), "Class info index");
+			case ANNOTATION_VALUE -> elementValue.annotation().print(this);
+			case ARRAY_VALUE -> {
+				print.u2(elementValue.u2First(), "Number of values");
+				ElementValue[] elementValues = elementValue.elementValues();
+				for (int i = 0; i < elementValue.u2First().getValue(); i++) {
+					elementValues[i].print(this);
+				}
+			}
 		}
 	}
 

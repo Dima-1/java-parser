@@ -1,13 +1,13 @@
 package com.example.jcparser.attribute.annotation;
 
 import com.example.jcparser.Parser.U2;
+import com.example.jcparser.Print;
+import com.example.jcparser.attribute.AttributePrinter;
 
-public class ValuePair {
-	U2 elementNameIndex;
-	ElementValue elementValue;
+public record ValuePair(U2 elementNameIndex, ElementValue elementValue) implements Print.Printable<AttributePrinter> {
 
-	public ValuePair(U2 elementNameIndex, ElementValue elementValue) {
-		this.elementNameIndex = elementNameIndex;
-		this.elementValue = elementValue;
+	@Override
+	public void print(AttributePrinter printer) {
+		printer.print(this);
 	}
 }
