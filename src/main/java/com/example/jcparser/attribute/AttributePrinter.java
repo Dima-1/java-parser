@@ -3,10 +3,7 @@ package com.example.jcparser.attribute;
 import com.example.jcparser.AccessFlag;
 import com.example.jcparser.Parser;
 import com.example.jcparser.Print;
-import com.example.jcparser.attribute.annotation.ElementValue;
-import com.example.jcparser.attribute.annotation.RuntimeVisibleAnnotationsAttribute;
-import com.example.jcparser.attribute.annotation.TagValueItem;
-import com.example.jcparser.attribute.annotation.ValuePair;
+import com.example.jcparser.attribute.annotation.*;
 import com.example.jcparser.attribute.stackmapframe.StackMapFrame;
 
 public class AttributePrinter {
@@ -168,6 +165,15 @@ public class AttributePrinter {
 				}
 			}
 		}
+	}
+
+	public void print(RuntimeInvisibleAnnotationsAttribute attr) {
+		print.u2(attr.getNumberOf(), "Attribute number of invisible annotation", "", true);
+		print.incIndent();
+		for (RuntimeVisibleAnnotationsAttribute.RuntimeVisibleAnnotation visibleAnnotation : attr.getAnnotations()) {
+			visibleAnnotation.print(this);
+		}
+		print.decIndent();
 	}
 
 	void print(BootstrapMethodsAttribute attr) {

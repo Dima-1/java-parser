@@ -1,10 +1,7 @@
 package com.example.jcparser;
 
 import com.example.jcparser.attribute.*;
-import com.example.jcparser.attribute.annotation.ElementValue;
-import com.example.jcparser.attribute.annotation.RuntimeVisibleAnnotationsAttribute;
-import com.example.jcparser.attribute.annotation.TagValueItem;
-import com.example.jcparser.attribute.annotation.ValuePair;
+import com.example.jcparser.attribute.annotation.*;
 import com.example.jcparser.attribute.stackmapframe.*;
 import org.apache.commons.text.StringEscapeUtils;
 
@@ -372,6 +369,16 @@ public class Parser {
 					annotations[i] = getAnnotation(dis);
 				}
 				yield new RuntimeVisibleAnnotationsAttribute(constantPool, attributeNameIndex, attributeLength, numberOf,
+						annotations);
+			}
+			case "RuntimeInvisibleAnnotations" -> {
+				U2 numberOf = readU2(dis);
+				RuntimeVisibleAnnotationsAttribute.RuntimeVisibleAnnotation[] annotations
+						= new RuntimeVisibleAnnotationsAttribute.RuntimeVisibleAnnotation[numberOf.getValue()];
+				for (int i = 0; i < numberOf.getValue(); i++) {
+					annotations[i] = getAnnotation(dis);
+				}
+				yield new RuntimeInvisibleAnnotationsAttribute(constantPool, attributeNameIndex, attributeLength, numberOf,
 						annotations);
 			}
 			case "BootstrapMethods" -> {
