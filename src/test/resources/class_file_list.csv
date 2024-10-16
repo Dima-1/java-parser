@@ -1,0 +1,7 @@
+#classes/com/example/jcparser/test/ParserTest.class
+classes/com/example/jcparser/test/TestClass.class
+classes/com/example/jcparser/test/TestClass$1TestLocalClass.class
+classes/com/example/jcparser/test/TestClass$TestAnnotation.class
+classes/com/example/jcparser/test/TestClass$TestInnerClass.class
+classes/com/example/jcparser/test/TestClass$TestRepeatableAnnotations.class
+classes/module-info.class

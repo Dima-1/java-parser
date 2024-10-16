@@ -49,8 +49,6 @@ class ParserTest {
 		System.setErr(originalErr);
 	}
 
-	private final String[] args = new String[]{System.getenv("FILE")};
-
 	Stream<Arguments> getClassFiles() throws IOException {
 		ClassLoader classloader = Thread.currentThread().getContextClassLoader();
 		String resourceListPath = Objects.requireNonNull(classloader.getResource("class_file_list.csv")).getPath();
@@ -61,9 +59,10 @@ class ParserTest {
 		System.setErr(new PrintStream(errStream));
 		List<Arguments> argumentsList = new ArrayList<>();
 		for (String path : testFiles) {
-			Parser.main(new String[]{path});
-			String fileName = path.substring(path.lastIndexOf('/') + 1);
-			argumentsList.add(arguments(named(fileName, path), outStream.toString().split("\n")));
+			String filePath = Objects.requireNonNull(classloader.getResource(path)).getPath();
+			Parser.main(new String[]{filePath});
+			String fileName = filePath.substring(filePath.lastIndexOf('/') + 1);
+			argumentsList.add(arguments(named(fileName, filePath), outStream.toString().split("\n")));
 			outStream.reset();
 		}
 		return argumentsList.stream();

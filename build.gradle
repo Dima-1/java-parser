@@ -18,3 +18,12 @@ test {
 tasks.named("compileTestJava") {
     options.compilerArgs << '-parameters'
 }
+
+tasks.register("processTestRes", Copy) {
+    from sourceSets.named("test").get().output.classesDirs.asPath
+    into sourceSets.named("test").get().resources.sourceDirectories.asPath + "/classes"
+}
+
+compileTestJava.finalizedBy processTestRes
+processTestRes.finalizedBy processTestResources
+
