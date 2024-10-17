@@ -1,5 +1,6 @@
 package com.example.jcparser;
 
+import com.example.jcparser.Parser.*;
 import com.example.jcparser.attribute.Attribute;
 import com.example.jcparser.attribute.AttributePrinter;
 import com.example.jcparser.attribute.Opcode;
@@ -11,7 +12,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.example.jcparser.AccessFlag.getAccessFlags;
-import com.example.jcparser.Parser.*;
 
 public class Print {
 
@@ -98,7 +98,7 @@ public class Print {
 		if (!PRINT_CONSTANT_POOL) {
 			return;
 		}
-		for (int i = 0; i < constants.size(); i++) {
+		for (int i = 1; i < constants.size(); i++) {
 			ConstantPoolEntry entry = constants.get(i);
 			entry.print(constantPrinter);
 			constantPrinter.print();
@@ -184,34 +184,34 @@ public class Print {
 
 		void format(ConstantPoolString cpe) {
 			formatedString += String.format(HEX_2, cpe.getStringIndex());
-			cpe.constants.get(cpe.getStringIndex() - 1).print(this);
+			cpe.constants.get(cpe.getStringIndex()).print(this);
 		}
 
 		void format(ConstantPoolMethodRef cpe) {
 			formatedString += String.format(HEX_2, cpe.getClassIndex());
-			cpe.constants.get(cpe.getClassIndex() - 1).print(this);
+			cpe.constants.get(cpe.getClassIndex()).print(this);
 			formatedString += String.format(HEX_2, cpe.getNameAndTypeIndex());
-			cpe.constants.get(cpe.getNameAndTypeIndex() - 1).print(this);
+			cpe.constants.get(cpe.getNameAndTypeIndex()).print(this);
 		}
 
 		void format(ConstantPoolNameAndType cpe) {
 			formatedString += String.format(HEX_2, cpe.getNameIndex());
-			cpe.constants.get(cpe.getNameIndex() - 1).print(this);
+			cpe.constants.get(cpe.getNameIndex()).print(this);
 			formatedString += String.format(HEX_2, cpe.getDescriptorIndex());
-			cpe.constants.get(cpe.getDescriptorIndex() - 1).print(this);
+			cpe.constants.get(cpe.getDescriptorIndex()).print(this);
 		}
 
 		void format(ConstantPoolDynamic cpe) {
 			formatedString += String.format(HEX_2, cpe.getBootstrapMethodAttrIndex());
 			formatedString += String.format(HEX_2, cpe.getNameAndTypeIndex());
-			cpe.constants.get(cpe.getNameAndTypeIndex() - 1).print(this);
+			cpe.constants.get(cpe.getNameAndTypeIndex()).print(this);
 		}
 
 		void format(ConstantPoolMethodHandle cpe) {
 			formatedString += " " + ConstantPoolMethodHandle.MHRef.values()[cpe.getReferenceKind()].name()
 					.replaceFirst("REF_", "");
 			formatedString += String.format(HEX_2, cpe.getReferenceIndex());
-			cpe.constants.get(cpe.getReferenceIndex() - 1).print(this);
+			cpe.constants.get(cpe.getReferenceIndex()).print(this);
 		}
 
 		void print() {

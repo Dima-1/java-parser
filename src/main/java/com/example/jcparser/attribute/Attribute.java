@@ -1,7 +1,7 @@
 package com.example.jcparser.attribute;
 
 import com.example.jcparser.Parser;
-import com.example.jcparser.Print.*;
+import com.example.jcparser.Print.Printable;
 
 import java.util.List;
 
@@ -12,7 +12,7 @@ public class Attribute implements Printable<AttributePrinter> {
 
 	public Attribute(List<Parser.ConstantPoolEntry> constants, Parser.U2 nameIndex, Parser.U4 length) {
 		this.nameIndex = nameIndex;
-		name = constants.get(nameIndex.getValue() - 1).getAdditional();
+		name = constants.get(nameIndex.getValue()).getAdditional();
 		this.length = length;
 	}
 

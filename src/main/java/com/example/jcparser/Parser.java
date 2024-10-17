@@ -183,6 +183,7 @@ public class Parser {
 	 * <a href="https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-4.html#jvms-4.4">4.4. The Constant Pool</a>
 	 */
 	private void readConstantPool(DataInputStream dis, int constantPoolCount) throws IOException {
+		constantPool.add(null); //The constant_pool table is indexed from 1 to constant_pool_count - 1.
 		for (int i = 1; i < constantPoolCount; i++) {
 			ConstantPoolEntry entry = createEntry(i, dis);
 			constantPool.add(entry);
@@ -264,7 +265,7 @@ public class Parser {
 
 	private Attribute readAttribute(DataInputStream dis) throws IOException {
 		U2 attributeNameIndex = readU2(dis, true);
-		String name = constantPool.get(attributeNameIndex.getValue() - 1).getAdditional();
+		String name = constantPool.get(attributeNameIndex.getValue()).getAdditional();
 		U4 attributeLength = readU4(dis);
 
 		return switch (name) {
@@ -481,7 +482,7 @@ public class Parser {
 		int value = dis.readUnsignedShort();
 		if (addSymbolicName && !constantPool.isEmpty()) {
 			if (value > 0) {
-				symbolic += constantPool.get(value - 1).getAdditional();
+				symbolic += constantPool.get(value).getAdditional();
 			} else {
 				symbolic = "java/lang/Object";
 			}
@@ -912,7 +913,7 @@ public class Parser {
 		}
 
 		public String getString() {
-			return ((ConstantPoolUtf8) constants.get(stringIndex - 1)).getUtf8();
+			return ((ConstantPoolUtf8) constants.get(stringIndex)).getUtf8();
 		}
 
 		@Override
@@ -944,7 +945,7 @@ public class Parser {
 		}
 
 		public String getClassIndexString() {
-			return ((ConstantPoolString) constants.get(classIndex - 1)).getString();
+			return ((ConstantPoolString) constants.get(classIndex)).getString();
 		}
 
 		public int getNameAndTypeIndex() {
@@ -952,7 +953,7 @@ public class Parser {
 		}
 
 		public String getNameAndTypeIndexString() {
-			return ((ConstantPoolNameAndType) constants.get(nameAndTypeIndex - 1)).getAdditional();
+			return ((ConstantPoolNameAndType) constants.get(nameAndTypeIndex)).getAdditional();
 		}
 
 		@Override
@@ -984,7 +985,7 @@ public class Parser {
 		}
 
 		public String getNameIndexString() {
-			return ((ConstantPoolUtf8) constants.get(nameIndex - 1)).getUtf8();
+			return ((ConstantPoolUtf8) constants.get(nameIndex)).getUtf8();
 		}
 
 		public int getDescriptorIndex() {
@@ -992,7 +993,7 @@ public class Parser {
 		}
 
 		public String getDescriptorIndexString() {
-			return ((ConstantPoolUtf8) constants.get(descriptorIndex - 1)).getUtf8();
+			return ((ConstantPoolUtf8) constants.get(descriptorIndex)).getUtf8();
 		}
 
 		@Override
@@ -1016,7 +1017,7 @@ public class Parser {
 		@Override
 		public String getAdditional() {
 			return "(" + toHex(bootstrapMethodAttrIndex) + ") "
-					+ " (" + toHex(nameAndTypeIndex) + ") " + constants.get(nameAndTypeIndex - 1).getAdditional();
+					+ " (" + toHex(nameAndTypeIndex) + ") " + constants.get(nameAndTypeIndex).getAdditional();
 		}
 
 		public int getBootstrapMethodAttrIndex() {
@@ -1061,7 +1062,7 @@ public class Parser {
 		@Override
 		public String getAdditional() {
 			return MHRef.values()[referenceKind].name().replaceFirst("REF_", "")
-					+ " (" + toHex(referenceIndex) + ")" + constants.get(referenceIndex - 1).getAdditional();
+					+ " (" + toHex(referenceIndex) + ")" + constants.get(referenceIndex).getAdditional();
 		}
 
 		public int getReferenceKind() {

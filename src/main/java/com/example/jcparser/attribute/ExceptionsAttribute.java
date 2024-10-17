@@ -1,10 +1,12 @@
 package com.example.jcparser.attribute;
 
+import com.example.jcparser.Parser.ConstantPoolEntry;
+import com.example.jcparser.Parser.U2;
+import com.example.jcparser.Parser.U2Array;
+import com.example.jcparser.Parser.U4;
 import com.example.jcparser.Print;
 
 import java.util.List;
-
-import com.example.jcparser.Parser.*;
 
 public class ExceptionsAttribute extends Attribute {
 	private final U2Array exceptions;
@@ -13,7 +15,7 @@ public class ExceptionsAttribute extends Attribute {
 		super(constants, nameIndex, length);
 		this.exceptions = exceptions;
 		for (U2 exception : exceptions.array()) {
-			ConstantPoolEntry entry = constants.get(exception.getValue() - 1);
+			ConstantPoolEntry entry = constants.get(exception.getValue());
 			if (!entry.getConstantTag().isConstantClass()) {
 				String message = String.format("%04X ExceptionValue = %s", exception.getOffset(), entry.getConstantTag());
 				throw new RuntimeException(message);
