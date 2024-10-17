@@ -64,15 +64,9 @@ public class Parser {
 			print.accessFlags(accessFlags, Type.CLASS);
 			print.u2(readU2(dis, true), "This class");
 			print.u2(readU2(dis, true), "Super class");
-			u2 = readU2(dis);
-			print.u2(u2, "Interfaces count", ConsoleColors.BLUE, true);
-			readInterfaces(dis, u2.value);
-			u2 = readU2(dis);
-			print.u2(u2, "Fields count", ConsoleColors.BLUE, true);
-			readFields(dis, u2.value);
-			u2 = readU2(dis);
-			print.u2(u2, "Methods count", ConsoleColors.BLUE, true);
-			readMethods(dis, u2.value);
+			readInterfaces(dis);
+			readFields(dis);
+			readMethods(dis);
 			U2 attributesCount = readU2(dis);
 			print.u2(attributesCount, "Attributes count", ConsoleColors.BLUE, true);
 			if (attributesCount.value > 0) {
@@ -84,7 +78,10 @@ public class Parser {
 		}
 	}
 
-	private void readInterfaces(DataInputStream dis, int interfacesCount) throws IOException {
+	private void readInterfaces(DataInputStream dis) throws IOException {
+		U2 u2 = readU2(dis);
+		print.u2(u2, "Interfaces count", ConsoleColors.BLUE, true);
+		int interfacesCount = u2.value;
 		for (int i = 0; i < interfacesCount; i++) {
 			print.u2(readU2(dis, true), "");
 		}
@@ -93,29 +90,28 @@ public class Parser {
 	/**
 	 * <a href="https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-4.html#jvms-4.5">4.5. Fields</a>
 	 */
-	private void readFields(DataInputStream dis, int fieldsCount) throws IOException {
-		for (int i = 0; i < fieldsCount; i++) {
-			U2 accessFlags = readU2(dis);
-			print.accessFlags(accessFlags, Type.FIELD);
-			print.u2(readU2(dis, true), "Name index");
-			print.u2(readU2(dis, true), "Descriptor index");
-			U2 u2 = readU2(dis);
-			print.u2(u2, "Attributes count");
-			Map<String, Attribute> attributes = new LinkedHashMap<>(readAttributes(dis, u2.value));
-			print.attributes(attributes);
-		}
+	private void readFields(DataInputStream dis) throws IOException {
+		readAdditionData(dis, Type.FIELD);
 	}
 
 	/**
 	 * <a href="https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-4.html#jvms-4.6">4.6. Methods</a>
 	 */
-	private void readMethods(DataInputStream dis, int methodsCount) throws IOException {
-		for (int i = 0; i < methodsCount; i++) {
+	private void readMethods(DataInputStream dis) throws IOException {
+		readAdditionData(dis, Type.METHOD);
+	}
+
+	private void readAdditionData(DataInputStream dis, Type type) throws IOException {
+		String title = (type == Type.FIELD ? "Fields" : "Methods") + "count";
+		U2 u2 = readU2(dis);
+		print.u2(u2, title, ConsoleColors.BLUE, true);
+		int length = u2.value;
+		for (int i = 0; i < length; i++) {
 			U2 accessFlags = readU2(dis);
-			print.accessFlags(accessFlags, Type.METHOD);
+			print.accessFlags(accessFlags, type);
 			print.u2(readU2(dis, true), "Name index");
 			print.u2(readU2(dis, true), "Descriptor index");
-			U2 u2 = readU2(dis);
+			u2 = readU2(dis);
 			print.u2(u2, "Attributes count");
 			Map<String, Attribute> attributes = new LinkedHashMap<>(readAttributes(dis, u2.value));
 			print.attributes(attributes);
