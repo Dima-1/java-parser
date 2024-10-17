@@ -1143,8 +1143,9 @@ public class Parser {
 
 		@Override
 		public U2 check(Class<?> clazz) {
-			if (!clazz.isInstance(getConstantPool().get(value))) {
-				String message = String.format("%04X Value = %s not a %s", getOffset(), value, clazz.getName());
+			if (value != 0 && !clazz.isInstance(getConstantPool().get(value))) {
+				String message = String.format("%04X Value = %s expected a %s actual %s",
+						getOffset(), value, clazz.getName(), getConstantPool().get(value));
 				throw new RuntimeException(message);
 			}
 			return this;
