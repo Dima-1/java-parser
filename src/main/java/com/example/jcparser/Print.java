@@ -52,9 +52,16 @@ public class Print {
 		String hexValue = String.format("%04X", u2.getValue());
 		StringBuilder splitHexValue = getSplitHexValue(hexValue);
 		String decimalValue = String.format(addDecimal ? " (%02d)" : "", u2.getValue());
-		String yellowString = u2.getSymbolic().isEmpty() ? YELLOW_STRING : " " + YELLOW_STRING;
+		String constantString = "";
+		if (u2.getCpe() != null) {
+			constantPrinter.printGeneral = false;
+			constantPrinter.formatedString = "";
+			u2.getCpe().print(constantPrinter);
+			constantString = constantPrinter.formatedString.stripLeading();
+		}
+		String yellowString = constantString.isEmpty() ? "%s" : " %s";
 		System.out.printf(OFFSET_FORMAT + "%s " + titleColor + "%s" + ConsoleColors.RESET + "%s" + yellowString + "\n",
-				u2.getOffset(), splitHexValue, title.indent(getIndents()).stripTrailing(), decimalValue, u2.getSymbolic());
+				u2.getOffset(), splitHexValue, title.indent(getIndents()).stripTrailing(), decimalValue, constantString);
 	}
 
 	public void u2WithIndex(int index, Parser.U2 u2, String title) {
@@ -77,9 +84,8 @@ public class Print {
 	public void u4(Parser.U4 u4, String title) {
 		String hexValue = String.format("%08X", u4.getValue());
 		StringBuilder splitHexValue = getSplitHexValue(hexValue);
-		String yellowString = u4.getSymbolic().isEmpty() ? YELLOW_STRING : " " + YELLOW_STRING;
-		System.out.printf(OFFSET_FORMAT + "%s %s" + yellowString + "\n",
-				u4.getOffset(), splitHexValue, title.indent(getIndents() - 6).stripTrailing(), u4.getSymbolic());
+		System.out.printf(OFFSET_FORMAT + "%s %s\n",
+				u4.getOffset(), splitHexValue, title.indent(getIndents() - 6).stripTrailing());
 	}
 
 	public void debugInfo(int offset, String info) {

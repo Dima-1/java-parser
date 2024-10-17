@@ -21,6 +21,7 @@ public class Parser {
 	private final Print print;
 	private int count = 0;
 	private final List<ConstantPoolEntry> constantPool = new ArrayList<>();
+	private ConstantPoolEntry constantObject = null;
 	private final Map<String, Attribute> attributes = new LinkedHashMap<>();
 
 	public Parser(Print print) {
@@ -102,7 +103,7 @@ public class Parser {
 	}
 
 	private void readAdditionData(DataInputStream dis, Type type) throws IOException {
-		String title = (type == Type.FIELD ? "Fields" : "Methods") + "count";
+		String title = (type == Type.FIELD ? "Fields" : "Methods") + " count";
 		U2 u2 = readU2(dis);
 		print.u2(u2, title, ConsoleColors.BLUE, true);
 		int length = u2.value;
@@ -446,7 +447,7 @@ public class Parser {
 				for (int j = 0; j < attributeLength.getValue(); j++) {
 					readByte(dis);
 				}
-				attributeLength = new U4(attributeLength.getOffset(), 0, "");//mark non-implemented attr, to show in the test 
+				attributeLength = new U4(attributeLength.getOffset(), 0);//mark non-implemented attr, to show in the test 
 				yield new Attribute(constantPool, attributeNameIndex, attributeLength);
 			}
 		};
@@ -464,7 +465,7 @@ public class Parser {
 
 	private U1 readU1(DataInputStream dis) throws IOException {
 		int value = dis.readUnsignedByte();
-		U1 u1 = new U1(count, value, "");
+		U1 u1 = new U1(count, value);
 		count += Byte.BYTES;
 		return u1;
 	}
@@ -474,23 +475,34 @@ public class Parser {
 	}
 
 	private U2 readU2(DataInputStream dis, boolean addSymbolicName) throws IOException {
-		String symbolic = "";
+		ConstantPoolEntry cpe = null;
 		int value = dis.readUnsignedShort();
 		if (addSymbolicName && !constantPool.isEmpty()) {
 			if (value > 0) {
-				symbolic += constantPool.get(value).getAdditional();
+				cpe = constantPool.get(value);
 			} else {
-				symbolic = "java/lang/Object";
+				if (constantObject == null) {
+					for (ConstantPoolEntry entry : constantPool) {
+						if (entry != null && "java/lang/Object".equals(entry.getAdditional())) {
+							constantObject = entry;
+							break;
+						}
+					}
+					if (constantObject == null) {
+						constantObject = new ConstantPoolUtf8(constantPool, 0, 0, ConstantTag.CONSTANT_Utf8, "java/lang/Object");
+					}
+				}
+				cpe = constantObject;
 			}
 		}
-		U2 u2 = new U2(count, value, symbolic);
+		U2 u2 = new U2(count, value, cpe);
 		count += Short.BYTES;
 		return u2;
 	}
 
 	private U4 readU4(DataInputStream dis) throws IOException {
 		int value = dis.readInt();
-		U4 u4 = new U4(count, value, "");
+		U4 u4 = new U4(count, value);
 		count += Integer.BYTES;
 		return u4;
 	}
@@ -643,11 +655,11 @@ public class Parser {
 	public InnerClassesAttribute.InnerClass getInnerClass(int index, DataInputStream dis) throws IOException {
 		U2 innerClassInfoIndex = readU2(dis, true);
 		U2 outerClassInfoIndex = readU2(dis, true);
-		outerClassInfoIndex.clearZeroSymbolic();
+		outerClassInfoIndex.clearCpe();
 		U2 innerNameIndex = readU2(dis, true);
-		innerNameIndex.clearZeroSymbolic();
+		innerNameIndex.clearCpe();
 		U2 innerClassAccessFlags = readU2(dis);
-		innerClassAccessFlags.clearZeroSymbolic();
+		innerClassAccessFlags.clearCpe();
 		return new InnerClassesAttribute.InnerClass(index, innerClassInfoIndex, outerClassInfoIndex, innerNameIndex, innerClassAccessFlags);
 	}
 
@@ -1079,12 +1091,10 @@ public class Parser {
 	public class U1 {
 		private final int offset;
 		protected final int value;
-		private String symbolic;
 
-		public U1(int offset, int value, String symbolic) {
+		public U1(int offset, int value) {
 			this.offset = offset;
 			this.value = value;
-			this.symbolic = symbolic;
 		}
 
 		public int getOffset() {
@@ -1095,22 +1105,12 @@ public class Parser {
 			return value;
 		}
 
-		public String getSymbolic() {
-			return symbolic;
-		}
-
 		public static int getSize() {
 			return 1;
 		}
 
 		public List<Integer> getIntList() {
 			return Arrays.stream(getByteArray()).boxed().toList();
-		}
-
-		public void clearZeroSymbolic() {
-			if (value == 0) {
-				symbolic = "";
-			}
 		}
 
 		public int[] getByteArray() {
@@ -1123,13 +1123,25 @@ public class Parser {
 	}
 
 	public class U2 extends U1 {
+		private ConstantPoolEntry cpe;
 
-		public U2(int offset, int value, String symbolic) {
-			super(offset, value, symbolic);
+		public U2(int offset, int value, ConstantPoolEntry cpe) {
+			super(offset, value);
+			this.cpe = cpe;
 		}
 
 		public static int getSize() {
 			return 2;
+		}
+
+		public void clearCpe() {
+			if (value == 0) {
+				cpe = null;
+			}
+		}
+
+		public ConstantPoolEntry getCpe() {
+			return cpe;
 		}
 
 		@Override
@@ -1149,8 +1161,8 @@ public class Parser {
 	}
 
 	public class U4 extends U2 {
-		public U4(int offset, int value, String symbolic) {
-			super(offset, value, symbolic);
+		public U4(int offset, int value) {
+			super(offset, value, null);
 		}
 
 		public static int getSize() {
