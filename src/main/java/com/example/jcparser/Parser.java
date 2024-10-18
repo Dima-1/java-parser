@@ -71,7 +71,7 @@ public class Parser {
 			U2 attributesCount = readU2(dis);
 			print.u2(attributesCount, "Attributes count", ConsoleColors.BLUE, true);
 			if (attributesCount.value > 0) {
-				attributes.putAll(readAttributes(dis, attributesCount.value));
+				attributes.putAll(readAttributes(dis, attributesCount.value, null));
 				print.attributes(attributes);
 			}
 		} catch (IOException e) {
@@ -111,10 +111,11 @@ public class Parser {
 			U2 accessFlags = readU2(dis);
 			print.accessFlags(accessFlags, type);
 			print.u2(readU2(dis, true), "Name index");
-			print.u2(readU2(dis, true), "Descriptor index");
+			U2 descriptor = readU2(dis, true);
+			print.u2(descriptor, "Descriptor index");
 			u2 = readU2(dis);
 			print.u2(u2, "Attributes count");
-			Map<String, Attribute> attributes = new LinkedHashMap<>(readAttributes(dis, u2.value));
+			Map<String, Attribute> attributes = new LinkedHashMap<>(readAttributes(dis, u2.value, descriptor));
 			print.attributes(attributes);
 		}
 	}
@@ -122,10 +123,10 @@ public class Parser {
 	/**
 	 * <a href="https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-4.html#jvms-4.7">4.7. Attributes</a>
 	 */
-	private Map<String, Attribute> readAttributes(DataInputStream dis, int attributesCount) throws IOException {
+	private Map<String, Attribute> readAttributes(DataInputStream dis, int attributesCount, U2 additional) throws IOException {
 		Map<String, Attribute> attributes = new LinkedHashMap<>();
 		for (int i = 0; i < attributesCount; i++) {
-			Attribute attribute = readAttribute(dis);
+			Attribute attribute = readAttribute(dis, additional);
 			attributes.put(attribute.getName(), attribute);
 		}
 		return attributes;
@@ -260,14 +261,15 @@ public class Parser {
 		};
 	}
 
-	private Attribute readAttribute(DataInputStream dis) throws IOException {
+	private Attribute readAttribute(DataInputStream dis, U2 additional) throws IOException {
 		U2 attributeNameIndex = readU2(dis, true);
 		String name = constantPool.get(attributeNameIndex.getValue()).getAdditional();
 		U4 attributeLength = readU4(dis);
 
 		return switch (name) {
 			case "ConstantValue" -> {
-				U2 constantValueIndex = readU2(dis, true).check(ConstantPoolUtf8.class);
+				Class<? extends ConstantPoolEntry> clazz = getClass(additional);
+				U2 constantValueIndex = readU2(dis, true).check(clazz);
 				yield new ConstantValueAttribute(constantPool, attributeNameIndex, attributeLength, constantValueIndex);
 			}
 			case "Code" -> {
@@ -286,7 +288,7 @@ public class Parser {
 					exceptions[i] = readException(dis);
 				}
 				U2 numberOf = readU2(dis);
-				Map<String, Attribute> attributes = new LinkedHashMap<>(readAttributes(dis, numberOf.value));
+				Map<String, Attribute> attributes = new LinkedHashMap<>(readAttributes(dis, numberOf.value, null));
 				yield new CodeAttribute(constantPool, attributeNameIndex, attributeLength, maxStack, maxLocals,
 						codeLength, opcodes, exceptionTableLength, exceptions, numberOf, attributes);
 			}
@@ -451,6 +453,22 @@ public class Parser {
 				yield new Attribute(constantPool, attributeNameIndex, attributeLength);
 			}
 		};
+	}
+
+	private Class<? extends ConstantPoolEntry> getClass(U2 additional) {
+		ConstantPoolEntry cpe = constantPool.get(additional.value);
+		Class<? extends ConstantPoolEntry> clazz = null;
+		if (cpe instanceof ConstantPoolUtf8 cpeUtf8) {
+			clazz = switch (cpeUtf8.utf8) {
+				case "F" -> ConstantPoolFloat.class;
+				case "L" -> ConstantPoolLong.class;
+				case "D" -> ConstantPoolDouble.class;
+				case "Ljava/lang/String;" -> ConstantPoolString.class;
+				case "I", "S", "C", "B", "Z" -> ConstantPoolInteger.class;
+				default -> throw new IllegalStateException("Unexpected value: " + cpeUtf8.utf8);
+			};
+		}
+		return clazz;
 	}
 
 	private U2Array readU2Array(DataInputStream dis) throws IOException {
@@ -1151,7 +1169,7 @@ public class Parser {
 
 		@Override
 		public U2 check(Class<?> clazz) {
-			if (value != 0 && !clazz.isInstance(getConstantPool().get(value))) {
+			if (value != 0 && clazz != null && !clazz.isInstance(getConstantPool().get(value))) {
 				String message = String.format("%04X Value = %s expected a %s actual %s",
 						getOffset(), value, clazz.getName(), getConstantPool().get(value));
 				throw new RuntimeException(message);
