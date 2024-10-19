@@ -1,9 +1,10 @@
 package com.example.jcparser.attribute;
 
-import java.util.List;
-import java.util.Map;
+import com.example.jcparser.Parser.ConstantPoolEntry;
+import com.example.jcparser.Parser.U2;
+import com.example.jcparser.Parser.U4;
 
-import com.example.jcparser.Parser.*;
+import java.util.List;
 
 public class CodeAttribute extends Attribute {
 	private final U2 maxStack;
@@ -13,11 +14,11 @@ public class CodeAttribute extends Attribute {
 	private final U2 exceptionTableLength;
 	private final ExceptionsAttribute.Exception[] exceptions;
 	private final U2 numberOf;
-	private final Map<String, Attribute> attributes;
+	private final List<Attribute> attributes;
 
 	public CodeAttribute(List<ConstantPoolEntry> constants, U2 nameIndex, U4 length, U2 maxStack, U2 maxLocals,
-	                     U4 codeLength, List<Opcode> opcodes ,U2 exceptionTableLength, ExceptionsAttribute.Exception[] exceptions, U2 numberOf,
-	                     Map<String, Attribute> attributes) {
+	                     U4 codeLength, List<Opcode> opcodes, U2 exceptionTableLength, ExceptionsAttribute.Exception[] exceptions, U2 numberOf,
+	                     List<Attribute> attributes) {
 		super(constants, nameIndex, length);
 		this.maxStack = maxStack;
 		this.maxLocals = maxLocals;
@@ -63,7 +64,7 @@ public class CodeAttribute extends Attribute {
 		return numberOf;
 	}
 
-	public Map<String, Attribute> getAttributes() {
+	public List<Attribute> getAttributes() {
 		return attributes;
 	}
 }

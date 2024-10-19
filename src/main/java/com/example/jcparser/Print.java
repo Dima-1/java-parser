@@ -8,7 +8,6 @@ import com.example.jcparser.attribute.stackmapframe.StackFramePrinter;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.example.jcparser.AccessFlag.getAccessFlags;
@@ -121,10 +120,9 @@ public class Print {
 				getSplitHexValue(String.format("%04X", u2.getValue())), title.indent(getIndents()).stripTrailing(), flags);
 	}
 
-	public void attributes(Map<String, Attribute> attributes) {
+	public void attributes(List<Attribute> attributes) {
 		indent++;
-		for (Map.Entry<String, Attribute> entry : attributes.entrySet()) {
-			Attribute attr = entry.getValue();
+		for (Attribute attr : attributes) {
 			attr.print(attributePrinter);
 		}
 		indent--;

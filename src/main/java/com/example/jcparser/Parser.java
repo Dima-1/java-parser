@@ -9,7 +9,9 @@ import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import static com.example.jcparser.AccessFlag.Type;
 
@@ -22,7 +24,7 @@ public class Parser {
 	private int count = 0;
 	private final List<ConstantPoolEntry> constantPool = new ArrayList<>();
 	private ConstantPoolEntry constantObject = null;
-	private final Map<String, Attribute> attributes = new LinkedHashMap<>();
+	private final List<Attribute> attributes = new ArrayList<>();
 
 	public Parser(Print print) {
 		this.print = print;
@@ -71,7 +73,7 @@ public class Parser {
 			U2 attributesCount = readU2(dis);
 			print.u2(attributesCount, "Attributes count", ConsoleColors.BLUE, true);
 			if (attributesCount.value > 0) {
-				attributes.putAll(readAttributes(dis, attributesCount.value, null));
+				attributes.addAll(readAttributes(dis, attributesCount.value, null));
 				print.attributes(attributes);
 			}
 		} catch (IOException e) {
@@ -115,7 +117,7 @@ public class Parser {
 			print.u2(descriptor, "Descriptor index");
 			u2 = readU2(dis);
 			print.u2(u2, "Attributes count");
-			Map<String, Attribute> attributes = new LinkedHashMap<>(readAttributes(dis, u2.value, descriptor));
+			List<Attribute> attributes = new ArrayList<>(readAttributes(dis, u2.value, descriptor));
 			print.attributes(attributes);
 		}
 	}
@@ -123,11 +125,11 @@ public class Parser {
 	/**
 	 * <a href="https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-4.html#jvms-4.7">4.7. Attributes</a>
 	 */
-	private Map<String, Attribute> readAttributes(DataInputStream dis, int attributesCount, U2 additional) throws IOException {
-		Map<String, Attribute> attributes = new LinkedHashMap<>();
+	private List<Attribute> readAttributes(DataInputStream dis, int attributesCount, U2 additional) throws IOException {
+		List<Attribute> attributes = new ArrayList<>();
 		for (int i = 0; i < attributesCount; i++) {
 			Attribute attribute = readAttribute(dis, additional);
-			attributes.put(attribute.getName(), attribute);
+			attributes.add(attribute);
 		}
 		return attributes;
 	}
@@ -263,7 +265,7 @@ public class Parser {
 
 	private Attribute readAttribute(DataInputStream dis, U2 additional) throws IOException {
 		U2 attributeNameIndex = readU2(dis, true);
-		String name = ((ConstantPoolUtf8)constantPool.get(attributeNameIndex.getValue())).getUtf8();
+		String name = ((ConstantPoolUtf8) constantPool.get(attributeNameIndex.getValue())).getUtf8();
 		U4 attributeLength = readU4(dis);
 
 		return switch (name) {
@@ -288,7 +290,7 @@ public class Parser {
 					exceptions[i] = readException(dis);
 				}
 				U2 numberOf = readU2(dis);
-				Map<String, Attribute> attributes = new LinkedHashMap<>(readAttributes(dis, numberOf.value, null));
+				List<Attribute> attributes = new ArrayList<>(readAttributes(dis, numberOf.value, null));
 				yield new CodeAttribute(constantPool, attributeNameIndex, attributeLength, maxStack, maxLocals,
 						codeLength, opcodes, exceptionTableLength, exceptions, numberOf, attributes);
 			}
