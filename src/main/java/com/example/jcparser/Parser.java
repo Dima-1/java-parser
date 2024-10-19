@@ -263,7 +263,7 @@ public class Parser {
 
 	private Attribute readAttribute(DataInputStream dis, U2 additional) throws IOException {
 		U2 attributeNameIndex = readU2(dis, true);
-		String name = constantPool.get(attributeNameIndex.getValue()).getAdditional();
+		String name = ((ConstantPoolUtf8)constantPool.get(attributeNameIndex.getValue())).getUtf8();
 		U4 attributeLength = readU4(dis);
 
 		return switch (name) {
@@ -459,13 +459,13 @@ public class Parser {
 		ConstantPoolEntry cpe = constantPool.get(additional.value);
 		Class<? extends ConstantPoolEntry> clazz = null;
 		if (cpe instanceof ConstantPoolUtf8 cpeUtf8) {
-			clazz = switch (cpeUtf8.utf8) {
+			clazz = switch (cpeUtf8.getUtf8()) {
 				case "F" -> ConstantPoolFloat.class;
 				case "L" -> ConstantPoolLong.class;
 				case "D" -> ConstantPoolDouble.class;
 				case "Ljava/lang/String;" -> ConstantPoolString.class;
 				case "I", "S", "C", "B", "Z" -> ConstantPoolInteger.class;
-				default -> throw new IllegalStateException("Unexpected value: " + cpeUtf8.utf8);
+				default -> throw new IllegalStateException("Unexpected value: " + cpeUtf8.getUtf8());
 			};
 		}
 		return clazz;
@@ -501,7 +501,7 @@ public class Parser {
 			} else {
 				if (constantObject == null) {
 					for (ConstantPoolEntry entry : constantPool) {
-						if (entry != null && "java/lang/Object".equals(entry.getAdditional())) {
+						if (entry instanceof ConstantPoolUtf8 utf8 && "java/lang/Object".equals(utf8.getUtf8())) {
 							constantObject = entry;
 							break;
 						}
