@@ -1,18 +1,15 @@
 package com.example.jcparser.attribute;
 
+import com.example.jcparser.Parser.U2;
+import com.example.jcparser.Parser.U4;
 import com.example.jcparser.Print;
-
-import java.util.List;
-
-import com.example.jcparser.Parser.*;
 
 public class LocalVariableAttribute extends Attribute {
 	private final U2 numberOf;
 	private final LocalVariable[] localVariables;
 
-	public LocalVariableAttribute(List<ConstantPoolEntry> constants, U2 nameIndex, U4 length, U2 numberOf,
-	                              LocalVariable[] localVariables) {
-		super(constants, nameIndex, length);
+	public LocalVariableAttribute(U2 nameIndex, U4 length, U2 numberOf, LocalVariable[] localVariables) {
+		super(nameIndex, length);
 		this.numberOf = numberOf;
 		this.localVariables = localVariables;
 	}

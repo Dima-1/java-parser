@@ -1,6 +1,7 @@
 package com.example.jcparser.attribute.stackmapframe;
 
-import com.example.jcparser.Parser.*;
+import com.example.jcparser.Parser.U1;
+import com.example.jcparser.Parser.U2;
 
 public final class SameStackMapFrameExtended extends StackMapFrame {
 	private final U2 offsetDelta;

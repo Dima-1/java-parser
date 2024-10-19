@@ -1,6 +1,5 @@
 package com.example.jcparser.attribute;
 
-import com.example.jcparser.Parser.ConstantPoolEntry;
 import com.example.jcparser.Parser.U2;
 import com.example.jcparser.Parser.U4;
 
@@ -16,10 +15,10 @@ public class CodeAttribute extends Attribute {
 	private final U2 numberOf;
 	private final List<Attribute> attributes;
 
-	public CodeAttribute(List<ConstantPoolEntry> constants, U2 nameIndex, U4 length, U2 maxStack, U2 maxLocals,
-	                     U4 codeLength, List<Opcode> opcodes, U2 exceptionTableLength, ExceptionsAttribute.Exception[] exceptions, U2 numberOf,
+	public CodeAttribute(U2 nameIndex, U4 length, U2 maxStack, U2 maxLocals, U4 codeLength, List<Opcode> opcodes,
+	                     U2 exceptionTableLength, ExceptionsAttribute.Exception[] exceptions, U2 numberOf, 
 	                     List<Attribute> attributes) {
-		super(constants, nameIndex, length);
+		super(nameIndex, length);
 		this.maxStack = maxStack;
 		this.maxLocals = maxLocals;
 		this.codeLength = codeLength;

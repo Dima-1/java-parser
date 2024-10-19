@@ -1,18 +1,15 @@
 package com.example.jcparser.attribute;
 
+import com.example.jcparser.Parser.U2;
+import com.example.jcparser.Parser.U4;
 import com.example.jcparser.Print;
-
-import java.util.List;
-
-import com.example.jcparser.Parser.*;
 
 public class InnerClassesAttribute extends Attribute {
 	private final U2 numberOf;
 	private final InnerClass[] innerClasses;
 
-	public InnerClassesAttribute(List<ConstantPoolEntry> constants, U2 nameIndex, U4 length, U2 numberOf,
-	                             InnerClass[] innerClasses) {
-		super(constants, nameIndex, length);
+	public InnerClassesAttribute(U2 nameIndex, U4 length, U2 numberOf, InnerClass[] innerClasses) {
+		super(nameIndex, length);
 		this.numberOf = numberOf;
 		this.innerClasses = innerClasses;
 	}

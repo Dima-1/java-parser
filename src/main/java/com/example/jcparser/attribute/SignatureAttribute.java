@@ -1,13 +1,12 @@
 package com.example.jcparser.attribute;
 
-import java.util.List;
-
-import com.example.jcparser.Parser.*;
+import com.example.jcparser.Parser.U2;
+import com.example.jcparser.Parser.U4;
 
 public class SignatureAttribute extends ConstantPoolAttribute {
 
-	public SignatureAttribute(List<ConstantPoolEntry> constants, U2 nameIndex, U4 length, U2 signatureIndex) {
-		super(constants, nameIndex, length, signatureIndex);
+	public SignatureAttribute(U2 nameIndex, U4 length, U2 signatureIndex) {
+		super(nameIndex, length, signatureIndex);
 	}
 
 	@Override

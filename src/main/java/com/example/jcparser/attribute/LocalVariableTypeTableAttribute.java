@@ -1,14 +1,12 @@
 package com.example.jcparser.attribute;
 
-import com.example.jcparser.Parser;
-
-import java.util.List;
+import com.example.jcparser.Parser.U2;
+import com.example.jcparser.Parser.U4;
 
 public class LocalVariableTypeTableAttribute extends LocalVariableAttribute {
-	public LocalVariableTypeTableAttribute(List<Parser.ConstantPoolEntry> constantPool, Parser.U2 attributeNameIndex, 
-	                                       Parser.U4 attributeLength, Parser.U2 numberOf, 
+	public LocalVariableTypeTableAttribute(U2 attributeNameIndex, U4 attributeLength, U2 numberOf,
 	                                       LocalVariable[] localVariables) {
-		super(constantPool, attributeNameIndex, attributeLength, numberOf, localVariables);
+		super(attributeNameIndex, attributeLength, numberOf, localVariables);
 	}
 
 	@Override

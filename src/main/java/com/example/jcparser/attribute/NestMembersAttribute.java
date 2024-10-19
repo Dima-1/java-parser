@@ -1,14 +1,14 @@
 package com.example.jcparser.attribute;
 
-import java.util.List;
-
-import com.example.jcparser.Parser.*;
+import com.example.jcparser.Parser.U2;
+import com.example.jcparser.Parser.U2Array;
+import com.example.jcparser.Parser.U4;
 
 public class NestMembersAttribute extends Attribute {
 	private final U2Array classes;
 
-	public NestMembersAttribute(List<ConstantPoolEntry> constants, U2 nameIndex, U4 length, U2Array classes) {
-		super(constants, nameIndex, length);
+	public NestMembersAttribute(U2 nameIndex, U4 length, U2Array classes) {
+		super(nameIndex, length);
 		this.classes = classes;
 	}
 

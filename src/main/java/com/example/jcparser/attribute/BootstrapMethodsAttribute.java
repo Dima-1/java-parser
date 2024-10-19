@@ -1,18 +1,16 @@
 package com.example.jcparser.attribute;
 
+import com.example.jcparser.Parser.U2;
+import com.example.jcparser.Parser.U2Array;
+import com.example.jcparser.Parser.U4;
 import com.example.jcparser.Print;
-
-import java.util.List;
-
-import com.example.jcparser.Parser.*;
 
 public class BootstrapMethodsAttribute extends Attribute {
 	private final U2 numberOf;
 	private final BootstrapMethod[] bootstrapMethods;
 
-	public BootstrapMethodsAttribute(List<ConstantPoolEntry> constants, U2 nameIndex, U4 length, U2 numberOf,
-	                                 BootstrapMethod[] bootstrapMethods) {
-		super(constants, nameIndex, length);
+	public BootstrapMethodsAttribute(U2 nameIndex, U4 length, U2 numberOf, BootstrapMethod[] bootstrapMethods) {
+		super(nameIndex, length);
 		this.numberOf = numberOf;
 		this.bootstrapMethods = bootstrapMethods;
 	}

@@ -1,10 +1,9 @@
 package com.example.jcparser.attribute;
 
+import com.example.jcparser.Parser.U2;
+import com.example.jcparser.Parser.U2Array;
+import com.example.jcparser.Parser.U4;
 import com.example.jcparser.Print;
-
-import java.util.List;
-
-import com.example.jcparser.Parser.*;
 
 public class ModuleAttribute extends Attribute {
 	private final U2 moduleNameIndex;
@@ -20,11 +19,10 @@ public class ModuleAttribute extends Attribute {
 	private final U2 providesCount;
 	private final Provides[] provides;
 
-	public ModuleAttribute(List<ConstantPoolEntry> constantPool, U2 attributeNameIndex, U4 attributeLength,
-	                       U2 moduleNameIndex, U2 moduleFlags, U2 moduleVersionIndex,
-	                       U2 requiresCount, Requires[] requires, U2 exportsCount, Exports[] exports,
+	public ModuleAttribute(U2 attributeNameIndex, U4 attributeLength, U2 moduleNameIndex, U2 moduleFlags,
+	                       U2 moduleVersionIndex, U2 requiresCount, Requires[] requires, U2 exportsCount, Exports[] exports,
 	                       U2 opensCount, Opens[] opens, U2Array uses, U2 providesCount, Provides[] provides) {
-		super(constantPool, attributeNameIndex, attributeLength);
+		super(attributeNameIndex, attributeLength);
 		this.moduleNameIndex = moduleNameIndex;
 		this.moduleFlags = moduleFlags;
 		this.moduleVersionIndex = moduleVersionIndex;

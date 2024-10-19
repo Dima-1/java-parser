@@ -168,11 +168,6 @@ public class Parser {
 			return this == CONSTANT_Double | this == CONSTANT_Long;
 		}
 
-		public boolean isConstantValueAttribute() {
-			return this == CONSTANT_Integer | this == CONSTANT_Float | this == CONSTANT_Long
-					| this == CONSTANT_Double | this == CONSTANT_String;
-		}
-
 		public static ConstantTag getConstant(int tag) {
 			return Arrays.stream(values()).filter(v -> v.tag == tag).findFirst().orElseThrow(() ->
 					new IllegalArgumentException("Unknown constant tag: " + tag));
@@ -272,7 +267,7 @@ public class Parser {
 			case "ConstantValue" -> {
 				Class<? extends ConstantPoolEntry> clazz = getClass(additional);
 				U2 constantValueIndex = readU2(dis, true).check(clazz);
-				yield new ConstantValueAttribute(constantPool, attributeNameIndex, attributeLength, constantValueIndex);
+				yield new ConstantValueAttribute(attributeNameIndex, attributeLength, constantValueIndex);
 			}
 			case "Code" -> {
 				U2 maxStack = readU2(dis);
@@ -291,7 +286,7 @@ public class Parser {
 				}
 				U2 numberOf = readU2(dis);
 				List<Attribute> attributes = new ArrayList<>(readAttributes(dis, numberOf.value, null));
-				yield new CodeAttribute(constantPool, attributeNameIndex, attributeLength, maxStack, maxLocals,
+				yield new CodeAttribute(attributeNameIndex, attributeLength, maxStack, maxLocals,
 						codeLength, opcodes, exceptionTableLength, exceptions, numberOf, attributes);
 			}
 			case "StackMapTable" -> {
@@ -300,11 +295,18 @@ public class Parser {
 				for (int i = 0; i < numberOf.getValue(); i++) {
 					entries.add(readStackMapFrame(dis));
 				}
-				yield new StackMapTableAttribute(constantPool, attributeNameIndex, attributeLength, numberOf, entries);
+				yield new StackMapTableAttribute(attributeNameIndex, attributeLength, numberOf, entries);
 			}
 			case "Exceptions" -> {
 				U2Array exceptions = readU2Array(dis);
-				yield new ExceptionsAttribute(constantPool, attributeNameIndex, attributeLength, exceptions);
+				for (U2 exception : exceptions.array()) {
+					ConstantPoolEntry cpe = constantPool.get(exception.getValue());
+					if (!cpe.getConstantTag().isConstantClass()) {
+						String message = String.format("%04X ExceptionValue = %s", exception.getOffset(), cpe.getConstantTag());
+						throw new RuntimeException(message);
+					}
+				}
+				yield new ExceptionsAttribute(attributeNameIndex, attributeLength, exceptions);
 			}
 			case "InnerClasses" -> {
 				U2 numberOf = readU2(dis);
@@ -312,27 +314,27 @@ public class Parser {
 				for (int i = 0; i < numberOf.getValue(); i++) {
 					classes[i] = getInnerClass(i, dis);
 				}
-				yield new InnerClassesAttribute(constantPool, attributeNameIndex, attributeLength,
+				yield new InnerClassesAttribute(attributeNameIndex, attributeLength,
 						numberOf, classes);
 			}
 			case "EnclosingMethod" -> {
 				U2 classIndex = readU2(dis, true);
 				U2 methodIndex = readU2(dis, true);
-				yield new EnclosingMethodAttribute(constantPool, attributeNameIndex, attributeLength,
+				yield new EnclosingMethodAttribute(attributeNameIndex, attributeLength,
 						classIndex, methodIndex);
 			}
-			case "Synthetic", "Deprecated" -> new Attribute(constantPool, attributeNameIndex, attributeLength);
+			case "Synthetic", "Deprecated" -> new Attribute(attributeNameIndex, attributeLength);
 			case "Signature" -> {
 				U2 aShort = readU2(dis, true);
-				yield new SignatureAttribute(constantPool, attributeNameIndex, attributeLength, aShort);
+				yield new SignatureAttribute(attributeNameIndex, attributeLength, aShort);
 			}
 			case "SourceFile" -> {
 				U2 aShort = readU2(dis, true);
-				yield new SourceFileAttribute(constantPool, attributeNameIndex, attributeLength, aShort);
+				yield new SourceFileAttribute(attributeNameIndex, attributeLength, aShort);
 			}
 			case "SourceDebugExtension" -> {
 				String utf8 = new String(dis.readNBytes(attributeLength.getValue()));
-				yield new SourceDebugExtensionAttribute(constantPool, attributeNameIndex, attributeLength, utf8);
+				yield new SourceDebugExtensionAttribute(attributeNameIndex, attributeLength, utf8);
 			}
 			case "LineNumberTable" -> {
 				U2 numberOf = readU2(dis);
@@ -340,7 +342,7 @@ public class Parser {
 				for (int i = 0; i < numberOf.getValue(); i++) {
 					lineNumbers[i] = getLineNumber(i, dis);
 				}
-				yield new LineNumberTableAttribute(constantPool, attributeNameIndex, attributeLength, numberOf,
+				yield new LineNumberTableAttribute(attributeNameIndex, attributeLength, numberOf,
 						lineNumbers);
 			}
 			case "LocalVariableTable" -> {
@@ -350,7 +352,7 @@ public class Parser {
 				for (int i = 0; i < numberOf.getValue(); i++) {
 					localVariables[i] = getLocalVariable(dis, "Descriptor");
 				}
-				yield new LocalVariableTableAttribute(constantPool, attributeNameIndex, attributeLength, numberOf,
+				yield new LocalVariableTableAttribute(attributeNameIndex, attributeLength, numberOf,
 						localVariables);
 			}
 			case "LocalVariableTypeTable" -> {
@@ -360,7 +362,7 @@ public class Parser {
 				for (int i = 0; i < numberOf.getValue(); i++) {
 					localVariables[i] = getLocalVariable(dis, "Signature");
 				}
-				yield new LocalVariableTypeTableAttribute(constantPool, attributeNameIndex, attributeLength, numberOf,
+				yield new LocalVariableTypeTableAttribute(attributeNameIndex, attributeLength, numberOf,
 						localVariables);
 			}
 			case "RuntimeVisibleAnnotations" -> {
@@ -370,7 +372,7 @@ public class Parser {
 				for (int i = 0; i < numberOf.getValue(); i++) {
 					annotations[i] = getAnnotation(dis);
 				}
-				yield new RuntimeVisibleAnnotationsAttribute(constantPool, attributeNameIndex, attributeLength, numberOf,
+				yield new RuntimeVisibleAnnotationsAttribute(attributeNameIndex, attributeLength, numberOf,
 						annotations);
 			}
 			case "RuntimeInvisibleAnnotations" -> {
@@ -380,7 +382,7 @@ public class Parser {
 				for (int i = 0; i < numberOf.getValue(); i++) {
 					annotations[i] = getAnnotation(dis);
 				}
-				yield new RuntimeInvisibleAnnotationsAttribute(constantPool, attributeNameIndex, attributeLength, numberOf,
+				yield new RuntimeInvisibleAnnotationsAttribute(attributeNameIndex, attributeLength, numberOf,
 						annotations);
 			}
 			case "BootstrapMethods" -> {
@@ -389,7 +391,7 @@ public class Parser {
 				for (int i = 0; i < numberOf.getValue(); i++) {
 					bootstrapMethods[i] = getBootstrapMethod(i, dis);
 				}
-				yield new BootstrapMethodsAttribute(constantPool, attributeNameIndex, attributeLength,
+				yield new BootstrapMethodsAttribute(attributeNameIndex, attributeLength,
 						numberOf, bootstrapMethods);
 			}
 			case "MethodParameters" -> {
@@ -398,7 +400,7 @@ public class Parser {
 				for (int i = 0; i < numberOf.getValue(); i++) {
 					methodParameters[i] = getMethodParameter(i, dis);
 				}
-				yield new MethodParameterAttribute(constantPool, attributeNameIndex, attributeLength,
+				yield new MethodParameterAttribute(attributeNameIndex, attributeLength,
 						numberOf, methodParameters);
 			}
 			case "Module" -> {
@@ -426,33 +428,33 @@ public class Parser {
 				for (int i = 0; i < providesCount.getValue(); i++) {
 					provides[i] = readProvides(i, dis);
 				}
-				yield new ModuleAttribute(constantPool, attributeNameIndex, attributeLength,
+				yield new ModuleAttribute(attributeNameIndex, attributeLength,
 						moduleNameIndex, moduleFlags, moduleVersionIndex, requiresCount, requires, exportsCount, exports,
 						opensCount, opens, uses, providesCount, provides);
 			}
 			case "ModulePackages" -> {
 				U2Array packages = readU2Array(dis);
-				yield new ModulePackagesAttribute(constantPool, attributeNameIndex, attributeLength, packages);
+				yield new ModulePackagesAttribute(attributeNameIndex, attributeLength, packages);
 
 			}
 			case "ModuleMainClass" -> {
 				U2 aShort = readU2(dis, true);
-				yield new ModuleMainClassAttribute(constantPool, attributeNameIndex, attributeLength, aShort);
+				yield new ModuleMainClassAttribute(attributeNameIndex, attributeLength, aShort);
 			}
 			case "NestHost" -> {
 				U2 aShort = readU2(dis, true);
-				yield new NestHostAttribute(constantPool, attributeNameIndex, attributeLength, aShort);
+				yield new NestHostAttribute(attributeNameIndex, attributeLength, aShort);
 			}
 			case "NestMembers" -> {
 				U2Array classes = readU2Array(dis);
-				yield new NestMembersAttribute(constantPool, attributeNameIndex, attributeLength, classes);
+				yield new NestMembersAttribute(attributeNameIndex, attributeLength, classes);
 			}
 			default -> {
 				for (int j = 0; j < attributeLength.getValue(); j++) {
 					readByte(dis);
 				}
 				attributeLength = new U4(attributeLength.getOffset(), 0);//mark non-implemented attr, to show in the test 
-				yield new Attribute(constantPool, attributeNameIndex, attributeLength);
+				yield new Attribute(attributeNameIndex, attributeLength);
 			}
 		};
 	}
@@ -776,10 +778,6 @@ public class Parser {
 			this.constantTag = constantTag;
 		}
 
-		public String getAdditional() {
-			return "";
-		}
-
 		public int getOffset() {
 			return offset;
 		}
@@ -815,11 +813,6 @@ public class Parser {
 		}
 
 		@Override
-		public String getAdditional() {
-			return utf8;
-		}
-
-		@Override
 		public void print(Print.ConstantPrinter printer) {
 			super.print(printer);
 			printer.format(this);
@@ -832,11 +825,6 @@ public class Parser {
 		public ConstantPoolInteger(List<ConstantPoolEntry> constants, int offset, int idx, ConstantTag constantTag, int value) {
 			super(constants, offset, idx, constantTag);
 			this.value = value;
-		}
-
-		@Override
-		public String getAdditional() {
-			return String.valueOf(value);
 		}
 
 		public int getValue() {
@@ -858,11 +846,6 @@ public class Parser {
 			this.value = value;
 		}
 
-		@Override
-		public String getAdditional() {
-			return String.valueOf(value);
-		}
-
 		public float getValue() {
 			return value;
 		}
@@ -882,11 +865,6 @@ public class Parser {
 			this.value = value;
 		}
 
-		@Override
-		public String getAdditional() {
-			return String.valueOf(value);
-		}
-
 		public long getValue() {
 			return value;
 		}
@@ -904,11 +882,6 @@ public class Parser {
 		public ConstantPoolDouble(List<ConstantPoolEntry> constants, int offset, int idx, ConstantTag constantTag, double value) {
 			super(constants, offset, idx, constantTag);
 			this.value = value;
-		}
-
-		@Override
-		public String getAdditional() {
-			return String.valueOf(value);
 		}
 
 		public double getValue() {
@@ -931,17 +904,8 @@ public class Parser {
 			this.stringIndex = stringIndex;
 		}
 
-		@Override
-		public String getAdditional() {
-			return "(" + toHex(stringIndex) + ") " + getString();
-		}
-
 		public int getStringIndex() {
 			return stringIndex;
-		}
-
-		public String getString() {
-			return ((ConstantPoolUtf8) constants.get(stringIndex)).getUtf8();
 		}
 
 		@Override
@@ -962,26 +926,12 @@ public class Parser {
 			this.nameAndTypeIndex = nameAndTypeIndex;
 		}
 
-		@Override
-		public String getAdditional() {
-			return "(" + toHex(classIndex) + ") " + getClassIndexString()
-					+ " (" + toHex(nameAndTypeIndex) + ") " + getNameAndTypeIndexString();
-		}
-
 		public int getClassIndex() {
 			return classIndex;
 		}
 
-		public String getClassIndexString() {
-			return ((ConstantPoolString) constants.get(classIndex)).getString();
-		}
-
 		public int getNameAndTypeIndex() {
 			return nameAndTypeIndex;
-		}
-
-		public String getNameAndTypeIndexString() {
-			return ((ConstantPoolNameAndType) constants.get(nameAndTypeIndex)).getAdditional();
 		}
 
 		@Override
@@ -1002,26 +952,12 @@ public class Parser {
 			this.descriptorIndex = descriptorIndex;
 		}
 
-		@Override
-		public String getAdditional() {
-			return "(" + toHex(nameIndex) + ") " + getNameIndexString()
-					+ " (" + toHex(descriptorIndex) + ") " + getDescriptorIndexString();
-		}
-
 		public int getNameIndex() {
 			return nameIndex;
 		}
 
-		public String getNameIndexString() {
-			return ((ConstantPoolUtf8) constants.get(nameIndex)).getUtf8();
-		}
-
 		public int getDescriptorIndex() {
 			return descriptorIndex;
-		}
-
-		public String getDescriptorIndexString() {
-			return ((ConstantPoolUtf8) constants.get(descriptorIndex)).getUtf8();
 		}
 
 		@Override
@@ -1040,12 +976,6 @@ public class Parser {
 			super(constants, offset, idx, constantTag);
 			this.bootstrapMethodAttrIndex = bootstrapMethodAttrIndex;
 			this.nameAndTypeIndex = nameAndTypeIndex;
-		}
-
-		@Override
-		public String getAdditional() {
-			return "(" + toHex(bootstrapMethodAttrIndex) + ") "
-					+ " (" + toHex(nameAndTypeIndex) + ") " + constants.get(nameAndTypeIndex).getAdditional();
 		}
 
 		public int getBootstrapMethodAttrIndex() {
@@ -1085,12 +1015,6 @@ public class Parser {
 			super(constants, offset, idx, constantTag);
 			this.referenceKind = referenceKind;
 			this.referenceIndex = referenceIndex;
-		}
-
-		@Override
-		public String getAdditional() {
-			return MHRef.values()[referenceKind].name().replaceFirst("REF_", "")
-					+ " (" + toHex(referenceIndex) + ")" + constants.get(referenceIndex).getAdditional();
 		}
 
 		public int getReferenceKind() {

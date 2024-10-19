@@ -1,26 +1,16 @@
 package com.example.jcparser.attribute;
 
-import com.example.jcparser.Parser.ConstantPoolEntry;
 import com.example.jcparser.Parser.U2;
 import com.example.jcparser.Parser.U2Array;
 import com.example.jcparser.Parser.U4;
 import com.example.jcparser.Print;
 
-import java.util.List;
-
 public class ExceptionsAttribute extends Attribute {
 	private final U2Array exceptions;
 
-	public ExceptionsAttribute(List<ConstantPoolEntry> constants, U2 nameIndex, U4 length, U2Array exceptions) {
-		super(constants, nameIndex, length);
+	public ExceptionsAttribute(U2 nameIndex, U4 length, U2Array exceptions) {
+		super(nameIndex, length);
 		this.exceptions = exceptions;
-		for (U2 exception : exceptions.array()) {
-			ConstantPoolEntry entry = constants.get(exception.getValue());
-			if (!entry.getConstantTag().isConstantClass()) {
-				String message = String.format("%04X ExceptionValue = %s", exception.getOffset(), entry.getConstantTag());
-				throw new RuntimeException(message);
-			}
-		}
 	}
 
 	@Override

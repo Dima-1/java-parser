@@ -1,14 +1,13 @@
 package com.example.jcparser.attribute;
 
-import java.util.List;
-
-import com.example.jcparser.Parser.*;
+import com.example.jcparser.Parser.U2;
+import com.example.jcparser.Parser.U4;
 
 public class ConstantPoolAttribute extends Attribute {
 	private final U2 constantPoolIndex;
 
-	public ConstantPoolAttribute(List<ConstantPoolEntry> constants, U2 nameIndex, U4 length, U2 constantPoolIndex) {
-		super(constants, nameIndex, length);
+	public ConstantPoolAttribute(U2 nameIndex, U4 length, U2 constantPoolIndex) {
+		super(nameIndex, length);
 		this.constantPoolIndex = constantPoolIndex;
 	}
 

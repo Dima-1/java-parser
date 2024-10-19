@@ -1,13 +1,12 @@
 package com.example.jcparser.attribute;
 
-import java.util.List;
-
-import com.example.jcparser.Parser.*;
+import com.example.jcparser.Parser.U2;
+import com.example.jcparser.Parser.U4;
 
 public class NestHostAttribute extends ConstantPoolAttribute {
 
-	public NestHostAttribute(List<ConstantPoolEntry> constants, U2 nameIndex, U4 length, U2 hostClassIndex) {
-		super(constants, nameIndex, length, hostClassIndex);
+	public NestHostAttribute(U2 nameIndex, U4 length, U2 hostClassIndex) {
+		super(nameIndex, length, hostClassIndex);
 	}
 
 	@Override

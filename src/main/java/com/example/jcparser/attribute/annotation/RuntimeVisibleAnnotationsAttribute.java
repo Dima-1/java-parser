@@ -1,21 +1,18 @@
 package com.example.jcparser.attribute.annotation;
 
-import com.example.jcparser.Parser.ConstantPoolEntry;
 import com.example.jcparser.Parser.U2;
 import com.example.jcparser.Parser.U4;
 import com.example.jcparser.Print;
 import com.example.jcparser.attribute.Attribute;
 import com.example.jcparser.attribute.AttributePrinter;
 
-import java.util.List;
-
 public class RuntimeVisibleAnnotationsAttribute extends Attribute {
 	private final U2 numberOf;
 	private final RuntimeVisibleAnnotation[] annotations;
 
-	public RuntimeVisibleAnnotationsAttribute(List<ConstantPoolEntry> constantPool, U2 attributeNameIndex,
-	                                          U4 attributeLength, U2 numberOf, RuntimeVisibleAnnotation[] annotations) {
-		super(constantPool, attributeNameIndex, attributeLength);
+	public RuntimeVisibleAnnotationsAttribute(U2 attributeNameIndex, U4 attributeLength, U2 numberOf,
+	                                          RuntimeVisibleAnnotation[] annotations) {
+		super(attributeNameIndex, attributeLength);
 		this.numberOf = numberOf;
 		this.annotations = annotations;
 	}

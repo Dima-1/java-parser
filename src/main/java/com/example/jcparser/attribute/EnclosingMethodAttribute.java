@@ -1,16 +1,14 @@
 package com.example.jcparser.attribute;
 
-import com.example.jcparser.Parser.*;
-
-import java.util.List;
+import com.example.jcparser.Parser.U2;
+import com.example.jcparser.Parser.U4;
 
 public class EnclosingMethodAttribute extends Attribute {
 	private final U2 classIndex;
 	private final U2 methodIndex;
 
-	public EnclosingMethodAttribute(List<ConstantPoolEntry> constantPool, U2 attributeNameIndex,
-	                                U4 attributeLength, U2 classIndex, U2 methodIndex) {
-		super(constantPool, attributeNameIndex, attributeLength);
+	public EnclosingMethodAttribute(U2 attributeNameIndex, U4 attributeLength, U2 classIndex, U2 methodIndex) {
+		super(attributeNameIndex, attributeLength);
 		this.classIndex = classIndex;
 		this.methodIndex = methodIndex;
 	}

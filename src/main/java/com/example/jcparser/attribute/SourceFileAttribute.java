@@ -1,13 +1,12 @@
 package com.example.jcparser.attribute;
 
-import java.util.List;
-
-import com.example.jcparser.Parser.*;
+import com.example.jcparser.Parser.U2;
+import com.example.jcparser.Parser.U4;
 
 public class SourceFileAttribute extends ConstantPoolAttribute {
 
-	public SourceFileAttribute(List<ConstantPoolEntry> constants, U2 nameIndex, U4 length, U2 sourceFileIndex) {
-		super(constants, nameIndex, length, sourceFileIndex);
+	public SourceFileAttribute(U2 nameIndex, U4 length, U2 sourceFileIndex) {
+		super(nameIndex, length, sourceFileIndex);
 	}
 
 	@Override
