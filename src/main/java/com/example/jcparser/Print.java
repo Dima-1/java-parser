@@ -3,6 +3,7 @@ package com.example.jcparser;
 import com.example.jcparser.Parser.*;
 import com.example.jcparser.attribute.Attribute;
 import com.example.jcparser.attribute.AttributePrinter;
+import com.example.jcparser.attribute.Instruction;
 import com.example.jcparser.attribute.Opcode;
 import com.example.jcparser.attribute.stackmapframe.StackFramePrinter;
 
@@ -134,7 +135,8 @@ public class Print {
 					? " " + Arrays.stream(opcode.arguments()).mapToObj(num -> String.format("%02X ", num))
 					.collect(Collectors.joining()).trim()
 					: "";
-			System.out.printf(OFFSET_FORMAT + "%02X%s\n", opcode.offset(), opcode.opcode(), arguments);
+			String instruction = Instruction.getInstruction(opcode.opcode()).getName().toUpperCase();
+			System.out.printf(OFFSET_FORMAT + "%02X%-12s %s\n", opcode.offset(), opcode.opcode(), arguments, instruction);
 		}
 	}
 

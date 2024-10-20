@@ -566,7 +566,7 @@ public class Parser {
 	}
 
 	private int getFirstBytePadding(int startCodeCount) {
-		return (count - startCodeCount) % 4;
+		return 3 - (count - startCodeCount - 1) % 4;
 	}
 
 	private int readByte(DataInputStream dis) throws IOException {
