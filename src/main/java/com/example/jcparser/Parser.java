@@ -367,8 +367,8 @@ public class Parser {
 			}
 			case "RuntimeVisibleAnnotations" -> {
 				U2 numberOf = readU2(dis);
-				RuntimeVisibleAnnotationsAttribute.RuntimeVisibleAnnotation[] annotations
-						= new RuntimeVisibleAnnotationsAttribute.RuntimeVisibleAnnotation[numberOf.getValue()];
+				RuntimeVisibleAnnotationsAttribute.Annotation[] annotations
+						= new RuntimeVisibleAnnotationsAttribute.Annotation[numberOf.getValue()];
 				for (int i = 0; i < numberOf.getValue(); i++) {
 					annotations[i] = getAnnotation(dis);
 				}
@@ -377,13 +377,17 @@ public class Parser {
 			}
 			case "RuntimeInvisibleAnnotations" -> {
 				U2 numberOf = readU2(dis);
-				RuntimeVisibleAnnotationsAttribute.RuntimeVisibleAnnotation[] annotations
-						= new RuntimeVisibleAnnotationsAttribute.RuntimeVisibleAnnotation[numberOf.getValue()];
+				RuntimeVisibleAnnotationsAttribute.Annotation[] annotations
+						= new RuntimeVisibleAnnotationsAttribute.Annotation[numberOf.getValue()];
 				for (int i = 0; i < numberOf.getValue(); i++) {
 					annotations[i] = getAnnotation(dis);
 				}
 				yield new RuntimeInvisibleAnnotationsAttribute(attributeNameIndex, attributeLength, numberOf,
 						annotations);
+			}
+			case "AnnotationDefault" -> {
+				ElementValue elementValue = readElementValue(dis);
+				yield new AnnotationDefaultAttribute(attributeNameIndex, attributeLength, elementValue);
 			}
 			case "BootstrapMethods" -> {
 				U2 numberOf = readU2(dis);
@@ -435,7 +439,6 @@ public class Parser {
 			case "ModulePackages" -> {
 				U2Array packages = readU2Array(dis);
 				yield new ModulePackagesAttribute(attributeNameIndex, attributeLength, packages);
-
 			}
 			case "ModuleMainClass" -> {
 				U2 aShort = readU2(dis, true);
@@ -700,14 +703,14 @@ public class Parser {
 		return new LocalVariableAttribute.LocalVariable(startPC, length, nameIndex, descriptorIndex, index, descriptorTitle);
 	}
 
-	private RuntimeVisibleAnnotationsAttribute.RuntimeVisibleAnnotation getAnnotation(DataInputStream dis) throws IOException {
+	private RuntimeVisibleAnnotationsAttribute.Annotation getAnnotation(DataInputStream dis) throws IOException {
 		U2 typeIndex = readU2(dis, true).check(ConstantPoolUtf8.class);
 		U2 lengthOfPair = readU2(dis);
 		ValuePair[] valuePairs = new ValuePair[lengthOfPair.getValue()];
 		for (int i = 0; i < lengthOfPair.getValue(); i++) {
 			valuePairs[i] = readValuePair(dis);
 		}
-		return new RuntimeVisibleAnnotationsAttribute.RuntimeVisibleAnnotation(
+		return new RuntimeVisibleAnnotationsAttribute.Annotation(
 				typeIndex, lengthOfPair, valuePairs);
 	}
 
@@ -721,7 +724,7 @@ public class Parser {
 		U2 u2First = null;
 		U2 u2Second = null;
 		ElementValue[] elementValues = null;
-		RuntimeVisibleAnnotationsAttribute.RuntimeVisibleAnnotation annotation = null;
+		RuntimeVisibleAnnotationsAttribute.Annotation annotation = null;
 		U1 tag = readU1(dis);
 		switch (TagValueItem.getTagValue(tag.getValue())) {
 			case CONST_VALUE_INDEX, CLASS_INFO_INDEX -> u2First = readU2(dis, true);

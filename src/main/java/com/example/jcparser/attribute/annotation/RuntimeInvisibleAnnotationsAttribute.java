@@ -6,7 +6,7 @@ import com.example.jcparser.attribute.AttributePrinter;
 
 public class RuntimeInvisibleAnnotationsAttribute extends RuntimeVisibleAnnotationsAttribute {
 	public RuntimeInvisibleAnnotationsAttribute(U2 attributeNameIndex, U4 attributeLength, U2 numberOf,
-	                                            RuntimeVisibleAnnotationsAttribute.RuntimeVisibleAnnotation[] annotations) {
+	                                            Annotation[] annotations) {
 		super(attributeNameIndex, attributeLength, numberOf, annotations);
 	}
 

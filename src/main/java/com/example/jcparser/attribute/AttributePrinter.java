@@ -127,13 +127,13 @@ public class AttributePrinter {
 	public void print(RuntimeVisibleAnnotationsAttribute attr) {
 		print.u2(attr.getNumberOf(), "Attribute number of visible annotation", "", true);
 		print.incIndent();
-		for (RuntimeVisibleAnnotationsAttribute.RuntimeVisibleAnnotation visibleAnnotation : attr.getAnnotations()) {
-			visibleAnnotation.print(this);
+		for (RuntimeVisibleAnnotationsAttribute.Annotation annotation : attr.getAnnotations()) {
+			annotation.print(this);
 		}
 		print.decIndent();
 	}
 
-	public void print(RuntimeVisibleAnnotationsAttribute.RuntimeVisibleAnnotation attr) {
+	public void print(RuntimeVisibleAnnotationsAttribute.Annotation attr) {
 		print.u2(attr.typeIndex(), "Type of annotation", "", true);
 		print.u2(attr.lengthOfPair(), "Number of value pair", "", true);
 		for (ValuePair valuePair : attr.valuePairs()) {
@@ -170,10 +170,14 @@ public class AttributePrinter {
 	public void print(RuntimeInvisibleAnnotationsAttribute attr) {
 		print.u2(attr.getNumberOf(), "Attribute number of invisible annotation", "", true);
 		print.incIndent();
-		for (RuntimeVisibleAnnotationsAttribute.RuntimeVisibleAnnotation visibleAnnotation : attr.getAnnotations()) {
-			visibleAnnotation.print(this);
+		for (RuntimeVisibleAnnotationsAttribute.Annotation annotation : attr.getAnnotations()) {
+			annotation.print(this);
 		}
 		print.decIndent();
+	}
+
+	public void print(AnnotationDefaultAttribute attr) {
+		attr.getElementValue().print(this);
 	}
 
 	void print(BootstrapMethodsAttribute attr) {

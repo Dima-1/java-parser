@@ -6,7 +6,7 @@ import com.example.jcparser.Print;
 import com.example.jcparser.attribute.AttributePrinter;
 
 public record ElementValue(U1 tag, U2 u2First, U2 u2Second,
-                           RuntimeVisibleAnnotationsAttribute.RuntimeVisibleAnnotation annotation,
+                           RuntimeVisibleAnnotationsAttribute.Annotation annotation,
                            com.example.jcparser.attribute.annotation.ElementValue[] elementValues)
 		implements Print.Printable<AttributePrinter> {
 
@@ -14,6 +14,4 @@ public record ElementValue(U1 tag, U2 u2First, U2 u2Second,
 	public void print(AttributePrinter printer) {
 		printer.print(this);
 	}
-
-
 }

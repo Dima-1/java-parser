@@ -8,10 +8,10 @@ import com.example.jcparser.attribute.AttributePrinter;
 
 public class RuntimeVisibleAnnotationsAttribute extends Attribute {
 	private final U2 numberOf;
-	private final RuntimeVisibleAnnotation[] annotations;
+	private final Annotation[] annotations;
 
 	public RuntimeVisibleAnnotationsAttribute(U2 attributeNameIndex, U4 attributeLength, U2 numberOf,
-	                                          RuntimeVisibleAnnotation[] annotations) {
+	                                          Annotation[] annotations) {
 		super(attributeNameIndex, attributeLength);
 		this.numberOf = numberOf;
 		this.annotations = annotations;
@@ -27,12 +27,12 @@ public class RuntimeVisibleAnnotationsAttribute extends Attribute {
 		return numberOf;
 	}
 
-	public RuntimeVisibleAnnotation[] getAnnotations() {
+	public Annotation[] getAnnotations() {
 		return annotations;
 	}
 
-	public record RuntimeVisibleAnnotation(U2 typeIndex, U2 lengthOfPair,
-	                                       ValuePair[] valuePairs) implements Print.Printable<AttributePrinter> {
+	public record Annotation(U2 typeIndex, U2 lengthOfPair, ValuePair[] valuePairs)
+			implements Print.Printable<AttributePrinter> {
 
 		@Override
 		public void print(AttributePrinter printer) {
