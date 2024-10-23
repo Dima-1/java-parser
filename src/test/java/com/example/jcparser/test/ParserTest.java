@@ -18,6 +18,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
+import static com.example.jcparser.ConsoleColors.RED;
+import static com.example.jcparser.ConsoleColors.RESET;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Named.named;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
@@ -125,7 +127,8 @@ class ParserTest {
 				System.out.printf("%s", errorMsg);
 			}
 		}
-		System.out.printf("%s Total line parsed: %s Total errors: %s\n",
+		String errors = errorCount == 0 ? "Total errors: %s" : RED + "Total errors: %s" + RESET;
+		System.out.printf("%s Total line parsed: %s " + errors + "\n",
 				testInfo.getDisplayName(), lines.length, errorCount);
 	}
 }
