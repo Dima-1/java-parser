@@ -10,7 +10,7 @@ public class StackFramePrinter {
 	}
 
 	public void print(StackMapFrame frame) {
-		print.u1(frame.getTag(), "StackMapFrame type tag");
+		print.u1(frame.getTag(), "StackMapFrame type tag", true);
 	}
 
 	public void print(SameLocals1StackItemStackMapFrame frame) {
@@ -45,7 +45,7 @@ public class StackFramePrinter {
 
 	private void printTypeInfo(TypeInfo[] stack) {
 		for (TypeInfo typeInfo : stack) {
-			print.u1(typeInfo.tag(), "Type info tag");
+			print.u1(typeInfo.tag(), "Type info tag", true);
 			if (typeInfo.typeInfoAdditional() != null) {
 				print.u2(typeInfo.typeInfoAdditional(), "Offset");
 			}

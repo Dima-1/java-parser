@@ -39,9 +39,15 @@ public class Print {
 
 	public void u1(Parser.U1 u1, String title, boolean addDecimal) {
 		String hexValue = String.format("%02X", u1.getValue());
-		String decimalValue = String.format(addDecimal ? " (%02d)" : "", u1.getValue());
-		System.out.printf(OFFSET_FORMAT + "%s    %s %s\n", u1.getOffset(), hexValue,
-				title.indent(getIndents()).stripTrailing(), decimalValue);
+		String value;
+		String valueFormat = addDecimal ? " %s" : "";
+		value = String.format(addDecimal ? " (%02d)" : "", u1.getValue());
+		if (u1 instanceof CharU1) {
+			valueFormat += " " + YELLOW_STRING;
+			value += Character.toString(u1.value);
+		}
+		System.out.printf(OFFSET_FORMAT + "%s    %s" + valueFormat + "\n", u1.getOffset(), hexValue,
+				title.indent(getIndents()).stripTrailing(), value);
 	}
 
 	public void u2(Parser.U2 u2, String title) {

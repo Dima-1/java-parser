@@ -1,15 +1,13 @@
 package com.example.jcparser.test;
 
-import java.lang.annotation.Repeatable;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.*;
 import java.security.InvalidParameterException;
 
 public class TestClass {
 	public static void main(String[] args) {
 		TestClass testClassVar = new TestClass();
 		testClassVar.testMethod();
-		testClassVar.testMethodWithParameters(1, "test");
+		String res = testClassVar.testMethodWithParameters(1, "test");
 	}
 
 	@Deprecated
@@ -17,6 +15,7 @@ public class TestClass {
 		return 10;
 	}
 
+	@TestInvisibleAnnotation(hName = "New h name", hId = 2)
 	private void testMethod() {
 		class TestLocalClass {
 
@@ -38,10 +37,16 @@ public class TestClass {
 
 	@TestAnnotation(name = "New name 1", id = 1)
 	@TestAnnotation(name = "New name 2", id = 2)
-	private void testMethodWithParameters(int i, final String test) throws InvalidParameterException {
+	private String testMethodWithParameters(int i, final String test) throws InvalidParameterException {
 		if (i == 0) {
 			throw new InvalidParameterException(test);
 		}
+		return switch (i) {
+			case 1 -> "One " + test;
+			case 2 -> "Two " + test;
+			case 33 -> "Thirty three " + test;
+			default -> throw new IllegalStateException("Unexpected value: " + i);
+		};
 	}
 
 	public class TestInnerClass {
@@ -60,12 +65,19 @@ public class TestClass {
 	@Retention(RetentionPolicy.RUNTIME)
 	@interface TestAnnotation {
 		String name() default "default name";
+
 		int id() default 0;
 	}
-	
 
 	@Retention(RetentionPolicy.RUNTIME)
 	@interface TestRepeatableAnnotations {
 		TestAnnotation[] value();
+	}
+
+	@Retention(RetentionPolicy.CLASS)
+	@interface TestInvisibleAnnotation {
+		String hName() default "default hidden name";
+
+		int hId() default 1;
 	}
 }

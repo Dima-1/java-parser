@@ -725,7 +725,7 @@ public class Parser {
 		U2 u2Second = null;
 		ElementValue[] elementValues = null;
 		RuntimeVisibleAnnotationsAttribute.Annotation annotation = null;
-		U1 tag = readU1(dis);
+		CharU1 tag = new CharU1(readU1(dis));
 		switch (TagValueItem.getTagValue(tag.getValue())) {
 			case CONST_VALUE_INDEX, CLASS_INFO_INDEX -> u2First = readU2(dis, true);
 			case ENUM_CONST_VALUE -> {
@@ -1066,6 +1066,13 @@ public class Parser {
 
 		public U1 check(Class<?> aClass) {
 			return this;
+		}
+	}
+
+	public class CharU1 extends U1 {
+
+		public CharU1(U1 u1) {
+			super(u1.offset, u1.value);
 		}
 	}
 
