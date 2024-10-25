@@ -1,7 +1,10 @@
-package com.example.jcparser.attribute;
+package com.example.jcparser.attribute.opcode;
 
 import com.example.jcparser.Parser.U2;
 import com.example.jcparser.Parser.U4;
+import com.example.jcparser.attribute.Attribute;
+import com.example.jcparser.attribute.AttributePrinter;
+import com.example.jcparser.attribute.ExceptionsAttribute;
 
 import java.util.List;
 
@@ -16,7 +19,7 @@ public class CodeAttribute extends Attribute {
 	private final List<Attribute> attributes;
 
 	public CodeAttribute(U2 nameIndex, U4 length, U2 maxStack, U2 maxLocals, U4 codeLength, List<Opcode> opcodes,
-	                     U2 exceptionTableLength, ExceptionsAttribute.Exception[] exceptions, U2 numberOf, 
+	                     U2 exceptionTableLength, ExceptionsAttribute.Exception[] exceptions, U2 numberOf,
 	                     List<Attribute> attributes) {
 		super(nameIndex, length);
 		this.maxStack = maxStack;

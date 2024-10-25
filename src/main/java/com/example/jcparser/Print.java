@@ -3,8 +3,8 @@ package com.example.jcparser;
 import com.example.jcparser.Parser.*;
 import com.example.jcparser.attribute.Attribute;
 import com.example.jcparser.attribute.AttributePrinter;
-import com.example.jcparser.attribute.Instruction;
-import com.example.jcparser.attribute.Opcode;
+import com.example.jcparser.attribute.opcode.Opcode;
+import com.example.jcparser.attribute.opcode.OpcodePrinter;
 import com.example.jcparser.attribute.stackmapframe.StackFramePrinter;
 
 import java.util.Arrays;
@@ -19,11 +19,16 @@ public class Print {
 	public static final String YELLOW_STRING = ConsoleColors.YELLOW + "%s" + ConsoleColors.RESET;
 	public static final String HEX_2 = " (%02X)";
 	public static final int SPACES_IN_INTENT = 6;
+	private final OpcodePrinter opcodePrinter = new OpcodePrinter(this);
 	private final StackFramePrinter stackFramePrinter = new StackFramePrinter(this);
 	private final AttributePrinter attributePrinter = new AttributePrinter(this);
 	private final ConstantPrinter constantPrinter = new ConstantPrinter();
 	private String OFFSET_FORMAT = "%04X ";
 	private int indent;
+
+	public OpcodePrinter getOpcodePrinter() {
+		return opcodePrinter;
+	}
 
 	public StackFramePrinter getStackFramePrinter() {
 		return stackFramePrinter;
@@ -135,15 +140,16 @@ public class Print {
 		indent--;
 	}
 
-	public void opcodes(List<Opcode> opcodes) {
-		for (Opcode opcode : opcodes) {
-			String arguments = opcode.arguments().length > 0
-					? " " + Arrays.stream(opcode.arguments()).mapToObj(num -> String.format("%02X ", num))
-					.collect(Collectors.joining()).trim()
-					: "";
-			String instruction = Instruction.getInstruction(opcode.opcode()).getName().toUpperCase();
-			System.out.printf(OFFSET_FORMAT + "%02X%-12s %s\n", opcode.offset(), opcode.opcode(), arguments, instruction);
-		}
+	public void opcode(Opcode opcode, String arguments, String label, String instruction) {
+		String rStream = Arrays.stream(opcode.strArguments())
+				.map(s -> {
+					constantPrinter.printGeneral = false;
+					constantPrinter.formatedString = "";
+					s.print(constantPrinter);
+					return constantPrinter.formatedString.stripLeading();
+				}).collect(Collectors.joining());
+		System.out.printf(OFFSET_FORMAT + "%02X%-12s %5s %s %s\n", opcode.offset(), opcode.opcode(), arguments, label,
+				instruction, rStream);
 	}
 
 	public void incIndent() {

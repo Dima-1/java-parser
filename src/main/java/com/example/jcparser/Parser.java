@@ -2,6 +2,9 @@ package com.example.jcparser;
 
 import com.example.jcparser.attribute.*;
 import com.example.jcparser.attribute.annotation.*;
+import com.example.jcparser.attribute.opcode.CodeAttribute;
+import com.example.jcparser.attribute.opcode.Instruction;
+import com.example.jcparser.attribute.opcode.Opcode;
 import com.example.jcparser.attribute.stackmapframe.*;
 import org.apache.commons.text.StringEscapeUtils;
 
@@ -565,7 +568,17 @@ public class Parser {
 			size += nPairs.getValue() * 2 * U4.BYTES;
 		}
 		readNBytes(dis, arguments, size);
-		return new Opcode(offset, opcode, arguments.stream().mapToInt(i -> i).toArray());
+		int[] array = arguments.stream().mapToInt(i -> i).toArray();
+		
+		Instruction.Type type = Instruction.getArgumentsType(opcode);
+		List<ConstantPoolEntry> sArguments = new ArrayList<>();
+		if (type == Instruction.Type.CONST_IDX) {
+			sArguments.add(constantPool.get(array[0] << 8 | array[1]));
+		} else if (type == Instruction.Type.CONST_IDX_BYTE) {
+			sArguments.add(constantPool.get(array[0]));
+		}
+		ConstantPoolEntry[] sArgument = sArguments.toArray(ConstantPoolEntry[]::new);
+		return new Opcode(offset, opcode, array, sArgument);
 	}
 
 	private int getFirstBytePadding(int startCodeCount) {

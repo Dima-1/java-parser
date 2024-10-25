@@ -1,4 +1,4 @@
-package com.example.jcparser.attribute;
+package com.example.jcparser.attribute.opcode;
 
 import java.util.Arrays;
 
@@ -238,5 +238,23 @@ public enum Instruction {
 
 	public static int getArgumentsSize(int code) {
 		return getInstruction(code).argumentsSize;
+	}
+
+	public static Type getArgumentsType(int code) {
+		Type type;
+		type = switch (getInstruction(code)) {
+			case ANEWARRAY, CHECKCAST, GETFIELD, GETSTATIC, INSTANCEOF, INVOKEDYNAMIC, INVOKESPECIAL, INVOKESTATIC,
+			     INVOKEVIRTUAL, LDC_W, LDC2_W, NEW, PUTFIELD, PUTSTATIC -> Type.CONST_IDX;
+			case INVOKEINTERFACE, MULTIANEWARRAY -> Type.CONST_IDX_COUNT;
+			case LDC -> Type.CONST_IDX_BYTE;
+			default -> null;
+		};
+		return type;
+	}
+
+	public enum Type {
+		CONST_IDX,
+		CONST_IDX_BYTE,
+		CONST_IDX_COUNT
 	}
 }

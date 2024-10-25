@@ -4,6 +4,7 @@ import com.example.jcparser.AccessFlag;
 import com.example.jcparser.Parser;
 import com.example.jcparser.Print;
 import com.example.jcparser.attribute.annotation.*;
+import com.example.jcparser.attribute.opcode.CodeAttribute;
 import com.example.jcparser.attribute.stackmapframe.StackMapFrame;
 
 public class AttributePrinter {
@@ -22,11 +23,11 @@ public class AttributePrinter {
 		print.u2(attr.getConstantValueIndex(), "Attribute constant value index");
 	}
 
-	void print(CodeAttribute attr) {
+	public void print(CodeAttribute attr) {
 		print.u2(attr.getMaxStack(), "Attribute max stack");
 		print.u2(attr.getMaxLocals(), "Attribute max local");
 		print.u4(attr.getCodeLength(), "Code length");
-		print.opcodes(attr.getOpcodes());
+		print.getOpcodePrinter().opcodes(attr.getOpcodes());
 		print.u2(attr.getExceptionTableLength(), "Exceptions table length");
 		for (ExceptionsAttribute.Exception exception : attr.getExceptions()) {
 			exception.print(this);
