@@ -41,7 +41,7 @@ public class Print {
 		String hexValue = String.format("%02X", u1.getValue());
 		String value;
 		String valueFormat = addDecimal ? " %s" : "";
-		value = String.format(addDecimal ? " (%02d)" : "", u1.getValue());
+		value = String.format(addDecimal ? "(%02d)" : "", u1.getValue());
 		if (u1 instanceof CharU1) {
 			valueFormat += " " + YELLOW_STRING;
 			value += Character.toString(u1.value);

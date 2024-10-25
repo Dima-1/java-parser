@@ -22,11 +22,6 @@ public class LocalVariableAttribute extends Attribute {
 		return localVariables;
 	}
 
-	@Override
-	public void print(AttributePrinter printer) {
-		super.print(printer);
-	}
-
 	public record LocalVariable(U2 startPC, U2 length, U2 nameIndex, U2 descriptorIndex, U2 index,
 	                            String descriptorTitle) implements Print.Printable<AttributePrinter> {
 

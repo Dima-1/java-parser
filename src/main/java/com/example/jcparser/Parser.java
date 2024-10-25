@@ -367,8 +367,8 @@ public class Parser {
 			}
 			case "RuntimeVisibleAnnotations" -> {
 				U2 numberOf = readU2(dis);
-				RuntimeVisibleAnnotationsAttribute.Annotation[] annotations
-						= new RuntimeVisibleAnnotationsAttribute.Annotation[numberOf.getValue()];
+				RuntimeAnnotationsAttribute.Annotation[] annotations
+						= new RuntimeAnnotationsAttribute.Annotation[numberOf.getValue()];
 				for (int i = 0; i < numberOf.getValue(); i++) {
 					annotations[i] = getAnnotation(dis);
 				}
@@ -377,8 +377,8 @@ public class Parser {
 			}
 			case "RuntimeInvisibleAnnotations" -> {
 				U2 numberOf = readU2(dis);
-				RuntimeVisibleAnnotationsAttribute.Annotation[] annotations
-						= new RuntimeVisibleAnnotationsAttribute.Annotation[numberOf.getValue()];
+				RuntimeAnnotationsAttribute.Annotation[] annotations
+						= new RuntimeAnnotationsAttribute.Annotation[numberOf.getValue()];
 				for (int i = 0; i < numberOf.getValue(); i++) {
 					annotations[i] = getAnnotation(dis);
 				}
@@ -491,7 +491,7 @@ public class Parser {
 	private U1 readU1(DataInputStream dis) throws IOException {
 		int value = dis.readUnsignedByte();
 		U1 u1 = new U1(count, value);
-		count += Byte.BYTES;
+		count += U1.BYTES;
 		return u1;
 	}
 
@@ -521,14 +521,14 @@ public class Parser {
 			}
 		}
 		U2 u2 = new U2(count, value, cpe);
-		count += Short.BYTES;
+		count += U2.BYTES;
 		return u2;
 	}
 
 	private U4 readU4(DataInputStream dis) throws IOException {
 		int value = dis.readInt();
 		U4 u4 = new U4(count, value);
-		count += Integer.BYTES;
+		count += U4.BYTES;
 		return u4;
 	}
 
@@ -545,24 +545,24 @@ public class Parser {
 		if (opcode == Instruction.TABLESWITCH.getCode()) {
 			size = getFirstBytePadding(startCodeCount);
 			readNBytes(dis, arguments, size);
-			size += 3 * U4.getSize();
+			size += 3 * U4.BYTES;
 			U4 defaultValue = readU4(dis);
 			arguments.addAll(defaultValue.getIntList());
 			U4 low = readU4(dis);
 			arguments.addAll(low.getIntList());
 			U4 high = readU4(dis);
 			arguments.addAll(high.getIntList());
-			size += (high.getValue() - low.getValue() + 1) * U4.getSize();
+			size += (high.getValue() - low.getValue() + 1) * U4.BYTES;
 		}
 		if (opcode == Instruction.LOOKUPSWITCH.getCode()) {
 			size = getFirstBytePadding(startCodeCount);
 			readNBytes(dis, arguments, size);
-			size += 2 * U4.getSize();
+			size += 2 * U4.BYTES;
 			U4 defaultValue = readU4(dis);
 			arguments.addAll(defaultValue.getIntList());
 			U4 nPairs = readU4(dis);
 			arguments.addAll(nPairs.getIntList());
-			size += nPairs.getValue() * 2 * U4.getSize();
+			size += nPairs.getValue() * 2 * U4.BYTES;
 		}
 		readNBytes(dis, arguments, size);
 		return new Opcode(offset, opcode, arguments.stream().mapToInt(i -> i).toArray());
@@ -703,14 +703,14 @@ public class Parser {
 		return new LocalVariableAttribute.LocalVariable(startPC, length, nameIndex, descriptorIndex, index, descriptorTitle);
 	}
 
-	private RuntimeVisibleAnnotationsAttribute.Annotation getAnnotation(DataInputStream dis) throws IOException {
+	private RuntimeAnnotationsAttribute.Annotation getAnnotation(DataInputStream dis) throws IOException {
 		U2 typeIndex = readU2(dis, true).check(ConstantPoolUtf8.class);
 		U2 lengthOfPair = readU2(dis);
 		ValuePair[] valuePairs = new ValuePair[lengthOfPair.getValue()];
 		for (int i = 0; i < lengthOfPair.getValue(); i++) {
 			valuePairs[i] = readValuePair(dis);
 		}
-		return new RuntimeVisibleAnnotationsAttribute.Annotation(
+		return new RuntimeAnnotationsAttribute.Annotation(
 				typeIndex, lengthOfPair, valuePairs);
 	}
 
@@ -724,7 +724,7 @@ public class Parser {
 		U2 u2First = null;
 		U2 u2Second = null;
 		ElementValue[] elementValues = null;
-		RuntimeVisibleAnnotationsAttribute.Annotation annotation = null;
+		RuntimeAnnotationsAttribute.Annotation annotation = null;
 		CharU1 tag = new CharU1(readU1(dis));
 		switch (TagValueItem.getTagValue(tag.getValue())) {
 			case CONST_VALUE_INDEX, CLASS_INFO_INDEX -> u2First = readU2(dis, true);
@@ -796,10 +796,6 @@ public class Parser {
 		@Override
 		public void print(Print.ConstantPrinter printer) {
 			printer.format(this);
-		}
-
-		protected String toHex(int i) {
-			return Integer.toHexString(i).toUpperCase();
 		}
 	}
 
@@ -1036,6 +1032,7 @@ public class Parser {
 	}
 
 	public class U1 {
+		public static final int BYTES = 1;
 		private final int offset;
 		protected final int value;
 
@@ -1050,10 +1047,6 @@ public class Parser {
 
 		public int getValue() {
 			return value;
-		}
-
-		public static int getSize() {
-			return 1;
 		}
 
 		public List<Integer> getIntList() {
@@ -1077,15 +1070,12 @@ public class Parser {
 	}
 
 	public class U2 extends U1 {
+		public static final int BYTES = 2;
 		private ConstantPoolEntry cpe;
 
 		public U2(int offset, int value, ConstantPoolEntry cpe) {
 			super(offset, value);
 			this.cpe = cpe;
-		}
-
-		public static int getSize() {
-			return 2;
 		}
 
 		public void clearCpe() {
@@ -1115,12 +1105,10 @@ public class Parser {
 	}
 
 	public class U4 extends U2 {
+		public static final int BYTES = 4;
+
 		public U4(int offset, int value) {
 			super(offset, value, null);
-		}
-
-		public static int getSize() {
-			return 4;
 		}
 
 		@Override

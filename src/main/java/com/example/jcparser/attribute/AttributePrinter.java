@@ -83,7 +83,7 @@ public class AttributePrinter {
 	}
 
 	void print(SourceDebugExtensionAttribute attr) {
-		print.debugInfo(attr.getLength().getOffset() + Parser.U4.getSize(), attr.getUtf8());
+		print.debugInfo(attr.getLength().getOffset() + Parser.U4.BYTES, attr.getUtf8());
 	}
 
 	void print(LineNumberTableAttribute attr) {
@@ -126,14 +126,18 @@ public class AttributePrinter {
 
 	public void print(RuntimeVisibleAnnotationsAttribute attr) {
 		print.u2(attr.getNumberOf(), "Attribute number of visible annotation", "", true);
+		printAnnotations(attr);
+	}
+
+	private void printAnnotations(RuntimeAnnotationsAttribute attr) {
 		print.incIndent();
-		for (RuntimeVisibleAnnotationsAttribute.Annotation annotation : attr.getAnnotations()) {
+		for (RuntimeAnnotationsAttribute.Annotation annotation : attr.getAnnotations()) {
 			annotation.print(this);
 		}
 		print.decIndent();
 	}
 
-	public void print(RuntimeVisibleAnnotationsAttribute.Annotation attr) {
+	public void print(RuntimeAnnotationsAttribute.Annotation attr) {
 		print.u2(attr.typeIndex(), "Type of annotation", "", true);
 		print.u2(attr.lengthOfPair(), "Number of value pair", "", true);
 		for (ValuePair valuePair : attr.valuePairs()) {
@@ -169,11 +173,7 @@ public class AttributePrinter {
 
 	public void print(RuntimeInvisibleAnnotationsAttribute attr) {
 		print.u2(attr.getNumberOf(), "Attribute number of invisible annotation", "", true);
-		print.incIndent();
-		for (RuntimeVisibleAnnotationsAttribute.Annotation annotation : attr.getAnnotations()) {
-			annotation.print(this);
-		}
-		print.decIndent();
+		printAnnotations(attr);
 	}
 
 	public void print(AnnotationDefaultAttribute attr) {
