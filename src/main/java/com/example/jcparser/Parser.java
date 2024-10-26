@@ -37,16 +37,32 @@ public class Parser {
 	public static void main(String[] args) {
 		File file;
 		if (args.length == 0) {
-			System.err.println("Use [/path/file.class] as first argument");
+			System.err.println(
+					"""
+							Usage [-c] [-r] </path/file.class>
+							      -c Skip the print of the constant pool
+							      -r Skip the print of the indexes of the constant pool""");
 			System.exit(1);
 		}
-		String fileName = args[0];
+		Options options = new Options();
+		String fileName = "";
+		for (String arg : args) {
+			if ("-c".equals(arg)) {
+				options.setConstants(false);
+			}
+			if ("-r".equals(arg)) {
+				options.setRefs(false);
+			}
+			if (!arg.startsWith("-")) {
+				fileName = arg;
+			}
+		}
 		file = new File(fileName);
 		if (!file.exists()) {
 			System.err.printf("File %s not exist\n", fileName);
 			System.exit(1);
 		}
-		Parser parser = new Parser(new Print());
+		Parser parser = new Parser(new Print(options));
 		parser.process(file);
 	}
 
