@@ -1,5 +1,6 @@
 package com.example.jcparser;
 
+import com.example.jcparser.Print.ConstantFormater;
 import com.example.jcparser.attribute.*;
 import com.example.jcparser.attribute.annotation.*;
 import com.example.jcparser.attribute.opcode.CodeAttribute;
@@ -569,7 +570,7 @@ public class Parser {
 		}
 		readNBytes(dis, arguments, size);
 		int[] array = arguments.stream().mapToInt(i -> i).toArray();
-		
+
 		Instruction.Type type = Instruction.getArgumentsType(opcode);
 		List<ConstantPoolEntry> sArguments = new ArrayList<>();
 		if (type == Instruction.Type.CONST_IDX) {
@@ -781,7 +782,7 @@ public class Parser {
 		}
 	}
 
-	public static class ConstantPoolEntry implements Print.Printable<Print.ConstantPrinter> {
+	public static class ConstantPoolEntry implements Print.Formatter<Print.ConstantFormater> {
 		protected final List<ConstantPoolEntry> constants;
 		private final int offset;
 		private final int idx;
@@ -807,8 +808,8 @@ public class Parser {
 		}
 
 		@Override
-		public void print(Print.ConstantPrinter printer) {
-			printer.format(this);
+		public void format(ConstantFormater formater) {
+			formater.format(this);
 		}
 	}
 
@@ -825,9 +826,9 @@ public class Parser {
 		}
 
 		@Override
-		public void print(Print.ConstantPrinter printer) {
-			super.print(printer);
-			printer.format(this);
+		public void format(ConstantFormater formater) {
+			super.format(formater);
+			formater.format(this);
 		}
 	}
 
@@ -844,9 +845,9 @@ public class Parser {
 		}
 
 		@Override
-		public void print(Print.ConstantPrinter printer) {
-			super.print(printer);
-			printer.format(this);
+		public void format(ConstantFormater formater) {
+			super.format(formater);
+			formater.format(this);
 		}
 	}
 
@@ -863,9 +864,9 @@ public class Parser {
 		}
 
 		@Override
-		public void print(Print.ConstantPrinter printer) {
-			super.print(printer);
-			printer.format(this);
+		public void format(ConstantFormater formater) {
+			super.format(formater);
+			formater.format(this);
 		}
 	}
 
@@ -882,9 +883,9 @@ public class Parser {
 		}
 
 		@Override
-		public void print(Print.ConstantPrinter printer) {
-			super.print(printer);
-			printer.format(this);
+		public void format(ConstantFormater formater) {
+			super.format(formater);
+			formater.format(this);
 		}
 	}
 
@@ -901,9 +902,9 @@ public class Parser {
 		}
 
 		@Override
-		public void print(Print.ConstantPrinter printer) {
-			super.print(printer);
-			printer.format(this);
+		public void format(ConstantFormater formater) {
+			super.format(formater);
+			formater.format(this);
 		}
 	}
 
@@ -921,9 +922,9 @@ public class Parser {
 		}
 
 		@Override
-		public void print(Print.ConstantPrinter printer) {
-			super.print(printer);
-			printer.format(this);
+		public void format(ConstantFormater formater) {
+			super.format(formater);
+			formater.format(this);
 		}
 	}
 
@@ -947,9 +948,9 @@ public class Parser {
 		}
 
 		@Override
-		public void print(Print.ConstantPrinter printer) {
-			super.print(printer);
-			printer.format(this);
+		public void format(ConstantFormater formater) {
+			super.format(formater);
+			formater.format(this);
 		}
 	}
 
@@ -973,9 +974,9 @@ public class Parser {
 		}
 
 		@Override
-		public void print(Print.ConstantPrinter printer) {
-			super.print(printer);
-			printer.format(this);
+		public void format(ConstantFormater formater) {
+			super.format(formater);
+			formater.format(this);
 		}
 	}
 
@@ -999,9 +1000,9 @@ public class Parser {
 		}
 
 		@Override
-		public void print(Print.ConstantPrinter printer) {
-			super.print(printer);
-			printer.format(this);
+		public void format(ConstantFormater formater) {
+			super.format(formater);
+			formater.format(this);
 		}
 	}
 
@@ -1038,13 +1039,13 @@ public class Parser {
 		}
 
 		@Override
-		public void print(Print.ConstantPrinter printer) {
-			super.print(printer);
-			printer.format(this);
+		public void format(ConstantFormater formater) {
+			super.format(formater);
+			formater.format(this);
 		}
 	}
 
-	public class U1 {
+	public static class U1 {
 		public static final int BYTES = 1;
 		private final int offset;
 		protected final int value;
@@ -1075,7 +1076,7 @@ public class Parser {
 		}
 	}
 
-	public class CharU1 extends U1 {
+	public static class CharU1 extends U1 {
 
 		public CharU1(U1 u1) {
 			super(u1.offset, u1.value);

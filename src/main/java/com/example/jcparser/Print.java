@@ -16,13 +16,14 @@ import static com.example.jcparser.AccessFlag.getAccessFlags;
 public class Print {
 
 	public static final boolean PRINT_CONSTANT_POOL = true;
+	public static final boolean PRINT_CONSTANT_POOL_REFERENCE = true;
 	public static final String YELLOW_STRING = ConsoleColors.YELLOW + "%s" + ConsoleColors.RESET;
 	public static final String HEX_2 = " (%02X)";
 	public static final int SPACES_IN_INTENT = 6;
 	private final OpcodePrinter opcodePrinter = new OpcodePrinter(this);
 	private final StackFramePrinter stackFramePrinter = new StackFramePrinter(this);
 	private final AttributePrinter attributePrinter = new AttributePrinter(this);
-	private final ConstantPrinter constantPrinter = new ConstantPrinter();
+	private final ConstantFormater constantFormater = new ConstantFormater();
 	private String OFFSET_FORMAT = "%04X ";
 	private int indent;
 
@@ -65,10 +66,7 @@ public class Print {
 		String decimalValue = String.format(addDecimal ? " (%02d)" : "", u2.getValue());
 		String constantString = "";
 		if (u2.getCpe() != null) {
-			constantPrinter.printGeneral = false;
-			constantPrinter.formatedString = "";
-			u2.getCpe().print(constantPrinter);
-			constantString = constantPrinter.formatedString.stripLeading();
+			constantString = constantFormater.formatNewOnlyString(u2.getCpe());
 		}
 		String yellowString = constantString.isEmpty() ? "%s" : " %s";
 		System.out.printf(OFFSET_FORMAT + "%s " + titleColor + "%s" + ConsoleColors.RESET + "%s" + yellowString + "\n",
@@ -116,13 +114,18 @@ public class Print {
 			return;
 		}
 		for (int i = 1; i < constants.size(); i++) {
-			ConstantPoolEntry entry = constants.get(i);
-			entry.print(constantPrinter);
-			constantPrinter.print();
-			if (entry.getConstantTag().isTwoEntriesTakeUp()) {
+			ConstantPoolEntry cpe = constants.get(i);
+			cpe.format(constantFormater);
+			constantPoolEntry(constantFormater);
+			if (cpe.getConstantTag().isTwoEntriesTakeUp()) {
 				i++;
 			}
 		}
+	}
+
+	void constantPoolEntry(ConstantFormater constantFormater) {
+		System.out.println(constantFormater.formatedString);
+		constantFormater.printGeneral = true;
 	}
 
 	public void accessFlags(Parser.U2 u2, AccessFlag.Type type) {
@@ -142,12 +145,7 @@ public class Print {
 
 	public void opcode(Opcode opcode, String arguments, String label, String instruction) {
 		String rStream = Arrays.stream(opcode.strArguments())
-				.map(s -> {
-					constantPrinter.printGeneral = false;
-					constantPrinter.formatedString = "";
-					s.print(constantPrinter);
-					return constantPrinter.formatedString.stripLeading();
-				}).collect(Collectors.joining());
+				.map(constantFormater::formatNewOnlyString).collect(Collectors.joining());
 		System.out.printf(OFFSET_FORMAT + "%02X%-12s %5s %s %s\n", opcode.offset(), opcode.opcode(), arguments, label,
 				instruction, rStream);
 	}
@@ -168,11 +166,15 @@ public class Print {
 		void print(T printer);
 	}
 
-	public class ConstantPrinter {
+	public interface Formatter<T> {
+		void format(T printer);
+	}
+
+	public class ConstantFormater {
 		private String formatedString;
 		private boolean printGeneral = true;
 
-		void format(ConstantPoolEntry cpe) {
+		public void format(ConstantPoolEntry cpe) {
 			if (printGeneral) {
 				String cpName = cpe.getConstantTag().name().replaceFirst("^CONSTANT_", "");
 				formatedString = String.format(OFFSET_FORMAT + " %4X %19s", cpe.getOffset(), cpe.getIdx(), cpName);
@@ -180,7 +182,7 @@ public class Print {
 			}
 		}
 
-		void format(ConstantPoolUtf8 cpe) {
+		public void format(ConstantPoolUtf8 cpe) {
 			formatedString += " " + String.format(YELLOW_STRING, cpe.getUtf8());
 		}
 
@@ -202,39 +204,41 @@ public class Print {
 
 		void format(ConstantPoolString cpe) {
 			formatedString += String.format(HEX_2, cpe.getStringIndex());
-			cpe.constants.get(cpe.getStringIndex()).print(this);
+			cpe.constants.get(cpe.getStringIndex()).format(this);
 		}
 
 		void format(ConstantPoolMethodRef cpe) {
 			formatedString += String.format(HEX_2, cpe.getClassIndex());
-			cpe.constants.get(cpe.getClassIndex()).print(this);
+			cpe.constants.get(cpe.getClassIndex()).format(this);
 			formatedString += String.format(HEX_2, cpe.getNameAndTypeIndex());
-			cpe.constants.get(cpe.getNameAndTypeIndex()).print(this);
+			cpe.constants.get(cpe.getNameAndTypeIndex()).format(this);
 		}
 
 		void format(ConstantPoolNameAndType cpe) {
 			formatedString += String.format(HEX_2, cpe.getNameIndex());
-			cpe.constants.get(cpe.getNameIndex()).print(this);
+			cpe.constants.get(cpe.getNameIndex()).format(this);
 			formatedString += String.format(HEX_2, cpe.getDescriptorIndex());
-			cpe.constants.get(cpe.getDescriptorIndex()).print(this);
+			cpe.constants.get(cpe.getDescriptorIndex()).format(this);
 		}
 
 		void format(ConstantPoolDynamic cpe) {
 			formatedString += String.format(HEX_2, cpe.getBootstrapMethodAttrIndex());
 			formatedString += String.format(HEX_2, cpe.getNameAndTypeIndex());
-			cpe.constants.get(cpe.getNameAndTypeIndex()).print(this);
+			cpe.constants.get(cpe.getNameAndTypeIndex()).format(this);
 		}
 
 		void format(ConstantPoolMethodHandle cpe) {
 			formatedString += " " + ConstantPoolMethodHandle.MHRef.values()[cpe.getReferenceKind()].name()
 					.replaceFirst("REF_", "");
 			formatedString += String.format(HEX_2, cpe.getReferenceIndex());
-			cpe.constants.get(cpe.getReferenceIndex()).print(this);
+			cpe.constants.get(cpe.getReferenceIndex()).format(this);
 		}
 
-		void print() {
-			System.out.println(formatedString);
-			printGeneral = true;
+		public String formatNewOnlyString(ConstantPoolEntry cpe) {
+			printGeneral = false;
+			formatedString = "";
+			cpe.format(this);
+			return formatedString.stripLeading();
 		}
 	}
 }
