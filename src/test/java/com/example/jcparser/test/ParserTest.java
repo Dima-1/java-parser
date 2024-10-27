@@ -1,6 +1,8 @@
 package com.example.jcparser.test;
 
+import com.example.jcparser.Options;
 import com.example.jcparser.Parser;
+import com.example.jcparser.Print;
 import com.example.jcparser.attribute.opcode.Instruction;
 import com.example.jcparser.attribute.stackmapframe.FrameType;
 import org.junit.jupiter.api.*;
@@ -19,6 +21,8 @@ import java.util.stream.Stream;
 
 import static com.example.jcparser.ConsoleColors.RED;
 import static com.example.jcparser.ConsoleColors.RESET;
+import static com.example.jcparser.Parser.ConstantTag.CONSTANT_String;
+import static com.example.jcparser.Parser.ConstantTag.CONSTANT_Utf8;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Named.named;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
@@ -104,7 +108,7 @@ class ParserTest {
 
 	@ParameterizedTest(name = "{index} File {0}")
 	@MethodSource("getClassFiles")
-	void check_every_byte_present(String[] lines) {
+	void check_every_byte_present(String path, String[] lines) {
 		System.setOut(originalOut);
 		System.setErr(originalErr);
 		assertFalse(lines.length < CONSTANT_COUNT_LINE, "Wrong file size < 2 lines");
@@ -143,6 +147,27 @@ class ParserTest {
 		@Test
 		void wrong_frame_type() {
 			assertThrows(IllegalArgumentException.class, () -> FrameType.getType(0x80));
+		}
+
+		@Test
+		void check_options() {
+			System.setOut(new PrintStream(outStream));
+			System.setErr(new PrintStream(errStream));
+			List<Parser.ConstantPoolEntry> list = new ArrayList<>();
+			list.add(null);
+			list.add(new Parser.ConstantPoolUtf8(list, 0x0A, 1, CONSTANT_Utf8, "TestUtf8"));
+			list.add(new Parser.ConstantPoolString(list, 0x12, 2, CONSTANT_String, 1));
+			Options options = new Options();
+			options.setConstants(false);
+			Print print = new Print(options);
+			print.constantPool(list);
+			assertEquals(0, outStream.size(), "Constant pool doesn't hide");
+			outStream.reset();
+			options.setConstants(true);
+			options.setRefs(false);
+			print.constantPool(list);
+			String[] lines = outStream.toString().split("\n");
+			assertFalse(lines[1].contains("(01)"), "Constant pool reference index doesn't hide");
 		}
 	}
 }

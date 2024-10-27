@@ -1,6 +1,8 @@
 package com.example.jcparser.test;
 
-import java.lang.annotation.*;
+import java.lang.annotation.Repeatable;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.security.InvalidParameterException;
 
 public class TestClass {
@@ -30,7 +32,12 @@ public class TestClass {
 			}
 		}
 		TestInnerClass testInnerClass = new TestInnerClass(10);
-		System.out.println(testInnerClass.getFieldInt());
+		long aLong = (long) testInnerClass.getFieldInt() * Integer.MAX_VALUE;
+		System.out.println(aLong);
+		float aFloat = 3.3333f;
+		double aDouble = 2.2222;
+		aDouble += aFloat;
+		System.out.println(aDouble);
 		TestLocalClass testLocalClass = new TestLocalClass("local string");
 		System.out.println(testLocalClass.getStr());
 	}
