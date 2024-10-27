@@ -1,5 +1,6 @@
 package com.example.jcparser.attribute.stackmapframe;
 
+import com.example.jcparser.Parser;
 import com.example.jcparser.Print;
 
 public class StackFramePrinter {
@@ -10,7 +11,8 @@ public class StackFramePrinter {
 	}
 
 	public void print(StackMapFrame frame) {
-		print.u1(frame.getTag(), "StackMapFrame type tag", true);
+		Parser.U1 tag = frame.getTag();
+		print.u1(tag, "StackMapFrame type tag", true, FrameType.getType(tag.getValue()).name().toLowerCase());
 	}
 
 	public void print(SameLocals1StackItemStackMapFrame frame) {
@@ -18,20 +20,20 @@ public class StackFramePrinter {
 	}
 
 	public void print(SameLocals1StackItemStackMapFrameExtended frame) {
-		print.u2(frame.getOffsetDelta(), "offset delta");
+		print.u2(frame.getOffsetDelta(), "offset delta", true);
 		printTypeInfo(frame.getStack());
 	}
 
 	public void print(ChopStackMapFrame frame) {
-		print.u2(frame.getOffsetDelta(), "offset delta");
+		print.u2(frame.getOffsetDelta(), "offset delta", true);
 	}
 
 	public void print(SameStackMapFrameExtended frame) {
-		print.u2(frame.getOffsetDelta(), "offset delta");
+		print.u2(frame.getOffsetDelta(), "offset delta", true);
 	}
 
 	public void print(AppendStackMapFrame frame) {
-		print.u2(frame.getOffsetDelta(), "offset delta");
+		print.u2(frame.getOffsetDelta(), "offset delta", true);
 		printTypeInfo(frame.getStack());
 	}
 
@@ -47,7 +49,7 @@ public class StackFramePrinter {
 		for (TypeInfo typeInfo : stack) {
 			print.u1(typeInfo.tag(), "Type info tag", true);
 			if (typeInfo.typeInfoAdditional() != null) {
-				print.u2(typeInfo.typeInfoAdditional(), "Offset");
+				print.u2(typeInfo.typeInfoAdditional(), "Offset", true);
 			}
 		}
 	}

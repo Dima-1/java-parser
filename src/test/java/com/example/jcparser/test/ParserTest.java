@@ -1,10 +1,9 @@
 package com.example.jcparser.test;
 
 import com.example.jcparser.Parser;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.TestInfo;
-import org.junit.jupiter.api.TestInstance;
+import com.example.jcparser.attribute.opcode.Instruction;
+import com.example.jcparser.attribute.stackmapframe.FrameType;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -105,7 +104,7 @@ class ParserTest {
 
 	@ParameterizedTest(name = "{index} File {0}")
 	@MethodSource("getClassFiles")
-	void check_every_byte_present(String path, String[] lines) {
+	void check_every_byte_present(String[] lines) {
 		System.setOut(originalOut);
 		System.setErr(originalErr);
 		assertFalse(lines.length < CONSTANT_COUNT_LINE, "Wrong file size < 2 lines");
@@ -130,5 +129,20 @@ class ParserTest {
 		String errors = errorCount == 0 ? "Total errors: %s" : RED + "Total errors: %s" + RESET;
 		System.out.printf("%s Total line parsed: %s " + errors + "\n",
 				testInfo.getDisplayName(), lines.length, errorCount);
+	}
+
+	@Nested
+	@DisplayName("Tests for all files")
+	class AdditionalTests {
+
+		@Test
+		void wrong_opcode() {
+			assertThrows(IllegalArgumentException.class, () -> Instruction.getInstruction(0xFF));
+		}
+
+		@Test
+		void wrong_frame_type() {
+			assertThrows(IllegalArgumentException.class, () -> FrameType.getType(0x80));
+		}
 	}
 }

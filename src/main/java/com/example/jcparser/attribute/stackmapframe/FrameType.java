@@ -21,6 +21,6 @@ public enum FrameType {
 
 	public static FrameType getType(int tag) {
 		return Arrays.stream(values()).filter(v -> v.min <= tag && tag <= v.max).findFirst().orElseThrow(() ->
-				new IllegalArgumentException("Unknown frame type tag: " + tag));
+				new IllegalArgumentException("Reserved frame type tag (128-246): " + tag));
 	}
 }

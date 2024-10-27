@@ -42,25 +42,28 @@ public class Print {
 		OFFSET_FORMAT = "%0" + Long.toHexString(length).length() + "X ";
 	}
 
-	public void u1(Parser.U1 u1, String title) {
-		u1(u1, title, false);
+	public void u1(Parser.U1 u1, String title, boolean addDecimal) {
+		u1(u1, title, addDecimal, "");
 	}
 
-	public void u1(Parser.U1 u1, String title, boolean addDecimal) {
+	public void u1(U1 u1, String title, boolean addDecimal, String stringValue) {
 		String hexValue = String.format("%02X", u1.getValue());
 		String value;
-		String valueFormat = addDecimal ? " %s" : "";
+		String valueFormat = addDecimal ? " %s" : "%s";
 		value = String.format(addDecimal ? "(%02d)" : "", u1.getValue());
-		if (u1 instanceof CharU1) {
+		if (!stringValue.isEmpty()) {
 			valueFormat += " " + YELLOW_STRING;
-			value += Character.toString(u1.value);
 		}
 		System.out.printf(OFFSET_FORMAT + "%s    %s" + valueFormat + "\n", u1.getOffset(), hexValue,
-				title.indent(getIndents()).stripTrailing(), value);
+				title.indent(getIndents()).stripTrailing(), value, stringValue);
 	}
 
 	public void u2(Parser.U2 u2, String title) {
-		u2(u2, title, "", false);
+		u2(u2, title, false);
+	}
+
+	public void u2(Parser.U2 u2, String title, boolean addDecimal) {
+		u2(u2, title, "", addDecimal);
 	}
 
 	public void u2(Parser.U2 u2, String title, String titleColor, boolean addDecimal) {
@@ -84,7 +87,7 @@ public class Print {
 	}
 
 	public void u2array(Parser.U2Array u2Array, String title, String itemTitle) {
-		u2(u2Array.numberOf(), title, "", true);
+		u2(u2Array.numberOf(), title, true);
 		incIndent();
 		Parser.U2[] array = u2Array.array();
 		for (int i = 0; i < array.length; i++) {

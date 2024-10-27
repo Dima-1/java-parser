@@ -32,7 +32,7 @@ public class AttributePrinter {
 		for (ExceptionsAttribute.Exception exception : attr.getExceptions()) {
 			exception.print(this);
 		}
-		print.u2(attr.getNumberOf(), "Attributes table length", "", true);
+		print.u2(attr.getNumberOf(), "Attributes table length", true);
 		print.attributes(attr.getAttributes());
 	}
 
@@ -44,7 +44,7 @@ public class AttributePrinter {
 	}
 
 	void print(StackMapTableAttribute attr) {
-		print.u2(attr.getNumberOf(), "Attribute number of stack maps", "", true);
+		print.u2(attr.getNumberOf(), "Attribute number of stack maps", true);
 		for (StackMapFrame stackMapFrame : attr.getEntries()) {
 			stackMapFrame.print(print.getStackFramePrinter());
 		}
@@ -55,7 +55,7 @@ public class AttributePrinter {
 	}
 
 	void print(InnerClassesAttribute attr) {
-		print.u2(attr.getNumberOf(), "Attribute number of inner classes", "", true);
+		print.u2(attr.getNumberOf(), "Attribute number of inner classes", true);
 		print.incIndent();
 		for (InnerClassesAttribute.InnerClass innerClass : attr.getInnerClasses()) {
 			innerClass.print(this);
@@ -88,7 +88,7 @@ public class AttributePrinter {
 	}
 
 	void print(LineNumberTableAttribute attr) {
-		print.u2(attr.getNumberOf(), "Attribute number of lines", "", true);
+		print.u2(attr.getNumberOf(), "Attribute number of lines", true);
 		print.incIndent();
 		for (LineNumberTableAttribute.LineNumber lineNumber : attr.getLineNumberTable()) {
 			lineNumber.print(this);
@@ -98,11 +98,11 @@ public class AttributePrinter {
 
 	void print(LineNumberTableAttribute.LineNumber lineNumber) {
 		print.u2WithIndex(lineNumber.index(), lineNumber.startPC(), "Start PC");
-		print.u2(lineNumber.lineNumber(), "Line number", "", true);
+		print.u2(lineNumber.lineNumber(), "Line number", true);
 	}
 
 	void print(LocalVariableTableAttribute attr) {
-		print.u2(attr.getNumberOf(), "Attribute number of local variables", "", true);
+		print.u2(attr.getNumberOf(), "Attribute number of local variables", true);
 		print.incIndent();
 		for (LocalVariableTableAttribute.LocalVariable localVariable : attr.getLocalVariables()) {
 			localVariable.print(this);
@@ -112,21 +112,21 @@ public class AttributePrinter {
 
 	void print(LocalVariableAttribute.LocalVariable localVariable) {
 		print.u2WithIndex(localVariable.index().getValue(), localVariable.startPC(), "Start PC");
-		print.u2(localVariable.length(), "Length", "", true);
+		print.u2(localVariable.length(), "Length", true);
 		print.u2(localVariable.nameIndex(), "Name index");
 		print.u2(localVariable.descriptorIndex(), localVariable.descriptorTitle() + " index");
-		print.u2(localVariable.index(), "Index", "", true);
+		print.u2(localVariable.index(), "Index", true);
 	}
 
 	void print(LocalVariableTypeTableAttribute attr) {
-		print.u2(attr.getNumberOf(), "Attribute number of local variable types", "", true);
+		print.u2(attr.getNumberOf(), "Attribute number of local variable types", true);
 		for (LocalVariableAttribute.LocalVariable localVariable : attr.getLocalVariables()) {
 			localVariable.print(this);
 		}
 	}
 
 	public void print(RuntimeVisibleAnnotationsAttribute attr) {
-		print.u2(attr.getNumberOf(), "Attribute number of visible annotation", "", true);
+		print.u2(attr.getNumberOf(), "Attribute number of visible annotation", true);
 		printAnnotations(attr);
 	}
 
@@ -139,22 +139,22 @@ public class AttributePrinter {
 	}
 
 	public void print(RuntimeAnnotationsAttribute.Annotation attr) {
-		print.u2(attr.typeIndex(), "Type of annotation", "", true);
-		print.u2(attr.lengthOfPair(), "Number of value pair", "", true);
+		print.u2(attr.typeIndex(), "Type of annotation", true);
+		print.u2(attr.lengthOfPair(), "Number of value pair", true);
 		for (ValuePair valuePair : attr.valuePairs()) {
 			valuePair.print(this);
 		}
 	}
 
 	public void print(ValuePair valuePair) {
-		print.u2(valuePair.elementNameIndex(), "Type of annotation", "", true);
+		print.u2(valuePair.elementNameIndex(), "Type of annotation", true);
 		valuePair.elementValue().print(this);
 	}
 
 	public void print(ElementValue elementValue) {
-		print.u1(elementValue.tag(), "Tag");
-		int tag = elementValue.tag().getValue();
-		switch (TagValueItem.getTagValue(tag)) {
+		Parser.U1 tag = elementValue.tag();
+		print.u1(tag, "Tag", false, Character.toString(tag.getValue()));
+		switch (TagValueItem.getTagValue(tag.getValue())) {
 			case CONST_VALUE_INDEX -> print.u2(elementValue.u2First(), "Constant value index");
 			case ENUM_CONST_VALUE -> {
 				print.u2(elementValue.u2First(), "Type name index");
@@ -173,7 +173,7 @@ public class AttributePrinter {
 	}
 
 	public void print(RuntimeInvisibleAnnotationsAttribute attr) {
-		print.u2(attr.getNumberOf(), "Attribute number of invisible annotation", "", true);
+		print.u2(attr.getNumberOf(), "Attribute number of invisible annotation", true);
 		printAnnotations(attr);
 	}
 
@@ -182,7 +182,7 @@ public class AttributePrinter {
 	}
 
 	void print(BootstrapMethodsAttribute attr) {
-		print.u2(attr.getNumberOf(), "Attribute number of bootstrap methods", "", true);
+		print.u2(attr.getNumberOf(), "Attribute number of bootstrap methods", true);
 		for (BootstrapMethodsAttribute.BootstrapMethod bootstrapMethod : attr.getBootstrapMethods()) {
 			bootstrapMethod.print(this);
 		}
@@ -208,29 +208,29 @@ public class AttributePrinter {
 	}
 
 	void print(ModuleAttribute attr) {
-		print.u2(attr.getModuleNameIndex(), "Attribute module name index", "", true);
+		print.u2(attr.getModuleNameIndex(), "Attribute module name index", true);
 		print.accessFlags(attr.getModuleFlags(), AccessFlag.Type.MODULE);
-		print.u2(attr.getModuleVersionIndex(), "Attribute module version index", "", true);
-		print.u2(attr.getRequiresCount(), "Requires count", "", true);
+		print.u2(attr.getModuleVersionIndex(), "Attribute module version index", true);
+		print.u2(attr.getRequiresCount(), "Requires count", true);
 		print.incIndent();
 		for (ModuleAttribute.Requires require : attr.getRequires()) {
 			require.print(this);
 		}
 		print.decIndent();
-		print.u2(attr.getExportsCount(), "Exports count", "", true);
+		print.u2(attr.getExportsCount(), "Exports count", true);
 		print.incIndent();
 		for (ModuleAttribute.Exports export : attr.getExports()) {
 			export.print(this);
 		}
 		print.decIndent();
-		print.u2(attr.getOpensCount(), "Opens count", "", true);
+		print.u2(attr.getOpensCount(), "Opens count", true);
 		print.incIndent();
 		for (ModuleAttribute.Opens open : attr.getOpens()) {
 			open.print(this);
 		}
 		print.decIndent();
 		print.u2array(attr.getUses(), "Uses count", "Uses");
-		print.u2(attr.getProvidesCount(), "Provides count", "", true);
+		print.u2(attr.getProvidesCount(), "Provides count", true);
 		print.incIndent();
 		for (ModuleAttribute.Provides provide : attr.getProvides()) {
 			provide.print(this);

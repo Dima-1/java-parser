@@ -23,7 +23,7 @@ public enum Instruction {
 	BALOAD("baload", 0x33),                     // 		arrayref, index → value 	load a byte or Boolean value from an array
 	BASTORE("bastore", 0x54),                   // 		arrayref, index, value → 	store a byte or Boolean value into an array
 	BIPUSH("bipush", 0x10, 1),                  // 	1: byte 	→ value 	push a byte onto the stack as an integer value
-	BREAKPOINT("breakpoint", 0xCA),             // 			reserved for breakpoints in Java debuggers; should not appear in any class file
+//	BREAKPOINT("breakpoint", 0xCA),             // 			reserved for breakpoints in Java debuggers; should not appear in any class file
 	CALOAD("caload", 0x34),                     // 		arrayref, index → value 	load a char from an array
 	CASTORE("castore", 0x55),                   // 		arrayref, index, value → 	store a char into an array
 	CHECKCAST("checkcast", 0xC0, 2),            // 	2: indexbyte1, indexbyte2 	objectref → objectref 	checks whether an objectref is of a certain type, the class reference of which is in the constant pool at index (indexbyte1 << 8 | indexbyte2)
@@ -130,8 +130,8 @@ public enum Instruction {
 	ILOAD_1("iload_1", 0x1B),                   // 		→ value 	load an int value from local variable 1
 	ILOAD_2("iload_2", 0x1C),                   // 		→ value 	load an int value from local variable 2
 	ILOAD_3("iload_3", 0x1D),                   // 		→ value 	load an int value from local variable 3
-	IMPDEP1("impdep1", 0xFE),                   // 			reserved for implementation-dependent operations within debuggers; should not appear in any class file
-	IMPDEP2("impdep2", 0xFF),                   // 			reserved for implementation-dependent operations within debuggers; should not appear in any class file
+//	IMPDEP1("impdep1", 0xFE),                   // 			reserved for implementation-dependent operations within debuggers; should not appear in any class file
+//	IMPDEP2("impdep2", 0xFF),                   // 			reserved for implementation-dependent operations within debuggers; should not appear in any class file
 	IMUL("imul", 0x68),                         // 		value1, value2 → result 	multiply two integers
 	INEG("ineg", 0x74),                         // 		value → result 	negate int
 	INSTANCEOF("instanceof", 0xC1, 2),          // 	2: indexbyte1, indexbyte2 	objectref → result 	determines if an object objectref is of a given type, identified by class reference index in constant pool (indexbyte1 << 8 | indexbyte2)
