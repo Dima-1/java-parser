@@ -6,6 +6,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.security.InvalidParameterException;
 
 public class TestClass {
+
+	public static final float FLOAT_CONSTANT_VALUE = 3.3333f;
+	public static final double DOUBLE_CONSTANT_VALUE = 2.2222;
+	public static final String STRING_CONSTANT_VALUE = "local string";
+	private static final long LONG_CONSTANT_VALUE = (long) Integer.MAX_VALUE * 4;
+
 	public static void main(String[] args) {
 		TestClass testClassVar = new TestClass();
 		testClassVar.testMethod();
@@ -17,7 +23,7 @@ public class TestClass {
 		return 10;
 	}
 
-	@TestInvisibleAnnotation(hName = "New h name", hId = 2)
+	@TestInvisibleAnnotation(hName = "New invisible name", hId = 2)
 	private void testMethod() {
 		class TestLocalClass {
 
@@ -32,13 +38,13 @@ public class TestClass {
 			}
 		}
 		TestInnerClass testInnerClass = new TestInnerClass(10);
-		long aLong = (long) testInnerClass.getFieldInt() * Integer.MAX_VALUE;
+		long aLong = (long) testInnerClass.getFieldInt() * Integer.MAX_VALUE + LONG_CONSTANT_VALUE;
 		System.out.println(aLong);
-		float aFloat = 3.3333f;
-		double aDouble = 2.2222;
+		float aFloat = FLOAT_CONSTANT_VALUE;
+		double aDouble = DOUBLE_CONSTANT_VALUE;
 		aDouble += aFloat;
 		System.out.println(aDouble);
-		TestLocalClass testLocalClass = new TestLocalClass("local string");
+		TestLocalClass testLocalClass = new TestLocalClass(STRING_CONSTANT_VALUE);
 		System.out.println(testLocalClass.getStr());
 	}
 

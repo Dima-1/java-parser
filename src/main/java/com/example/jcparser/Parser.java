@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.example.jcparser.AccessFlag.Type;
+import static com.example.jcparser.AccessFlag.Type.*;
 
 /**
  * <a href="https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-4.html#jvms-4.1">4.1. The ClassFile Structure</a>
@@ -84,7 +84,7 @@ public class Parser {
 			readConstantPool(dis, u2.value);
 			print.constantPool(constantPool);
 			U2 accessFlags = readU2(dis);
-			print.accessFlags(accessFlags, Type.CLASS);
+			print.accessFlags(accessFlags, CLASS);
 			print.u2(readU2(dis, true), "This class");
 			print.u2(readU2(dis, true), "Super class");
 			readInterfaces(dis);
@@ -114,18 +114,18 @@ public class Parser {
 	 * <a href="https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-4.html#jvms-4.5">4.5. Fields</a>
 	 */
 	private void readFields(DataInputStream dis) throws IOException {
-		readAdditionData(dis, Type.FIELD);
+		readAdditionData(dis, FIELD);
 	}
 
 	/**
 	 * <a href="https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-4.html#jvms-4.6">4.6. Methods</a>
 	 */
 	private void readMethods(DataInputStream dis) throws IOException {
-		readAdditionData(dis, Type.METHOD);
+		readAdditionData(dis, METHOD);
 	}
 
-	private void readAdditionData(DataInputStream dis, Type type) throws IOException {
-		String title = (type == Type.FIELD ? "Fields" : "Methods") + " count";
+	private void readAdditionData(DataInputStream dis, AccessFlag.Type type) throws IOException {
+		String title = (type == FIELD ? "Fields" : "Methods") + " count";
 		U2 u2 = readU2(dis);
 		print.u2(u2, title, ConsoleColors.BLUE, true);
 		int length = u2.value;
@@ -385,26 +385,14 @@ public class Parser {
 				yield new LocalVariableTypeTableAttribute(attributeNameIndex, attributeLength, numberOf,
 						localVariables);
 			}
-			case "RuntimeVisibleAnnotations" -> {
-				U2 numberOf = readU2(dis);
-				RuntimeAnnotationsAttribute.Annotation[] annotations
-						= new RuntimeAnnotationsAttribute.Annotation[numberOf.getValue()];
-				for (int i = 0; i < numberOf.getValue(); i++) {
-					annotations[i] = getAnnotation(dis);
-				}
-				yield new RuntimeVisibleAnnotationsAttribute(attributeNameIndex, attributeLength, numberOf,
-						annotations);
-			}
-			case "RuntimeInvisibleAnnotations" -> {
-				U2 numberOf = readU2(dis);
-				RuntimeAnnotationsAttribute.Annotation[] annotations
-						= new RuntimeAnnotationsAttribute.Annotation[numberOf.getValue()];
-				for (int i = 0; i < numberOf.getValue(); i++) {
-					annotations[i] = getAnnotation(dis);
-				}
-				yield new RuntimeInvisibleAnnotationsAttribute(attributeNameIndex, attributeLength, numberOf,
-						annotations);
-			}
+			case "RuntimeVisibleAnnotations" ->
+					getRuntimeAnnotationsAttribute(dis, attributeNameIndex, attributeLength, true);
+			case "RuntimeInvisibleAnnotations" ->
+					getRuntimeAnnotationsAttribute(dis, attributeNameIndex, attributeLength, false);
+			case "RuntimeVisibleParameterAnnotations" -> 
+					getRuntimeParameterAnnotations(dis, attributeNameIndex, attributeLength, true);
+			case "RuntimeInvisibleParameterAnnotations" -> 
+					getRuntimeParameterAnnotations(dis, attributeNameIndex, attributeLength, false);
 			case "AnnotationDefault" -> {
 				ElementValue elementValue = readElementValue(dis);
 				yield new AnnotationDefaultAttribute(attributeNameIndex, attributeLength, elementValue);
@@ -482,13 +470,43 @@ public class Parser {
 		};
 	}
 
+	private Attribute getRuntimeParameterAnnotations(DataInputStream dis, U2 attributeNameIndex, U4 attributeLength,
+	                                                 boolean visible) throws IOException {
+		U1 numberOf = readU1(dis);
+		RuntimeAnnotationsAttribute[] parameterAnnotations
+				= new RuntimeAnnotationsAttribute[numberOf.getValue()];
+		for (int i = 0; i < numberOf.getValue(); i++) {
+			parameterAnnotations[i] = getRuntimeAnnotationsAttribute(dis, attributeNameIndex, attributeLength, visible);
+		}
+		return visible
+				? new RuntimeVisibleParameterAnnotationsAttribute(attributeNameIndex, attributeLength, numberOf,
+				parameterAnnotations)
+				: new RuntimeInvisibleParameterAnnotationsAttribute(attributeNameIndex, attributeLength, numberOf,
+				parameterAnnotations);
+	}
+
+	private RuntimeAnnotationsAttribute getRuntimeAnnotationsAttribute(DataInputStream dis, U2 attributeNameIndex,
+	                                                                   U4 attributeLength, boolean visible) throws IOException {
+		U2 numberOf = readU2(dis);
+		RuntimeAnnotationsAttribute.Annotation[] annotations
+				= new RuntimeAnnotationsAttribute.Annotation[numberOf.getValue()];
+		for (int i = 0; i < numberOf.getValue(); i++) {
+			annotations[i] = getAnnotation(dis);
+		}
+		return visible
+				? new RuntimeVisibleAnnotationsAttribute(attributeNameIndex, attributeLength, numberOf,
+				annotations)
+				: new RuntimeInvisibleAnnotationsAttribute(attributeNameIndex, attributeLength, numberOf,
+				annotations);
+	}
+
 	private Class<? extends ConstantPoolEntry> getClass(U2 additional) {
 		ConstantPoolEntry cpe = constantPool.get(additional.value);
 		Class<? extends ConstantPoolEntry> clazz = null;
 		if (cpe instanceof ConstantPoolUtf8 cpeUtf8) {
 			clazz = switch (cpeUtf8.getUtf8()) {
 				case "F" -> ConstantPoolFloat.class;
-				case "L" -> ConstantPoolLong.class;
+				case "J" -> ConstantPoolLong.class;
 				case "D" -> ConstantPoolDouble.class;
 				case "Ljava/lang/String;" -> ConstantPoolString.class;
 				case "I", "S", "C", "B", "Z" -> ConstantPoolInteger.class;
