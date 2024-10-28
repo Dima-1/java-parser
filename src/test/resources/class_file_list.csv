@@ -5,4 +5,6 @@ classes/com/example/jcparser/test/TestClass$TestAnnotation.class
 classes/com/example/jcparser/test/TestClass$TestInnerClass.class
 classes/com/example/jcparser/test/TestClass$TestInvisibleAnnotation.class
 classes/com/example/jcparser/test/TestClass$TestRepeatableAnnotations.class
+classes/com/example/jcparser/test/TestClass$TestProvider.class
+classes/com/example/jcparser/test/TestClass$TestService.class
 classes/module-info.class

@@ -64,7 +64,7 @@ class ParserTest {
 		System.setErr(new PrintStream(errStream));
 		List<Arguments> argumentsList = new ArrayList<>();
 		for (String path : testFiles) {
-			String filePath = Objects.requireNonNull(classloader.getResource(path)).getPath();
+			String filePath = Objects.requireNonNull(classloader.getResource(path),"File not found: " + path).getPath();
 			Parser.main(new String[]{filePath});
 			String fileName = filePath.substring(filePath.lastIndexOf('/') + 1);
 			argumentsList.add(arguments(named(fileName, filePath), outStream.toString().split("\n")));

@@ -4,6 +4,8 @@ import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.security.InvalidParameterException;
+import java.util.NoSuchElementException;
+import java.util.ServiceLoader;
 
 public class TestClass {
 
@@ -15,7 +17,10 @@ public class TestClass {
 	public static void main(String[] args) {
 		TestClass testClassVar = new TestClass();
 		testClassVar.testMethod();
-		String res = testClassVar.testMethodWithParameters(1, "test");
+		testClassVar.testMethodWithParameters(1, "test");
+		TestProvider provider = TestProvider.getInstance();
+		TestService service = provider.serviceImpl();
+		service.print("Test service");
 	}
 
 	@Deprecated
@@ -92,5 +97,44 @@ public class TestClass {
 		String hName() default "default hidden name";
 
 		int hId() default 1;
+	}
+
+	public interface TestService {
+		void print(String title);
+	}
+
+	public static class TestProvider {
+		private static TestProvider provider;
+
+		private final ServiceLoader<TestService> loader;
+
+		private TestProvider() {
+			loader = ServiceLoader.load(TestService.class);
+		}
+
+		public static TestProvider getInstance() {
+			if (provider == null) {
+				provider = new TestProvider();
+			}
+			return provider;
+		}
+
+		public TestService serviceImpl() {
+			TestService service = loader.iterator().next();
+
+			if (service != null) {
+				return service;
+			} else {
+				throw new NoSuchElementException("No implementation for TestProvider");
+			}
+		}
+
+	}
+
+	public static class ConsolePrintTest implements TestService {
+		@Override
+		public void print(String title) {
+			System.out.println("Console print: " + title);
+		}
 	}
 }
