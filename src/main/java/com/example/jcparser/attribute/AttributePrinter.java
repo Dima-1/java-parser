@@ -127,12 +127,12 @@ public class AttributePrinter {
 
 	public void print(RuntimeVisibleAnnotationsAttribute attr) {
 		print.u2(attr.getNumberOf(), "Attribute number of visible annotation", true);
-		printAnnotations(attr);
+		printAnnotations(attr.getAnnotations());
 	}
 
-	private void printAnnotations(RuntimeAnnotationsAttribute attr) {
+	private void printAnnotations(RuntimeAnnotationsAttribute.Annotation[] annotations) {
 		print.incIndent();
-		for (RuntimeAnnotationsAttribute.Annotation annotation : attr.getAnnotations()) {
+		for (RuntimeAnnotationsAttribute.Annotation annotation : annotations) {
 			annotation.print(this);
 		}
 		print.decIndent();
@@ -174,8 +174,28 @@ public class AttributePrinter {
 
 	public void print(RuntimeInvisibleAnnotationsAttribute attr) {
 		print.u2(attr.getNumberOf(), "Attribute number of invisible annotation", true);
-		printAnnotations(attr);
+		printAnnotations(attr.getAnnotations());
 	}
+
+	public void print(RuntimeInvisibleParameterAnnotationsAttribute attr) {
+		print.u1(attr.getNumberOf(), "Attribute number of parameter invisible annotation", true);
+		for (ParameterAnnotation parameterAnnotations : attr.getParameterAnnotations()) {
+			parameterAnnotations.print(this);
+		}
+	}
+
+	public void print(RuntimeVisibleParameterAnnotationsAttribute attr) {
+		print.u1(attr.getNumberOf(), "Attribute number of parameter visible annotation", true);
+		for (ParameterAnnotation parameterAnnotations : attr.getParameterAnnotations()) {
+			parameterAnnotations.print(this);
+		}
+	}
+
+	public void print(ParameterAnnotation parameterAnnotation) {
+		print.u2(parameterAnnotation.numberOf(), "Attribute number of annotation", true);
+		printAnnotations(parameterAnnotation.annotations());
+	}
+
 
 	public void print(AnnotationDefaultAttribute attr) {
 		attr.getElementValue().print(this);

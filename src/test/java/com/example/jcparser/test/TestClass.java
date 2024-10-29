@@ -55,7 +55,9 @@ public class TestClass {
 
 	@TestAnnotation(name = "New name 1", id = 1)
 	@TestAnnotation(name = "New name 2", id = 2)
-	private String testMethodWithParameters(int i, final String test) throws InvalidParameterException {
+	private String testMethodWithParameters(@TestAnnotation(name = "Params 1") int i,
+	                                        @TestInvisibleAnnotation(hName = "Params 2") final String test)
+			throws InvalidParameterException {
 		if (i == 0) {
 			throw new InvalidParameterException(test);
 		}

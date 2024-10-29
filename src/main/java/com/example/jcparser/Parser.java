@@ -390,9 +390,9 @@ public class Parser {
 			case "RuntimeInvisibleAnnotations" ->
 					getRuntimeAnnotationsAttribute(dis, attributeNameIndex, attributeLength, false);
 			case "RuntimeVisibleParameterAnnotations" -> 
-					getRuntimeParameterAnnotations(dis, attributeNameIndex, attributeLength, true);
+					getParameterAnnotations(dis, attributeNameIndex, attributeLength, true);
 			case "RuntimeInvisibleParameterAnnotations" -> 
-					getRuntimeParameterAnnotations(dis, attributeNameIndex, attributeLength, false);
+					getParameterAnnotations(dis, attributeNameIndex, attributeLength, false);
 			case "AnnotationDefault" -> {
 				ElementValue elementValue = readElementValue(dis);
 				yield new AnnotationDefaultAttribute(attributeNameIndex, attributeLength, elementValue);
@@ -470,13 +470,13 @@ public class Parser {
 		};
 	}
 
-	private Attribute getRuntimeParameterAnnotations(DataInputStream dis, U2 attributeNameIndex, U4 attributeLength,
-	                                                 boolean visible) throws IOException {
+	private Attribute getParameterAnnotations(DataInputStream dis, U2 attributeNameIndex,
+	                                          U4 attributeLength,  boolean visible) throws IOException {
 		U1 numberOf = readU1(dis);
-		RuntimeAnnotationsAttribute[] parameterAnnotations
-				= new RuntimeAnnotationsAttribute[numberOf.getValue()];
+		ParameterAnnotation[] parameterAnnotations
+				= new ParameterAnnotation[numberOf.getValue()];
 		for (int i = 0; i < numberOf.getValue(); i++) {
-			parameterAnnotations[i] = getRuntimeAnnotationsAttribute(dis, attributeNameIndex, attributeLength, visible);
+			parameterAnnotations[i] = getParameterAnnotation(dis);
 		}
 		return visible
 				? new RuntimeVisibleParameterAnnotationsAttribute(attributeNameIndex, attributeLength, numberOf,
@@ -487,17 +487,22 @@ public class Parser {
 
 	private RuntimeAnnotationsAttribute getRuntimeAnnotationsAttribute(DataInputStream dis, U2 attributeNameIndex,
 	                                                                   U4 attributeLength, boolean visible) throws IOException {
+		ParameterAnnotation result = getParameterAnnotation(dis);
+		return visible
+				? new RuntimeVisibleAnnotationsAttribute(attributeNameIndex, attributeLength, result.numberOf(),
+				result.annotations())
+				: new RuntimeInvisibleAnnotationsAttribute(attributeNameIndex, attributeLength, result.numberOf(),
+				result.annotations());
+	}
+
+	private ParameterAnnotation getParameterAnnotation(DataInputStream dis) throws IOException {
 		U2 numberOf = readU2(dis);
 		RuntimeAnnotationsAttribute.Annotation[] annotations
 				= new RuntimeAnnotationsAttribute.Annotation[numberOf.getValue()];
 		for (int i = 0; i < numberOf.getValue(); i++) {
 			annotations[i] = getAnnotation(dis);
 		}
-		return visible
-				? new RuntimeVisibleAnnotationsAttribute(attributeNameIndex, attributeLength, numberOf,
-				annotations)
-				: new RuntimeInvisibleAnnotationsAttribute(attributeNameIndex, attributeLength, numberOf,
-				annotations);
+		return new ParameterAnnotation(numberOf, annotations);
 	}
 
 	private Class<? extends ConstantPoolEntry> getClass(U2 additional) {

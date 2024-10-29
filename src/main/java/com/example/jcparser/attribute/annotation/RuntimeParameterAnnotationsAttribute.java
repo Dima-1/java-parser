@@ -4,13 +4,14 @@ import com.example.jcparser.Parser.U1;
 import com.example.jcparser.Parser.U2;
 import com.example.jcparser.Parser.U4;
 import com.example.jcparser.attribute.Attribute;
+import com.example.jcparser.attribute.AttributePrinter;
 
 public class RuntimeParameterAnnotationsAttribute extends Attribute {
 	private final U1 numberOf;
-	private final RuntimeAnnotationsAttribute[] parameterAnnotations;
+	private final ParameterAnnotation[] parameterAnnotations;
 
 	public RuntimeParameterAnnotationsAttribute(U2 nameIndex, U4 length, U1 numberOf,
-	                                            RuntimeAnnotationsAttribute[] parameterAnnotations) {
+	                                            ParameterAnnotation[] parameterAnnotations) {
 		super(nameIndex, length);
 		this.numberOf = numberOf;
 		this.parameterAnnotations = parameterAnnotations;
@@ -20,7 +21,12 @@ public class RuntimeParameterAnnotationsAttribute extends Attribute {
 		return numberOf;
 	}
 
-	public RuntimeAnnotationsAttribute[] getParameterAnnotations() {
+	public ParameterAnnotation[] getParameterAnnotations() {
 		return parameterAnnotations;
+	}
+
+	@Override
+	public void print(AttributePrinter printer) {
+		super.print(printer);
 	}
 }
