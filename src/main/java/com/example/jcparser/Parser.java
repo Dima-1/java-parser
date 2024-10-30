@@ -476,33 +476,27 @@ public class Parser {
 		ParameterAnnotation[] parameterAnnotations
 				= new ParameterAnnotation[numberOf.getValue()];
 		for (int i = 0; i < numberOf.getValue(); i++) {
-			parameterAnnotations[i] = getParameterAnnotation(dis);
+			parameterAnnotations[i] = getParameterAnnotation(dis, visible);
 		}
-		return visible
-				? new RuntimeVisibleParameterAnnotationsAttribute(attributeNameIndex, attributeLength, numberOf,
-				parameterAnnotations)
-				: new RuntimeInvisibleParameterAnnotationsAttribute(attributeNameIndex, attributeLength, numberOf,
-				parameterAnnotations);
+		return new RuntimeParameterAnnotationsAttribute(attributeNameIndex, attributeLength, numberOf,
+				parameterAnnotations, visible);
 	}
 
 	private RuntimeAnnotationsAttribute getRuntimeAnnotationsAttribute(DataInputStream dis, U2 attributeNameIndex,
 	                                                                   U4 attributeLength, boolean visible) throws IOException {
-		ParameterAnnotation result = getParameterAnnotation(dis);
-		return visible
-				? new RuntimeVisibleAnnotationsAttribute(attributeNameIndex, attributeLength, result.numberOf(),
-				result.annotations())
-				: new RuntimeInvisibleAnnotationsAttribute(attributeNameIndex, attributeLength, result.numberOf(),
-				result.annotations());
+		ParameterAnnotation result = getParameterAnnotation(dis, visible);
+		return new RuntimeAnnotationsAttribute(attributeNameIndex, attributeLength, result.numberOf(),
+				result.annotations(), visible);
 	}
 
-	private ParameterAnnotation getParameterAnnotation(DataInputStream dis) throws IOException {
+	private ParameterAnnotation getParameterAnnotation(DataInputStream dis, boolean visible) throws IOException {
 		U2 numberOf = readU2(dis);
 		RuntimeAnnotationsAttribute.Annotation[] annotations
 				= new RuntimeAnnotationsAttribute.Annotation[numberOf.getValue()];
 		for (int i = 0; i < numberOf.getValue(); i++) {
 			annotations[i] = getAnnotation(dis);
 		}
-		return new ParameterAnnotation(numberOf, annotations);
+		return new ParameterAnnotation(numberOf, annotations, visible);
 	}
 
 	private Class<? extends ConstantPoolEntry> getClass(U2 additional) {

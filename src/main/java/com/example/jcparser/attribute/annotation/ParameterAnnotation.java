@@ -4,7 +4,7 @@ import com.example.jcparser.Parser.U2;
 import com.example.jcparser.Print;
 import com.example.jcparser.attribute.AttributePrinter;
 
-public record ParameterAnnotation(U2 numberOf, RuntimeAnnotationsAttribute.Annotation[] annotations) 
+public record ParameterAnnotation(U2 numberOf, RuntimeAnnotationsAttribute.Annotation[] annotations, boolean visible)
 		implements Print.Printable<AttributePrinter> {
 
 	@Override
