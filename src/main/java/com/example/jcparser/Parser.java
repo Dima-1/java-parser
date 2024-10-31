@@ -389,9 +389,9 @@ public class Parser {
 					getRuntimeAnnotationsAttribute(dis, attributeNameIndex, attributeLength, true);
 			case "RuntimeInvisibleAnnotations" ->
 					getRuntimeAnnotationsAttribute(dis, attributeNameIndex, attributeLength, false);
-			case "RuntimeVisibleParameterAnnotations" -> 
+			case "RuntimeVisibleParameterAnnotations" ->
 					getParameterAnnotations(dis, attributeNameIndex, attributeLength, true);
-			case "RuntimeInvisibleParameterAnnotations" -> 
+			case "RuntimeInvisibleParameterAnnotations" ->
 					getParameterAnnotations(dis, attributeNameIndex, attributeLength, false);
 			case "AnnotationDefault" -> {
 				ElementValue elementValue = readElementValue(dis);
@@ -460,6 +460,23 @@ public class Parser {
 				U2Array classes = readU2Array(dis);
 				yield new NestMembersAttribute(attributeNameIndex, attributeLength, classes);
 			}
+			case "Record" -> {
+				U2 numberOf = readU2(dis);
+				RecordAttribute.ComponentInfo[] components = new RecordAttribute.ComponentInfo[numberOf.value];
+				for (int i = 0; i < numberOf.getValue(); i++) {
+					U2 nameIndex = readU2(dis, true);
+					U2 descriptionIndex = readU2(dis, true);
+					U2 numberOfComponents = readU2(dis);
+					List<Attribute> attributes = new ArrayList<>(readAttributes(dis, numberOfComponents.value, null));
+					components[i] = new RecordAttribute.ComponentInfo(nameIndex, descriptionIndex, numberOfComponents,
+							attributes);
+				}
+				yield new RecordAttribute(attributeNameIndex, attributeLength, numberOf, components);
+			}
+			case "PermittedSubclasses" -> {
+				U2Array classes = readU2Array(dis);
+				yield new PermittedSubclassesAttribute(attributeNameIndex, attributeLength, classes);
+			}
 			default -> {
 				for (int j = 0; j < attributeLength.getValue(); j++) {
 					readByte(dis);
@@ -471,7 +488,7 @@ public class Parser {
 	}
 
 	private Attribute getParameterAnnotations(DataInputStream dis, U2 attributeNameIndex,
-	                                          U4 attributeLength,  boolean visible) throws IOException {
+	                                          U4 attributeLength, boolean visible) throws IOException {
 		U1 numberOf = readU1(dis);
 		ParameterAnnotation[] parameterAnnotations
 				= new ParameterAnnotation[numberOf.getValue()];

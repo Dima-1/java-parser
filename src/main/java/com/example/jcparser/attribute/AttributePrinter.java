@@ -286,4 +286,18 @@ public class AttributePrinter {
 	void print(NestMembersAttribute attr) {
 		print.u2array(attr.getClasses(), "Attribute number of classes", "Nest");
 	}
+
+	void print(RecordAttribute attr) {
+		print.u2(attr.getNumberOf(), "Components count");
+		for(RecordAttribute.ComponentInfo ci: attr.getComponents()){
+			print.u2(ci.nameIndex(), "Name index");
+			print.u2(ci.descriptorIndex(), "Descriptor index");
+			print.u2(ci.numberOf(), "Attributes count");
+			print.attributes(ci.attributes());
+		}
+	}
+
+	void print(PermittedSubclassesAttribute attr) {
+		print.u2array(attr.getClasses(), "Attribute number of classes", "Class");
+	}
 }

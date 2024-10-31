@@ -17,13 +17,16 @@ public class TestClass {
 	public static void main(String[] args) {
 		TestClass testClassVar = new TestClass();
 		testClassVar.testMethod();
-		testClassVar.testMethodWithParameters(1, "test");
+		String res = testClassVar.testMethodWithParameters(1, "MethodWithParameters");
+		System.out.println(res);
 		TestProvider provider = TestProvider.getInstance();
 		TestService service = provider.serviceImpl();
 		service.print("Test service");
+		TestSealed testRecord = new TestRecord(1, "Test Record");
+		testRecord.print();
 	}
 
-	@Deprecated
+	@Deprecated(forRemoval = true)
 	private int oldCodeMethod() {
 		return 10;
 	}
@@ -45,7 +48,7 @@ public class TestClass {
 		TestInnerClass testInnerClass = new TestInnerClass(10);
 		long aLong = (long) testInnerClass.getFieldInt() * Integer.MAX_VALUE + LONG_CONSTANT_VALUE;
 		System.out.println(aLong);
-		float aFloat = FLOAT_CONSTANT_VALUE;
+		float aFloat = FLOAT_CONSTANT_VALUE * 2;
 		double aDouble = DOUBLE_CONSTANT_VALUE;
 		aDouble += aFloat;
 		System.out.println(aDouble);
@@ -62,14 +65,14 @@ public class TestClass {
 			throw new InvalidParameterException(test);
 		}
 		return switch (i) {
-			case 1 -> "One " + test;
+			case 1 -> "Test " + test;
 			case 2 -> "Two " + test;
 			case 33 -> "Thirty three " + test;
 			default -> throw new IllegalStateException("Unexpected value: " + i);
 		};
 	}
 
-	public class TestInnerClass {
+	public static class TestInnerClass {
 		private final int fieldInt;
 
 		public TestInnerClass(int fieldInt) {
@@ -77,7 +80,8 @@ public class TestClass {
 		}
 
 		public int getFieldInt() {
-			return fieldInt * 11;
+			int anInt = 11;
+			return fieldInt * anInt;
 		}
 	}
 
@@ -138,5 +142,16 @@ public class TestClass {
 		public void print(String title) {
 			System.out.println("Console print: " + title);
 		}
+	}
+
+	record TestRecord(int id, String name) implements TestSealed {
+
+		public void print() {
+			System.out.println(name + " " + 1);
+		}
+	}
+
+	sealed interface TestSealed permits TestRecord {
+		void print();
 	}
 }
