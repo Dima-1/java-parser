@@ -589,47 +589,47 @@ public class Parser {
 	private Opcode readOpcode(DataInputStream dis, int startCodeCount) throws IOException {
 		int offset = count;
 		int opcode = readByte(dis);
-		int size = Instruction.getArgumentsSize(opcode);
-		List<Integer> arguments = new ArrayList<>();
+		int size = Instruction.getOperandsSize(opcode);
+		List<Integer> operands = new ArrayList<>();
 		if (opcode == Instruction.WIDE.getCode()) {
 			int additionalOpcode = readByte(dis);
 			size = additionalOpcode == Instruction.IINC.getCode() ? 5 : 3;
-			arguments.add(additionalOpcode);
+			operands.add(additionalOpcode);
 		}
 		if (opcode == Instruction.TABLESWITCH.getCode()) {
 			size = getFirstBytePadding(startCodeCount);
-			readNBytes(dis, arguments, size);
+			readNBytes(dis, operands, size);
 			size += 3 * U4.BYTES;
 			U4 defaultValue = readU4(dis);
-			arguments.addAll(defaultValue.getIntList());
+			operands.addAll(defaultValue.getIntList());
 			U4 low = readU4(dis);
-			arguments.addAll(low.getIntList());
+			operands.addAll(low.getIntList());
 			U4 high = readU4(dis);
-			arguments.addAll(high.getIntList());
+			operands.addAll(high.getIntList());
 			size += (high.getValue() - low.getValue() + 1) * U4.BYTES;
 		}
 		if (opcode == Instruction.LOOKUPSWITCH.getCode()) {
 			size = getFirstBytePadding(startCodeCount);
-			readNBytes(dis, arguments, size);
+			readNBytes(dis, operands, size);
 			size += 2 * U4.BYTES;
 			U4 defaultValue = readU4(dis);
-			arguments.addAll(defaultValue.getIntList());
+			operands.addAll(defaultValue.getIntList());
 			U4 nPairs = readU4(dis);
-			arguments.addAll(nPairs.getIntList());
+			operands.addAll(nPairs.getIntList());
 			size += nPairs.getValue() * 2 * U4.BYTES;
 		}
-		readNBytes(dis, arguments, size);
-		int[] array = arguments.stream().mapToInt(i -> i).toArray();
+		readNBytes(dis, operands, size);
+		int[] operandsArray = operands.stream().mapToInt(i -> i).toArray();
 
-		Instruction.Type type = Instruction.getArgumentsType(opcode);
-		List<ConstantPoolEntry> sArguments = new ArrayList<>();
-		if (type == Instruction.Type.CONST_IDX) {
-			sArguments.add(constantPool.get(array[0] << 8 | array[1]));
-		} else if (type == Instruction.Type.CONST_IDX_BYTE) {
-			sArguments.add(constantPool.get(array[0]));
+		Instruction.Type type = Instruction.getOperandsType(opcode);
+		List<ConstantPoolEntry> cpeList = new ArrayList<>();
+		if (type == Instruction.Type.CP_IDX) {
+			cpeList.add(constantPool.get(operandsArray[0] << 8 | operandsArray[1]));
+		} else if (type == Instruction.Type.CP_IDX_BYTE) {
+			cpeList.add(constantPool.get(operandsArray[0]));
 		}
-		ConstantPoolEntry[] sArgument = sArguments.toArray(ConstantPoolEntry[]::new);
-		return new Opcode(offset, opcode, array, sArgument);
+		ConstantPoolEntry[] cpeOperands = cpeList.toArray(ConstantPoolEntry[]::new);
+		return new Opcode(offset, opcode, operandsArray, cpeOperands);
 	}
 
 	private int getFirstBytePadding(int startCodeCount) {

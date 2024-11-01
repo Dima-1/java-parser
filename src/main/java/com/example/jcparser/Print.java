@@ -149,12 +149,12 @@ public class Print {
 		indent--;
 	}
 
-	public void opcode(Opcode opcode, String arguments, String label, String instruction) {
+	public void opcode(Opcode opcode, String operands, String label, String instruction) {
 		String strArguments = Arrays.stream(opcode.strArguments())
 				.map(constantFormater::formatNewOnlyString).collect(Collectors.joining());
 		String strArgFormat = strArguments.isEmpty() ? "" : " %s";
 		System.out.printf(OFFSET_FORMAT + "%02X%-12s %5s %s" + strArgFormat + "\n", opcode.offset(), opcode.opcode(),
-				arguments, label, instruction, strArguments);
+				operands, label, instruction, strArguments);
 	}
 
 	public void incIndent() {

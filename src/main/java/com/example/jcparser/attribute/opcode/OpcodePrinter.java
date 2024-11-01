@@ -15,12 +15,12 @@ public class OpcodePrinter {
 
 	public void opcodes(List<Opcode> opcodes) {
 		for (Opcode opcode : opcodes) {
-			String arguments = opcode.arguments().length > 0
-					? " " + Arrays.stream(opcode.arguments()).mapToObj(num -> String.format("%02X ", num))
+			String operands = opcode.operands().length > 0
+					? " " + Arrays.stream(opcode.operands()).mapToObj(num -> String.format("%02X ", num))
 					.collect(Collectors.joining()).trim()
 					: "";
 			String instruction = Instruction.getInstruction(opcode.opcode()).getName().toUpperCase();
-			print.opcode(opcode, arguments, "", instruction);
+			print.opcode(opcode, operands, "", instruction);
 		}
 	}
 }

@@ -23,7 +23,7 @@ public enum Instruction {
 	BALOAD("baload", 0x33),                     // 		arrayref, index → value 	load a byte or Boolean value from an array
 	BASTORE("bastore", 0x54),                   // 		arrayref, index, value → 	store a byte or Boolean value into an array
 	BIPUSH("bipush", 0x10, 1),                  // 	1: byte 	→ value 	push a byte onto the stack as an integer value
-//	BREAKPOINT("breakpoint", 0xCA),             // 			reserved for breakpoints in Java debuggers; should not appear in any class file
+	//	BREAKPOINT("breakpoint", 0xCA),             // 			reserved for breakpoints in Java debuggers; should not appear in any class file
 	CALOAD("caload", 0x34),                     // 		arrayref, index → value 	load a char from an array
 	CASTORE("castore", 0x55),                   // 		arrayref, index, value → 	store a char into an array
 	CHECKCAST("checkcast", 0xC0, 2),            // 	2: indexbyte1, indexbyte2 	objectref → objectref 	checks whether an objectref is of a certain type, the class reference of which is in the constant pool at index (indexbyte1 << 8 | indexbyte2)
@@ -130,7 +130,7 @@ public enum Instruction {
 	ILOAD_1("iload_1", 0x1B),                   // 		→ value 	load an int value from local variable 1
 	ILOAD_2("iload_2", 0x1C),                   // 		→ value 	load an int value from local variable 2
 	ILOAD_3("iload_3", 0x1D),                   // 		→ value 	load an int value from local variable 3
-//	IMPDEP1("impdep1", 0xFE),                   // 			reserved for implementation-dependent operations within debuggers; should not appear in any class file
+	//	IMPDEP1("impdep1", 0xFE),                   // 			reserved for implementation-dependent operations within debuggers; should not appear in any class file
 //	IMPDEP2("impdep2", 0xFF),                   // 			reserved for implementation-dependent operations within debuggers; should not appear in any class file
 	IMUL("imul", 0x68),                         // 		value1, value2 → result 	multiply two integers
 	INEG("ineg", 0x74),                         // 		value → result 	negate int
@@ -236,25 +236,29 @@ public enum Instruction {
 				new IllegalArgumentException("Unknown opcode: " + Integer.toHexString(code).toUpperCase()));
 	}
 
-	public static int getArgumentsSize(int code) {
+	public static int getOperandsSize(int code) {
 		return getInstruction(code).argumentsSize;
 	}
 
-	public static Type getArgumentsType(int code) {
+	public static Type getOperandsType(int code) {
 		Type type;
 		type = switch (getInstruction(code)) {
 			case ANEWARRAY, CHECKCAST, GETFIELD, GETSTATIC, INSTANCEOF, INVOKEDYNAMIC, INVOKESPECIAL, INVOKESTATIC,
-			     INVOKEVIRTUAL, LDC_W, LDC2_W, NEW, PUTFIELD, PUTSTATIC -> Type.CONST_IDX;
-			case INVOKEINTERFACE, MULTIANEWARRAY -> Type.CONST_IDX_COUNT;
-			case LDC -> Type.CONST_IDX_BYTE;
+			     INVOKEVIRTUAL, LDC_W, LDC2_W, NEW, PUTFIELD, PUTSTATIC -> Type.CP_IDX;
+			case INVOKEINTERFACE, MULTIANEWARRAY -> Type.CP_IDX_COUNT;
+			case LDC -> Type.CP_IDX_BYTE;
+			case ALOAD, ASTORE, DLOAD, DSTORE, FLOAD, FSTORE, ILOAD, ISTORE, LLOAD, LSTORE, RET -> Type.LOCAL_VAR_IDX;
+			case BIPUSH, NEWARRAY -> Type.BYTE;
 			default -> null;
 		};
 		return type;
 	}
 
 	public enum Type {
-		CONST_IDX,
-		CONST_IDX_BYTE,
-		CONST_IDX_COUNT
+		CP_IDX,
+		CP_IDX_BYTE,
+		CP_IDX_COUNT,
+		LOCAL_VAR_IDX,
+		BYTE
 	}
 }
