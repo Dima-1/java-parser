@@ -3,6 +3,6 @@ module com.example.jcparser.module {
 	exports com.example.jcparser.attribute;
 	exports com.example.jcparser.attribute.annotation;
 	exports com.example.jcparser.attribute.stackmapframe;
-	exports com.example.jcparser.attribute.opcode;
+	exports com.example.jcparser.attribute.instruction;
 	requires org.apache.commons.text;
 }

@@ -3,9 +3,9 @@ package com.example.jcparser;
 import com.example.jcparser.Print.ConstantFormater;
 import com.example.jcparser.attribute.*;
 import com.example.jcparser.attribute.annotation.*;
-import com.example.jcparser.attribute.opcode.CodeAttribute;
-import com.example.jcparser.attribute.opcode.Instruction;
-import com.example.jcparser.attribute.opcode.Opcode;
+import com.example.jcparser.attribute.instruction.CodeAttribute;
+import com.example.jcparser.attribute.instruction.InstructionSet;
+import com.example.jcparser.attribute.instruction.Instruction;
 import com.example.jcparser.attribute.stackmapframe.*;
 import org.apache.commons.text.StringEscapeUtils;
 
@@ -32,7 +32,7 @@ public class Parser {
 
 	public Parser(Print print) {
 		this.print = print;
-		print.setConstantPool(constantPool);
+		print.getConstantFormater().setConstantPool(constantPool);
 	}
 
 	public static void main(String[] args) {
@@ -294,11 +294,11 @@ public class Parser {
 				U2 maxStack = readU2(dis);
 				U2 maxLocals = readU2(dis);
 				U4 codeLength = readU4(dis);
-				List<Opcode> opcodes = new ArrayList<>();
+				List<Instruction> instructions = new ArrayList<>();
 				int startCodeCount = count;
 				int endCodeCount = startCodeCount + codeLength.getValue();
 				do {
-					opcodes.add(readOpcode(dis, startCodeCount));
+					instructions.add(readInstruction(dis, startCodeCount));
 				} while (count < endCodeCount);
 				U2 exceptionTableLength = readU2(dis);
 				ExceptionsAttribute.Exception[] exceptions = new ExceptionsAttribute.Exception[exceptionTableLength.getValue()];
@@ -308,7 +308,7 @@ public class Parser {
 				U2 numberOf = readU2(dis);
 				List<Attribute> attributes = new ArrayList<>(readAttributes(dis, numberOf.value, null));
 				yield new CodeAttribute(attributeNameIndex, attributeLength, maxStack, maxLocals,
-						codeLength, opcodes, exceptionTableLength, exceptions, numberOf, attributes);
+						codeLength, instructions, exceptionTableLength, exceptions, numberOf, attributes);
 			}
 			case "StackMapTable" -> {
 				U2 numberOf = readU2(dis);
@@ -587,17 +587,17 @@ public class Parser {
 		return u4;
 	}
 
-	private Opcode readOpcode(DataInputStream dis, int startCodeCount) throws IOException {
+	private Instruction readInstruction(DataInputStream dis, int startCodeCount) throws IOException {
 		int offset = count;
 		int opcode = readByte(dis);
-		int size = Instruction.getOperandsSize(opcode);
+		int size = InstructionSet.getOperandsSize(opcode);
 		List<Integer> operands = new ArrayList<>();
-		if (opcode == Instruction.WIDE.getCode()) {
+		if (opcode == InstructionSet.WIDE.getOpcode()) {
 			int additionalOpcode = readByte(dis);
-			size = additionalOpcode == Instruction.IINC.getCode() ? 5 : 3;
+			size = additionalOpcode == InstructionSet.IINC.getOpcode() ? 5 : 3;
 			operands.add(additionalOpcode);
 		}
-		if (opcode == Instruction.TABLESWITCH.getCode()) {
+		if (opcode == InstructionSet.TABLESWITCH.getOpcode()) {
 			size = getFirstBytePadding(startCodeCount);
 			readNBytes(dis, operands, size);
 			size += 3 * U4.BYTES;
@@ -609,7 +609,7 @@ public class Parser {
 			operands.addAll(high.getIntList());
 			size += (high.getValue() - low.getValue() + 1) * U4.BYTES;
 		}
-		if (opcode == Instruction.LOOKUPSWITCH.getCode()) {
+		if (opcode == InstructionSet.LOOKUPSWITCH.getOpcode()) {
 			size = getFirstBytePadding(startCodeCount);
 			readNBytes(dis, operands, size);
 			size += 2 * U4.BYTES;
@@ -621,16 +621,7 @@ public class Parser {
 		}
 		readNBytes(dis, operands, size);
 		int[] operandsArray = operands.stream().mapToInt(i -> i).toArray();
-
-		Instruction.Type type = Instruction.getOperandsType(opcode);
-		List<ConstantPoolEntry> cpeList = new ArrayList<>();
-		if (type == Instruction.Type.CP_IDX) {
-			cpeList.add(constantPool.get(operandsArray[0] << 8 | operandsArray[1]));
-		} else if (type == Instruction.Type.CP_IDX_BYTE) {
-			cpeList.add(constantPool.get(operandsArray[0]));
-		}
-		ConstantPoolEntry[] cpeOperands = cpeList.toArray(ConstantPoolEntry[]::new);
-		return new Opcode(offset, opcode, operandsArray, cpeOperands);
+		return new Instruction(offset, opcode, operandsArray);
 	}
 
 	private int getFirstBytePadding(int startCodeCount) {

@@ -4,7 +4,7 @@ import com.example.jcparser.AccessFlag;
 import com.example.jcparser.Parser;
 import com.example.jcparser.Print;
 import com.example.jcparser.attribute.annotation.*;
-import com.example.jcparser.attribute.opcode.CodeAttribute;
+import com.example.jcparser.attribute.instruction.CodeAttribute;
 import com.example.jcparser.attribute.stackmapframe.StackMapFrame;
 
 public class AttributePrinter {
@@ -27,7 +27,7 @@ public class AttributePrinter {
 		print.u2(attr.getMaxStack(), "Attribute max stack");
 		print.u2(attr.getMaxLocals(), "Attribute max local");
 		print.u4(attr.getCodeLength(), "Code length");
-		print.getOpcodePrinter().opcodes(attr.getOpcodes());
+		print.getInstructionPrinter().instruction(attr);
 		print.u2(attr.getExceptionTableLength(), "Exceptions table length");
 		for (ExceptionsAttribute.Exception exception : attr.getExceptions()) {
 			exception.print(this);
@@ -289,7 +289,7 @@ public class AttributePrinter {
 
 	void print(RecordAttribute attr) {
 		print.u2(attr.getNumberOf(), "Components count");
-		for(RecordAttribute.ComponentInfo ci: attr.getComponents()){
+		for (RecordAttribute.ComponentInfo ci : attr.getComponents()) {
 			print.u2(ci.nameIndex(), "Name index");
 			print.u2(ci.descriptorIndex(), "Descriptor index");
 			print.u2(ci.numberOf(), "Attributes count");

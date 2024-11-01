@@ -3,7 +3,7 @@ package com.example.jcparser.test;
 import com.example.jcparser.Options;
 import com.example.jcparser.Parser;
 import com.example.jcparser.Print;
-import com.example.jcparser.attribute.opcode.Instruction;
+import com.example.jcparser.attribute.instruction.InstructionSet;
 import com.example.jcparser.attribute.stackmapframe.FrameType;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -141,7 +141,7 @@ class ParserTest {
 
 		@Test
 		void wrong_opcode() {
-			assertThrows(IllegalArgumentException.class, () -> Instruction.getInstruction(0xFF));
+			assertThrows(IllegalArgumentException.class, () -> InstructionSet.getInstruction(0xFF));
 		}
 
 		@Test
@@ -160,7 +160,7 @@ class ParserTest {
 			Options options = new Options();
 			options.setConstants(false);
 			Print print = new Print(options);
-			print.setConstantPool(constantPool);
+			print.getConstantFormater().setConstantPool(constantPool);
 			print.constantPool(constantPool);
 			assertEquals(0, outStream.size(), "Constant pool doesn't hide");
 			outStream.reset();

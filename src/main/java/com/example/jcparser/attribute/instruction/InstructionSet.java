@@ -1,8 +1,8 @@
-package com.example.jcparser.attribute.opcode;
+package com.example.jcparser.attribute.instruction;
 
 import java.util.Arrays;
 
-public enum Instruction {
+public enum InstructionSet {
 	AALOAD("aaload", 0x32),                     // 		arrayref, index → value 	load onto the stack a reference from an array
 	AASTORE("aastore", 0x53),                   // 		arrayref, index, value → 	store a reference in an array
 	ACONST_NULL("aconst_null", 0x01),           // 		→ null 	push a null reference onto the stack
@@ -209,31 +209,31 @@ public enum Instruction {
 	TABLESWITCH("tableswitch", 0xAA, 16),       // 	16+: [0–3 bytes padding], defaultbyte1, defaultbyte2, defaultbyte3, defaultbyte4, lowbyte1, lowbyte2, lowbyte3, lowbyte4, highbyte1, highbyte2, highbyte3, highbyte4, jump offsets... 	index → 	continue execution from an address in the table at offset index
 	WIDE("wide", 0xC4, 3);                      // 	3/5: opcode, indexbyte1, indexbyte2 or iinc, indexbyte1, indexbyte2, countbyte1, countbyte2 	[same as for corresponding instructions] 	execute opcode, where opcode is either iload, fload, aload, lload, dload, istore, fstore, astore, lstore, dstore, or ret, but assume the index is 16 bit; or execute iinc, where the index is 16 bits and the constant to increment by is a signed 16 bit short
 
-	private final String name;
-	private final int code;
+	private final String mnemonic;
+	private final int opcode;
 	private int argumentsSize = 0;
 
-	Instruction(String name, int code) {
-		this.name = name;
-		this.code = code;
+	InstructionSet(String mnemonic, int opcode) {
+		this.mnemonic = mnemonic;
+		this.opcode = opcode;
 	}
 
-	Instruction(String name, int code, int argumentsSize) {
-		this(name, code);
+	InstructionSet(String mnemonic, int opcode, int argumentsSize) {
+		this(mnemonic, opcode);
 		this.argumentsSize = argumentsSize;
 	}
 
-	public String getName() {
-		return name;
+	public String getMnemonic() {
+		return mnemonic;
 	}
 
-	public int getCode() {
-		return code;
+	public int getOpcode() {
+		return opcode;
 	}
 
-	public static Instruction getInstruction(int code) {
-		return Arrays.stream(values()).filter(v -> v.code == code).findFirst().orElseThrow(() ->
-				new IllegalArgumentException("Unknown opcode: " + Integer.toHexString(code).toUpperCase()));
+	public static InstructionSet getInstruction(int opcode) {
+		return Arrays.stream(values()).filter(v -> v.opcode == opcode).findFirst().orElseThrow(() ->
+				new IllegalArgumentException("Unknown opcode: " + Integer.toHexString(opcode).toUpperCase()));
 	}
 
 	public static int getOperandsSize(int code) {

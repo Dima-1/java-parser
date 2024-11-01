@@ -3,13 +3,11 @@ package com.example.jcparser;
 import com.example.jcparser.Parser.*;
 import com.example.jcparser.attribute.Attribute;
 import com.example.jcparser.attribute.AttributePrinter;
-import com.example.jcparser.attribute.opcode.Opcode;
-import com.example.jcparser.attribute.opcode.OpcodePrinter;
+import com.example.jcparser.attribute.instruction.Instruction;
+import com.example.jcparser.attribute.instruction.InstructionPrinter;
 import com.example.jcparser.attribute.stackmapframe.StackFramePrinter;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static com.example.jcparser.AccessFlag.getAccessFlags;
 
@@ -19,24 +17,27 @@ public class Print {
 	public static final String HEX_2 = " (%02X)";
 	public static final int SPACES_IN_INTENT = 6;
 	private final Options options;
-	private final OpcodePrinter opcodePrinter = new OpcodePrinter(this);
+	private final InstructionPrinter instructionPrinter = new InstructionPrinter(this);
 	private final StackFramePrinter stackFramePrinter = new StackFramePrinter(this);
 	private final AttributePrinter attributePrinter = new AttributePrinter(this);
 	private final ConstantFormater constantFormater = new ConstantFormater();
 	private String OFFSET_FORMAT = "%04X ";
 	private int indent;
-	private List<ConstantPoolEntry> constants;
 
 	public Print(Options options) {
 		this.options = options;
 	}
 
-	public OpcodePrinter getOpcodePrinter() {
-		return opcodePrinter;
+	public InstructionPrinter getInstructionPrinter() {
+		return instructionPrinter;
 	}
 
 	public StackFramePrinter getStackFramePrinter() {
 		return stackFramePrinter;
+	}
+
+	public ConstantFormater getConstantFormater() {
+		return constantFormater;
 	}
 
 	public void setLength(long length) {
@@ -150,12 +151,10 @@ public class Print {
 		indent--;
 	}
 
-	public void opcode(Opcode opcode, String operands, String label, String instruction) {
-		String strArguments = Arrays.stream(opcode.strArguments())
-				.map(constantFormater::formatNewOnlyString).collect(Collectors.joining());
-		String strArgFormat = strArguments.isEmpty() ? "" : " %s";
-		System.out.printf(OFFSET_FORMAT + "%02X%-12s %5s %s" + strArgFormat + "\n", opcode.offset(), opcode.opcode(),
-				operands, label, instruction, strArguments);
+	public void instruction(Instruction instruction, String operands, String label, String mnemonic, String strOperands) {
+		String strArgFormat = strOperands.isEmpty() ? "" : " %s";
+		System.out.printf(OFFSET_FORMAT + "%02X%-12s %5s %s" + strArgFormat + "\n", instruction.offset(),
+				instruction.opcode(), operands, label, mnemonic, strOperands);
 	}
 
 	public void incIndent() {
@@ -170,10 +169,6 @@ public class Print {
 		return SPACES_IN_INTENT * indent;
 	}
 
-	public void setConstantPool(List<ConstantPoolEntry> constants) {
-		this.constants = constants;
-	}
-
 	public interface Printable<T> {
 		void print(T printer);
 	}
@@ -185,6 +180,15 @@ public class Print {
 	public class ConstantFormater {
 		private String formatedString;
 		private boolean printGeneral = true;
+		private List<ConstantPoolEntry> constants;
+
+		public void setConstantPool(List<ConstantPoolEntry> constants) {
+			this.constants = constants;
+		}
+
+		public List<ConstantPoolEntry> getConstantPool() {
+			return constants;
+		}
 
 		public void format(ConstantPoolEntry cpe) {
 			if (printGeneral) {
