@@ -25,6 +25,7 @@ public class Print {
 	private final ConstantFormater constantFormater = new ConstantFormater();
 	private String OFFSET_FORMAT = "%04X ";
 	private int indent;
+	private List<ConstantPoolEntry> constants;
 
 	public Print(Options options) {
 		this.options = options;
@@ -169,6 +170,10 @@ public class Print {
 		return SPACES_IN_INTENT * indent;
 	}
 
+	public void setConstantPool(List<ConstantPoolEntry> constants) {
+		this.constants = constants;
+	}
+
 	public interface Printable<T> {
 		void print(T printer);
 	}
@@ -210,7 +215,7 @@ public class Print {
 		}
 
 		void format(ConstantPoolString cpe) {
-			format(cpe.getStringIndex(), cpe.constants);
+			format(cpe.getStringIndex(), constants);
 		}
 
 		private void format(int idx, List<ConstantPoolEntry> cpe) {
@@ -221,24 +226,24 @@ public class Print {
 		}
 
 		void format(ConstantPoolMethodRef cpe) {
-			format(cpe.getClassIndex(), cpe.constants);
-			format(cpe.getNameAndTypeIndex(), cpe.constants);
+			format(cpe.getClassIndex(), constants);
+			format(cpe.getNameAndTypeIndex(), constants);
 		}
 
 		void format(ConstantPoolNameAndType cpe) {
-			format(cpe.getNameIndex(), cpe.constants);
-			format(cpe.getDescriptorIndex(), cpe.constants);
+			format(cpe.getNameIndex(), constants);
+			format(cpe.getDescriptorIndex(), constants);
 		}
 
 		void format(ConstantPoolDynamic cpe) {
 			formatedString += String.format(HEX_2, cpe.getBootstrapMethodAttrIndex());
-			format(cpe.getNameAndTypeIndex(), cpe.constants);
+			format(cpe.getNameAndTypeIndex(), constants);
 		}
 
 		void format(ConstantPoolMethodHandle cpe) {
 			formatedString += " " + ConstantPoolMethodHandle.MHRef.values()[cpe.getReferenceKind()].name()
 					.replaceFirst("REF_", "");
-			format(cpe.getReferenceIndex(), cpe.constants);
+			format(cpe.getReferenceIndex(), constants);
 		}
 
 		public String formatNewOnlyString(ConstantPoolEntry cpe) {

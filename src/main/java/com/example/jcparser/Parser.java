@@ -32,6 +32,7 @@ public class Parser {
 
 	public Parser(Print print) {
 		this.print = print;
+		print.setConstantPool(constantPool);
 	}
 
 	public static void main(String[] args) {
@@ -220,60 +221,60 @@ public class Parser {
 				int length = dis.readUnsignedShort();
 				count += Short.BYTES;
 				count += length;
-				yield new ConstantPoolUtf8(constantPool, offset, idx, constantTag, new String(dis.readNBytes(length)));
+				yield new ConstantPoolUtf8(offset, idx, constantTag, new String(dis.readNBytes(length)));
 			}
 			case CONSTANT_Integer -> {
 				int anInt = dis.readInt();
 				count += Integer.BYTES;
-				yield new ConstantPoolInteger(constantPool, offset, idx, constantTag, anInt);
+				yield new ConstantPoolInteger(offset, idx, constantTag, anInt);
 			}
 			case CONSTANT_Float -> {
 				float aFloat = dis.readFloat();
 				count += Float.BYTES;
-				yield new ConstantPoolFloat(constantPool, offset, idx, constantTag, aFloat);
+				yield new ConstantPoolFloat(offset, idx, constantTag, aFloat);
 			}
 			case CONSTANT_Long -> {
 				long aLong = dis.readLong();
 				count += Long.BYTES;
-				yield new ConstantPoolLong(constantPool, offset, idx, constantTag, aLong);
+				yield new ConstantPoolLong(offset, idx, constantTag, aLong);
 			}
 			case CONSTANT_Double -> {
 				double aDouble = dis.readDouble();
 				count += Double.BYTES;
-				yield new ConstantPoolDouble(constantPool, offset, idx, constantTag, aDouble);
+				yield new ConstantPoolDouble(offset, idx, constantTag, aDouble);
 			}
 			case CONSTANT_Class, CONSTANT_String, CONSTANT_MethodType, CONSTANT_Module, CONSTANT_Package -> {
 				int aShort = dis.readUnsignedShort();
 				count += Short.BYTES;
-				yield new ConstantPoolString(constantPool, offset, idx, constantTag, aShort);
+				yield new ConstantPoolString(offset, idx, constantTag, aShort);
 			}
 			case CONSTANT_Fieldref, CONSTANT_Methodref, CONSTANT_InterfaceMethodref -> {
 				int aShort = dis.readUnsignedShort();
 				count += Short.BYTES;
 				int bShort = dis.readUnsignedShort();
 				count += Short.BYTES;
-				yield new ConstantPoolMethodRef(constantPool, offset, idx, constantTag, aShort, bShort);
+				yield new ConstantPoolMethodRef(offset, idx, constantTag, aShort, bShort);
 			}
 			case CONSTANT_NameAndType -> {
 				int aShort = dis.readUnsignedShort();
 				count += Short.BYTES;
 				int bShort = dis.readUnsignedShort();
 				count += Short.BYTES;
-				yield new ConstantPoolNameAndType(constantPool, offset, idx, constantTag, aShort, bShort);
+				yield new ConstantPoolNameAndType(offset, idx, constantTag, aShort, bShort);
 			}
 			case CONSTANT_Dynamic, CONSTANT_InvokeDynamic -> {
 				int aShort = dis.readUnsignedShort();
 				count += Short.BYTES;
 				int bShort = dis.readUnsignedShort();
 				count += Short.BYTES;
-				yield new ConstantPoolDynamic(constantPool, offset, idx, constantTag, aShort, bShort);
+				yield new ConstantPoolDynamic(offset, idx, constantTag, aShort, bShort);
 			}
 			case CONSTANT_MethodHandle -> {
 				int referenceKind = dis.read();
 				count++;
 				int bShort = dis.readUnsignedShort();
 				count += Short.BYTES;
-				yield new ConstantPoolMethodHandle(constantPool, offset, idx, constantTag, referenceKind, bShort);
+				yield new ConstantPoolMethodHandle(offset, idx, constantTag, referenceKind, bShort);
 			}
 		};
 	}
@@ -568,7 +569,7 @@ public class Parser {
 						}
 					}
 					if (constantObject == null) {
-						constantObject = new ConstantPoolUtf8(constantPool, 0, 0, ConstantTag.CONSTANT_Utf8, "java/lang/Object");
+						constantObject = new ConstantPoolUtf8(0, 0, ConstantTag.CONSTANT_Utf8, "java/lang/Object");
 					}
 				}
 				cpe = constantObject;
@@ -817,7 +818,7 @@ public class Parser {
 	}
 
 	private static final class Magic {
-		static byte[] bytes = {(byte) 0xCA, (byte) 0xFE, (byte) 0xBA, (byte) 0xBE};
+		static final byte[] bytes = {(byte) 0xCA, (byte) 0xFE, (byte) 0xBA, (byte) 0xBE};
 		static final int BYTES = bytes.length;
 
 		private static void getMagic(DataInputStream dis) throws IOException {
@@ -833,13 +834,11 @@ public class Parser {
 	}
 
 	public static class ConstantPoolEntry implements Print.Formatter<Print.ConstantFormater> {
-		protected final List<ConstantPoolEntry> constants;
 		private final int offset;
 		private final int idx;
 		private final ConstantTag constantTag;
 
-		public ConstantPoolEntry(List<ConstantPoolEntry> constants, int offset, int idx, ConstantTag constantTag) {
-			this.constants = constants;
+		public ConstantPoolEntry(int offset, int idx, ConstantTag constantTag) {
 			this.offset = offset;
 			this.idx = idx;
 			this.constantTag = constantTag;
@@ -866,8 +865,8 @@ public class Parser {
 	public static final class ConstantPoolUtf8 extends ConstantPoolEntry {
 		private final String utf8;
 
-		public ConstantPoolUtf8(List<ConstantPoolEntry> constants, int offset, int idx, ConstantTag constantTag, String utf8) {
-			super(constants, offset, idx, constantTag);
+		public ConstantPoolUtf8(int offset, int idx, ConstantTag constantTag, String utf8) {
+			super(offset, idx, constantTag);
 			this.utf8 = StringEscapeUtils.escapeJava(utf8);
 		}
 
@@ -885,8 +884,8 @@ public class Parser {
 	public static class ConstantPoolInteger extends ConstantPoolEntry {
 		private final int value;
 
-		public ConstantPoolInteger(List<ConstantPoolEntry> constants, int offset, int idx, ConstantTag constantTag, int value) {
-			super(constants, offset, idx, constantTag);
+		public ConstantPoolInteger(int offset, int idx, ConstantTag constantTag, int value) {
+			super(offset, idx, constantTag);
 			this.value = value;
 		}
 
@@ -904,8 +903,8 @@ public class Parser {
 	public static class ConstantPoolFloat extends ConstantPoolEntry {
 		private final float value;
 
-		public ConstantPoolFloat(List<ConstantPoolEntry> constants, int offset, int idx, ConstantTag constantTag, float value) {
-			super(constants, offset, idx, constantTag);
+		public ConstantPoolFloat(int offset, int idx, ConstantTag constantTag, float value) {
+			super(offset, idx, constantTag);
 			this.value = value;
 		}
 
@@ -923,8 +922,8 @@ public class Parser {
 	public static class ConstantPoolLong extends ConstantPoolEntry {
 		private final long value;
 
-		public ConstantPoolLong(List<ConstantPoolEntry> constants, int offset, int idx, ConstantTag constantTag, long value) {
-			super(constants, offset, idx, constantTag);
+		public ConstantPoolLong(int offset, int idx, ConstantTag constantTag, long value) {
+			super(offset, idx, constantTag);
 			this.value = value;
 		}
 
@@ -942,8 +941,8 @@ public class Parser {
 	public static class ConstantPoolDouble extends ConstantPoolEntry {
 		private final double value;
 
-		public ConstantPoolDouble(List<ConstantPoolEntry> constants, int offset, int idx, ConstantTag constantTag, double value) {
-			super(constants, offset, idx, constantTag);
+		public ConstantPoolDouble(int offset, int idx, ConstantTag constantTag, double value) {
+			super(offset, idx, constantTag);
 			this.value = value;
 		}
 
@@ -961,9 +960,9 @@ public class Parser {
 	public static final class ConstantPoolString extends ConstantPoolEntry {
 		private final int stringIndex;
 
-		public ConstantPoolString(List<ConstantPoolEntry> constants, int offset, int idx, ConstantTag constantTag,
+		public ConstantPoolString(int offset, int idx, ConstantTag constantTag,
 		                          int stringIndex) {
-			super(constants, offset, idx, constantTag);
+			super(offset, idx, constantTag);
 			this.stringIndex = stringIndex;
 		}
 
@@ -982,9 +981,9 @@ public class Parser {
 		private final int classIndex;
 		private final int nameAndTypeIndex;
 
-		public ConstantPoolMethodRef(List<ConstantPoolEntry> constants, int offset, int idx, ConstantTag constantTag,
+		public ConstantPoolMethodRef(int offset, int idx, ConstantTag constantTag,
 		                             int classIndex, int nameAndTypeIndex) {
-			super(constants, offset, idx, constantTag);
+			super(offset, idx, constantTag);
 			this.classIndex = classIndex;
 			this.nameAndTypeIndex = nameAndTypeIndex;
 		}
@@ -1008,9 +1007,9 @@ public class Parser {
 		private final int nameIndex;
 		private final int descriptorIndex;
 
-		public ConstantPoolNameAndType(List<ConstantPoolEntry> constants, int offset, int idx, ConstantTag constantTag,
+		public ConstantPoolNameAndType(int offset, int idx, ConstantTag constantTag,
 		                               int nameIndex, int descriptorIndex) {
-			super(constants, offset, idx, constantTag);
+			super(offset, idx, constantTag);
 			this.nameIndex = nameIndex;
 			this.descriptorIndex = descriptorIndex;
 		}
@@ -1034,9 +1033,9 @@ public class Parser {
 		private final int bootstrapMethodAttrIndex;
 		private final int nameAndTypeIndex;
 
-		public ConstantPoolDynamic(List<ConstantPoolEntry> constants, int offset, int idx, ConstantTag constantTag,
+		public ConstantPoolDynamic(int offset, int idx, ConstantTag constantTag,
 		                           int bootstrapMethodAttrIndex, int nameAndTypeIndex) {
-			super(constants, offset, idx, constantTag);
+			super(offset, idx, constantTag);
 			this.bootstrapMethodAttrIndex = bootstrapMethodAttrIndex;
 			this.nameAndTypeIndex = nameAndTypeIndex;
 		}
@@ -1073,9 +1072,9 @@ public class Parser {
 		private final int referenceKind;
 		private final int referenceIndex;
 
-		public ConstantPoolMethodHandle(List<ConstantPoolEntry> constants, int offset, int idx, ConstantTag constantTag,
+		public ConstantPoolMethodHandle(int offset, int idx, ConstantTag constantTag,
 		                                int referenceKind, int referenceIndex) {
-			super(constants, offset, idx, constantTag);
+			super(offset, idx, constantTag);
 			this.referenceKind = referenceKind;
 			this.referenceIndex = referenceIndex;
 		}

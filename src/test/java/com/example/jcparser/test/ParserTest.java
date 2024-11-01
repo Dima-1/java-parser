@@ -64,7 +64,7 @@ class ParserTest {
 		System.setErr(new PrintStream(errStream));
 		List<Arguments> argumentsList = new ArrayList<>();
 		for (String path : testFiles) {
-			String filePath = Objects.requireNonNull(classloader.getResource(path),"File not found: " + path).getPath();
+			String filePath = Objects.requireNonNull(classloader.getResource(path), "File not found: " + path).getPath();
 			Parser.main(new String[]{filePath});
 			String fileName = filePath.substring(filePath.lastIndexOf('/') + 1);
 			argumentsList.add(arguments(named(fileName, filePath), outStream.toString().split("\n")));
@@ -153,19 +153,20 @@ class ParserTest {
 		void check_options() {
 			System.setOut(new PrintStream(outStream));
 			System.setErr(new PrintStream(errStream));
-			List<Parser.ConstantPoolEntry> list = new ArrayList<>();
-			list.add(null);
-			list.add(new Parser.ConstantPoolUtf8(list, 0x0A, 1, CONSTANT_Utf8, "TestUtf8"));
-			list.add(new Parser.ConstantPoolString(list, 0x12, 2, CONSTANT_String, 1));
+			List<Parser.ConstantPoolEntry> constantPool = new ArrayList<>();
+			constantPool.add(null);
+			constantPool.add(new Parser.ConstantPoolUtf8(0x0A, 1, CONSTANT_Utf8, "TestUtf8"));
+			constantPool.add(new Parser.ConstantPoolString(0x12, 2, CONSTANT_String, 1));
 			Options options = new Options();
 			options.setConstants(false);
 			Print print = new Print(options);
-			print.constantPool(list);
+			print.setConstantPool(constantPool);
+			print.constantPool(constantPool);
 			assertEquals(0, outStream.size(), "Constant pool doesn't hide");
 			outStream.reset();
 			options.setConstants(true);
 			options.setRefs(false);
-			print.constantPool(list);
+			print.constantPool(constantPool);
 			String[] lines = outStream.toString().split("\n");
 			assertFalse(lines[1].contains("(01)"), "Constant pool reference index doesn't hide");
 		}
