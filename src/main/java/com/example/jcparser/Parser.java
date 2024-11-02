@@ -295,7 +295,7 @@ public class Parser {
 				U2 maxLocals = readU2(dis);
 				U4 codeLength = readU4(dis);
 				List<Instruction> instructions = new ArrayList<>();
-				int startCodeCount = count;
+				int startCodeCount = codeLength.getOffset() + U4.BYTES;
 				int endCodeCount = startCodeCount + codeLength.getValue();
 				do {
 					instructions.add(readInstruction(dis, startCodeCount));
