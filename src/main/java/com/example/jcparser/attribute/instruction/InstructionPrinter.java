@@ -3,6 +3,7 @@ package com.example.jcparser.attribute.instruction;
 import com.example.jcparser.Parser;
 import com.example.jcparser.Print;
 import com.example.jcparser.attribute.Attribute;
+import com.example.jcparser.attribute.LineNumberTableAttribute;
 import com.example.jcparser.attribute.LocalVariableAttribute;
 import com.example.jcparser.attribute.LocalVariableTableAttribute;
 
@@ -28,7 +29,7 @@ public class InstructionPrinter {
 			String mnemonic = InstructionSet.getInstruction(instruction.opcode()).getMnemonic().toUpperCase();
 			InstructionSet.Type type = InstructionSet.getOperandsType(instruction.opcode());
 			String strOperands;
-			List<Parser.ConstantPoolEntry> cpeOperands = new ArrayList<>();
+			List<Parser.ConstantPoolEntry> cpeOperands;
 			Print.ConstantFormater constantFormater = print.getConstantFormater();
 			if (type == InstructionSet.Type.LOCAL_VAR_IDX) {
 				cpeOperands = getVariableOperand(instruction, attr);
@@ -36,8 +37,23 @@ public class InstructionPrinter {
 				cpeOperands = getCPOperands(instruction);
 			}
 			strOperands = cpeOperands.stream().map(constantFormater::formatNewOnlyString).collect(Collectors.joining(" "));
-			print.instruction(instruction, operands, "", mnemonic, strOperands);
+			String lineNumber = getLineNumber(instruction, attr);
+			print.instruction(instruction, operands, lineNumber, mnemonic, strOperands);
 		}
+	}
+
+	private String getLineNumber(Instruction instruction, CodeAttribute attr) {
+		String lineNumber = null;
+		for (Attribute attribute : attr.getAttributes()) {
+			if (attribute instanceof LineNumberTableAttribute lineNumberTableAttr) {
+				int startPC = attr.getCodeLength().getOffset() + Parser.U4.BYTES;
+				lineNumber = Arrays.stream(lineNumberTableAttr.getLineNumberTable())
+						.filter(ln -> (ln.startPC().getValue() + startPC) == instruction.offset())
+						.map(ln -> "LN" + ln.lineNumber().getValue()).findFirst().orElse("");
+				break;
+			}
+		}
+		return lineNumber;
 	}
 
 	private List<Parser.ConstantPoolEntry> getCPOperands(Instruction instruction) {
@@ -56,29 +72,23 @@ public class InstructionPrinter {
 	private List<Parser.ConstantPoolEntry> getVariableOperand(Instruction instruction, CodeAttribute attr) {
 		List<Parser.ConstantPoolEntry> varOperand = new ArrayList<>();
 		for (Attribute attribute : attr.getAttributes()) {
-			if (attribute instanceof LocalVariableTableAttribute variableAttribute) {
+			if (attribute instanceof LocalVariableTableAttribute variableAttr) {
 				LocalVariableAttribute.LocalVariable localVariable
-						= getLocalVariable(variableAttribute, instruction, attr.getCodeLength().getOffset() + Parser.U4.BYTES);
+						= getLocalVariable(variableAttr, instruction, attr.getCodeLength().getOffset() + Parser.U4.BYTES);
 				if (localVariable != null) {
 					varOperand.add(localVariable.descriptorIndex().getCpe());
 					varOperand.add(localVariable.nameIndex().getCpe());
-				} else {
-//					throw new IllegalArgumentException();
 				}
+				break;
 			}
 		}
 		return varOperand;
 	}
 
-	private static LocalVariableAttribute.LocalVariable getLocalVariable(LocalVariableTableAttribute variableAttribute,
+	private LocalVariableAttribute.LocalVariable getLocalVariable(LocalVariableTableAttribute variableAttribute,
 	                                                                     Instruction instruction, int startPC) {
-		int idx;
 		String mnemonic = InstructionSet.getInstruction(instruction.opcode()).getMnemonic();
-		if (mnemonic.contains("_")) {
-			idx = Integer.parseInt(mnemonic.split("_")[1]);
-		} else {
-			idx = instruction.operands()[0];
-		}
+		int idx = mnemonic.contains("_") ? Integer.parseInt(mnemonic.split("_")[1]) : instruction.operands()[0];
 		return Arrays.stream(variableAttribute.getLocalVariables())
 				.filter(lv -> lv.index().getValue() == idx
 						&& lv.startPC().getValue() <= instruction.offset() - startPC
