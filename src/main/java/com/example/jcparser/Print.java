@@ -153,7 +153,7 @@ public class Print {
 
 	public void instruction(Instruction instruction, String operands, String label, String mnemonic, String strOperands) {
 		String strArgFormat = strOperands.isEmpty() ? "" : " %s";
-		System.out.printf(OFFSET_FORMAT + "%02X%-12s %5s %s" + strArgFormat + "\n", instruction.offset(),
+		System.out.printf(OFFSET_FORMAT + "%02X%-12s %8s %s" + strArgFormat + "\n", instruction.offset(),
 				instruction.opcode(), operands, label, mnemonic, strOperands);
 	}
 

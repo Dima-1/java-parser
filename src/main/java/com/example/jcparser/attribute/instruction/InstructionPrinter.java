@@ -28,18 +28,28 @@ public class InstructionPrinter {
 					: "";
 			String mnemonic = InstructionSet.getInstruction(instruction.opcode()).getMnemonic().toUpperCase();
 			InstructionSet.Type type = InstructionSet.getOperandsType(instruction.opcode());
-			String strOperands;
-			List<Parser.ConstantPoolEntry> cpeOperands;
-			Print.ConstantFormater constantFormater = print.getConstantFormater();
-			if (type == InstructionSet.Type.LOCAL_VAR_IDX) {
-				cpeOperands = getVariableOperand(instruction, attr);
-			} else {
-				cpeOperands = getCPOperands(instruction);
+			String strOperands = "";
+			switch (type) {
+				case LOCAL_VAR_IDX -> strOperands = cpToString(getVariableOperand(instruction, attr));
+				case CP_IDX, CP_IDX_BYTE -> strOperands = cpToString(getCPOperands(instruction));
+				case BRANCH_OFFSET -> strOperands = getBranchOffset(instruction);
 			}
-			strOperands = cpeOperands.stream().map(constantFormater::formatNewOnlyString).collect(Collectors.joining(" "));
 			String lineNumber = getLineNumber(instruction, attr);
 			print.instruction(instruction, operands, lineNumber, mnemonic, strOperands);
 		}
+	}
+
+	private String getBranchOffset(Instruction instruction) {
+		return ":" + String.format("%2X ", instruction.offset() + getIntFromBytes(instruction));
+	}
+
+	private static int getIntFromBytes(Instruction instruction) {
+		return instruction.operands()[0] << 8 | instruction.operands()[1];
+	}
+
+	private String cpToString(List<Parser.ConstantPoolEntry> cpeOperands) {
+		Print.ConstantFormater constantFormater = print.getConstantFormater();
+		return cpeOperands.stream().map(constantFormater::formatNewOnlyString).collect(Collectors.joining(" "));
 	}
 
 	private String getLineNumber(Instruction instruction, CodeAttribute attr) {
@@ -62,7 +72,7 @@ public class InstructionPrinter {
 		Print.ConstantFormater constantFormater = print.getConstantFormater();
 		List<Parser.ConstantPoolEntry> constantPool = constantFormater.getConstantPool();
 		if (type == InstructionSet.Type.CP_IDX) {
-			cpeOperands.add(constantPool.get(instruction.operands()[0] << 8 | instruction.operands()[1]));
+			cpeOperands.add(constantPool.get(getIntFromBytes(instruction)));
 		} else if (type == InstructionSet.Type.CP_IDX_BYTE) {
 			cpeOperands.add(constantPool.get(instruction.operands()[0]));
 		}
@@ -86,7 +96,7 @@ public class InstructionPrinter {
 	}
 
 	private LocalVariableAttribute.LocalVariable getLocalVariable(LocalVariableTableAttribute variableAttribute,
-	                                                                     Instruction instruction, int startPC) {
+	                                                              Instruction instruction, int startPC) {
 		String mnemonic = InstructionSet.getInstruction(instruction.opcode()).getMnemonic();
 		int idx = mnemonic.contains("_") ? Integer.parseInt(mnemonic.split("_")[1]) : instruction.operands()[0];
 		return Arrays.stream(variableAttribute.getLocalVariables())
