@@ -97,31 +97,31 @@ public class AttributePrinter {
 	}
 
 	void print(LineNumberTableAttribute.LineNumber lineNumber) {
-		print.u2WithIndex(lineNumber.index(), lineNumber.startPC(), "Start PC");
-		print.u2(lineNumber.lineNumber(), "Line number", true);
+		print.u2WithIndex(lineNumber.index(), lineNumber.startPC(), "Start pc " + lineNumber.startPC().getValue());
+		print.u2(lineNumber.lineNumber(), "Line number " + lineNumber.lineNumber().getValue());
 	}
 
 	void print(LocalVariableTableAttribute attr) {
 		print.u2(attr.getNumberOf(), "Attribute number of local variables", true);
 		print.incIndent();
-		for (LocalVariableTableAttribute.LocalVariable localVariable : attr.getLocalVariables()) {
-			localVariable.print(this);
+		for (LocalVariableTableAttribute.LocalVariable variable : attr.getLocalVariables()) {
+			variable.print(this);
 		}
 		print.decIndent();
 	}
 
-	void print(LocalVariableAttribute.LocalVariable localVariable) {
-		print.u2WithIndex(localVariable.index().getValue(), localVariable.startPC(), "Start PC");
-		print.u2(localVariable.length(), "Length", true);
-		print.u2(localVariable.nameIndex(), "Name index");
-		print.u2(localVariable.descriptorIndex(), localVariable.descriptorTitle() + " index");
-		print.u2(localVariable.index(), "Index", true);
+	void print(LocalVariableAttribute.LocalVariable variable) {
+		print.u2WithIndex(variable.index().getValue(), variable.startPC(), "Start pc " + variable.startPC().getValue());
+		print.u2(variable.length(), "Length", true);
+		print.u2(variable.nameIndex(), "Name index");
+		print.u2(variable.descriptorIndex(), variable.descriptorTitle() + " index");
+		print.u2(variable.index(), "Index", true);
 	}
 
 	void print(LocalVariableTypeTableAttribute attr) {
 		print.u2(attr.getNumberOf(), "Attribute number of local variable types", true);
-		for (LocalVariableAttribute.LocalVariable localVariable : attr.getLocalVariables()) {
-			localVariable.print(this);
+		for (LocalVariableAttribute.LocalVariable variable : attr.getLocalVariables()) {
+			variable.print(this);
 		}
 	}
 
@@ -134,15 +134,17 @@ public class AttributePrinter {
 	}
 
 	public void print(RuntimeAnnotationsAttribute.Annotation attr) {
-		print.u2(attr.typeIndex(), "Type of annotation", true);
-		print.u2(attr.lengthOfPair(), "Number of value pair", true);
+		print.u2(attr.typeIndex(), "Type of annotation");
+		print.u2(attr.lengthOfPair(), "Number of element value pairs", true);
+		print.incIndent();
 		for (ValuePair valuePair : attr.valuePairs()) {
 			valuePair.print(this);
 		}
+		print.decIndent();
 	}
 
 	public void print(ValuePair valuePair) {
-		print.u2(valuePair.elementNameIndex(), "Type of annotation", true);
+		print.u2(valuePair.elementNameIndex(), "Name of element index");
 		valuePair.elementValue().print(this);
 	}
 
@@ -158,7 +160,7 @@ public class AttributePrinter {
 			case CLASS_INFO_INDEX -> print.u2(elementValue.u2First(), "Class info index");
 			case ANNOTATION_VALUE -> elementValue.annotation().print(this);
 			case ARRAY_VALUE -> {
-				print.u2(elementValue.u2First(), "Number of values");
+				print.u2(elementValue.u2First(), "Number of values", true);
 				ElementValue[] elementValues = elementValue.elementValues();
 				for (int i = 0; i < elementValue.u2First().getValue(); i++) {
 					elementValues[i].print(this);

@@ -46,11 +46,19 @@ public class StackFramePrinter {
 	}
 
 	private void printTypeInfo(TypeInfo[] stack) {
+		print.incIndent();
 		for (TypeInfo typeInfo : stack) {
-			print.u1(typeInfo.tag(), "Type info tag", true);
+			int value = typeInfo.tag().getValue();
+			TypeInfo.Type tagType = TypeInfo.Type.getTagType(value);
+			print.u1(typeInfo.tag(), "Type info tag", true, tagType.name());
 			if (typeInfo.typeInfoAdditional() != null) {
-				print.u2(typeInfo.typeInfoAdditional(), "Offset", true);
+				if (tagType == TypeInfo.Type.ITEM_Object) {
+					print.u2(typeInfo.typeInfoAdditional(), "class");
+				} else if (tagType == TypeInfo.Type.ITEM_Uninitialized) {
+					print.u2(typeInfo.typeInfoAdditional(), "Offset", true);
+				}
 			}
 		}
+		print.decIndent();
 	}
 }

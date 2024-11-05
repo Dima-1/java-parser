@@ -52,7 +52,8 @@ public class Print {
 		String hexValue = String.format("%02X", u1.getValue());
 		String value;
 		String valueFormat = addDecimal ? " %s" : "%s";
-		value = String.format(addDecimal ? "(%02d)" : "", u1.getValue());
+		String parenthesesType = stringValue.isEmpty() ? "[%02d]" : "(%02d)";
+		value = String.format(addDecimal ? parenthesesType : "", u1.getValue());
 		if (!stringValue.isEmpty()) {
 			valueFormat += " " + YELLOW_STRING;
 		}
@@ -71,13 +72,14 @@ public class Print {
 	public void u2(Parser.U2 u2, String title, String titleColor, boolean addDecimal) {
 		String hexValue = String.format("%04X", u2.getValue());
 		StringBuilder splitHexValue = getSplitHexValue(hexValue);
-		String decimalValue = String.format(addDecimal ? " (%02d)" : "", u2.getValue());
+		String valueFormat = addDecimal ? " %s" : "%s";
+		String decimalValue = String.format(addDecimal ? "[%02d]" : "", u2.getValue());
 		String constantString = "";
 		if (u2.getCpe() != null) {
 			constantString = constantFormater.formatNewOnlyString(u2.getCpe());
 		}
 		String yellowString = constantString.isEmpty() ? "%s" : " %s";
-		System.out.printf(OFFSET_FORMAT + "%s " + titleColor + "%s" + ConsoleColors.RESET + "%s" + yellowString + "\n",
+		System.out.printf(OFFSET_FORMAT + "%s " + titleColor + "%s" + ConsoleColors.RESET + valueFormat + yellowString + "\n",
 				u2.getOffset(), splitHexValue, title.indent(getIndents()).stripTrailing(), decimalValue, constantString);
 	}
 

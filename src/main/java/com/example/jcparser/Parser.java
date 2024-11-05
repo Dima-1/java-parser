@@ -686,12 +686,15 @@ public class Parser {
 	}
 
 	private TypeInfo getVerificationTypeInfo(DataInputStream dis) throws IOException {
-		U1 typeInfo = readU1(dis);
+		U1 tag = readU1(dis);
 		U2 typeInfoAdditional = null;
-		if (typeInfo.getValue() == 7 || typeInfo.getValue() == 8) {
+		TypeInfo.Type tagType = TypeInfo.Type.getTagType(tag.getValue());
+		if (tagType == TypeInfo.Type.ITEM_Object) {
+			typeInfoAdditional = readU2(dis, true);
+		} else if (tagType == TypeInfo.Type.ITEM_Uninitialized) {
 			typeInfoAdditional = readU2(dis);
 		}
-		return new TypeInfo(typeInfo, typeInfoAdditional);
+		return new TypeInfo(tag, typeInfoAdditional);
 	}
 
 	public BootstrapMethodsAttribute.BootstrapMethod getBootstrapMethod(int index, DataInputStream dis) throws IOException {
@@ -790,7 +793,7 @@ public class Parser {
 			}
 			case ANNOTATION_VALUE -> annotation = getAnnotation(dis);
 			case ARRAY_VALUE -> {
-				u2First = readU2(dis, true);
+				u2First = readU2(dis);
 				elementValues = new ElementValue[u2First.getValue()];
 				for (int i = 0; i < u2First.getValue(); i++) {
 					elementValues[i] = readElementValue(dis);
