@@ -598,7 +598,7 @@ public class Parser {
 			operands.add(additionalOpcode);
 		}
 		if (opcode == InstructionSet.TABLESWITCH.getOpcode()) {
-			size = getFirstBytePadding(startCodeCount);
+			size = Instruction.getFirstBytePadding(offset, startCodeCount);
 			readNBytes(dis, operands, size);
 			size += 3 * U4.BYTES;
 			U4 defaultValue = readU4(dis);
@@ -610,7 +610,7 @@ public class Parser {
 			size += (high.getValue() - low.getValue() + 1) * U4.BYTES;
 		}
 		if (opcode == InstructionSet.LOOKUPSWITCH.getOpcode()) {
-			size = getFirstBytePadding(startCodeCount);
+			size = Instruction.getFirstBytePadding(offset, startCodeCount);
 			readNBytes(dis, operands, size);
 			size += 2 * U4.BYTES;
 			U4 defaultValue = readU4(dis);
@@ -624,9 +624,6 @@ public class Parser {
 		return new Instruction(offset, opcode, operandsArray);
 	}
 
-	private int getFirstBytePadding(int startCodeCount) {
-		return 3 - (count - startCodeCount - 1) % 4;
-	}
 
 	private int readByte(DataInputStream dis) throws IOException {
 		int value = dis.readUnsignedByte();

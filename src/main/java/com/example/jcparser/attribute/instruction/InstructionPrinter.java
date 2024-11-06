@@ -20,12 +20,10 @@ public class InstructionPrinter {
 	}
 
 	public void instruction(CodeAttribute attr) {
+		List<InstructionUI> additionalInstructions = new ArrayList<>();
 		List<Instruction> instructions = attr.getInstructions();
 		for (Instruction instruction : instructions) {
-			String operands = instruction.operands().length > 0
-					? " " + Arrays.stream(instruction.operands()).mapToObj(num -> String.format("%02X ", num))
-					.collect(Collectors.joining()).trim()
-					: "";
+
 			String mnemonic = InstructionSet.getInstruction(instruction.opcode()).getMnemonic().toUpperCase();
 			InstructionSet.Type type = InstructionSet.getOperandsType(instruction.opcode());
 			String strOperands = "";
@@ -33,18 +31,61 @@ public class InstructionPrinter {
 				case LOCAL_VAR_IDX -> strOperands = cpToString(getVariableOperand(instruction, attr));
 				case CP_IDX, CP_IDX_BYTE -> strOperands = cpToString(getCPOperands(instruction));
 				case BRANCH_OFFSET -> strOperands = getBranchOffset(instruction);
+				case LOOKUPSWITCH -> processSwitch(attr, instruction, additionalInstructions);
 			}
 			String lineNumber = getLineNumber(instruction, attr);
-			print.instruction(instruction, operands, lineNumber, mnemonic, strOperands);
+			print.instruction(instruction, lineNumber, mnemonic, strOperands);
+			for (InstructionUI addInstruction : additionalInstructions) {
+				print.instruction(addInstruction.instruction, "", addInstruction.description, "");
+			}
+			additionalInstructions.clear();
+		}
+	}
+
+	private static void processSwitch(CodeAttribute attr, Instruction instruction, List<InstructionUI> additionalInstructions) {
+		int startPC = attr.getCodeLength().getOffset() + Parser.U4.BYTES;
+		int instructionOffset = instruction.offset();
+		int padding = Instruction.getFirstBytePadding(instructionOffset, startPC);
+		int[] tOperands = new int[0];
+		if (padding != 0) {
+			if (padding > 1) {
+				tOperands = new int[padding - 1];
+			}
+			instructionOffset += Parser.U1.BYTES;
+			additionalInstructions.add(new InstructionUI(new Instruction(instructionOffset, 0, tOperands), "//padding"));
+		}
+		int[] operands = instruction.operands();
+		tOperands = Arrays.copyOfRange(operands, padding + 1, padding + 4);
+		int defaultGoto = getIntFromBytes(Arrays.copyOfRange(operands, padding, padding + 4)) + instruction.offset();
+		String label = String.format("%2X ", defaultGoto);
+		additionalInstructions.add(new InstructionUI(new Instruction(instructionOffset + padding, operands[padding], tOperands),
+				"//default GOTO :" + label));
+		padding += 4;
+		tOperands = Arrays.copyOfRange(operands, padding + 1, padding + 4);
+		label = String.valueOf(getIntFromBytes(Arrays.copyOfRange(operands, padding, padding + 4)));
+		additionalInstructions.add(new InstructionUI(new Instruction(instructionOffset + padding, operands[padding], tOperands),
+				"//number of :" + label));
+		padding += 4;
+		for (int i = padding; i < operands.length; i += Parser.U4.BYTES * 2) {
+			int match = getIntFromBytes(Arrays.copyOfRange(operands, i, i + 4));
+			int gotoOffset = getIntFromBytes(Arrays.copyOfRange(operands, i + 4, i + 8)) + instruction.offset();
+			label = String.format("%2X ", gotoOffset);
+			tOperands = Arrays.copyOfRange(operands, i + 1, i + 8);
+			additionalInstructions.add(new InstructionUI(new Instruction(instructionOffset + i, operands[i], tOperands),
+					"//" + match + ":label GOTO :" + label));
 		}
 	}
 
 	private String getBranchOffset(Instruction instruction) {
-		return ":" + String.format("%2X ", instruction.offset() + getIntFromBytes(instruction));
+		return ":" + String.format("%2X ", instruction.offset() + getSortFromBytes(instruction));
 	}
 
-	private static int getIntFromBytes(Instruction instruction) {
+	private static int getSortFromBytes(Instruction instruction) {
 		return instruction.operands()[0] << 8 | instruction.operands()[1];
+	}
+
+	private static int getIntFromBytes(int[] bytes) {
+		return bytes[0] << 24 | bytes[1] << 16 | bytes[2] << 8 | bytes[3];
 	}
 
 	private String cpToString(List<Parser.ConstantPoolEntry> cpeOperands) {
@@ -72,7 +113,7 @@ public class InstructionPrinter {
 		Print.ConstantFormater constantFormater = print.getConstantFormater();
 		List<Parser.ConstantPoolEntry> constantPool = constantFormater.getConstantPool();
 		if (type == InstructionSet.Type.CP_IDX) {
-			cpeOperands.add(constantPool.get(getIntFromBytes(instruction)));
+			cpeOperands.add(constantPool.get(getSortFromBytes(instruction)));
 		} else if (type == InstructionSet.Type.CP_IDX_BYTE) {
 			cpeOperands.add(constantPool.get(instruction.operands()[0]));
 		}
@@ -104,5 +145,9 @@ public class InstructionPrinter {
 						&& lv.startPC().getValue() <= instruction.offset() - startPC
 						&& lv.startPC().getValue() + lv.length().getValue() > instruction.offset() - startPC)
 				.findFirst().orElse(null);
+	}
+
+	record InstructionUI(Instruction instruction, String description) {
+
 	}
 }

@@ -119,14 +119,14 @@ class ParserTest {
 			String[] splitLine = lines[i].split(" ");
 			int offset = Integer.parseInt(splitLine[0], 16);
 			int nextOffset = Integer.parseInt(lines[i + 1].split(" ")[0], 16);
-			int bytesCount = getBytes(splitLine).length;
-
-			if (nextOffset - offset != bytesCount) {
+			int length = getBytes(splitLine).length;
+			int actualAmount = nextOffset - offset;
+			if (actualAmount != length) {
 				errorCount++;
-				String errorMsg = String.format("%s Incorrect number of bytes (expected %d) : %s\n",
+				String errorMsg = String.format("%s Incorrect number of bytes (expected %d actual %d) : %s\n",
 						testInfo.getDisplayName(),
-						bytesCount, Arrays.toString(splitLine) + "(Previous " + lines[i - 1] + ")");
-//				assertFalse(nextOffset - offset != bytesCount, errorMsg);
+						actualAmount, length, Arrays.toString(splitLine) + "(Previous " + lines[i - 1] + ")");
+//				assertFalse(nextOffset - offset != length, errorMsg);
 				System.out.printf("%s", errorMsg);
 			}
 		}

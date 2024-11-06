@@ -5,9 +5,12 @@ import com.example.jcparser.attribute.Attribute;
 import com.example.jcparser.attribute.AttributePrinter;
 import com.example.jcparser.attribute.instruction.Instruction;
 import com.example.jcparser.attribute.instruction.InstructionPrinter;
+import com.example.jcparser.attribute.instruction.InstructionSet;
 import com.example.jcparser.attribute.stackmapframe.StackFramePrinter;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.example.jcparser.AccessFlag.getAccessFlags;
 
@@ -153,10 +156,16 @@ public class Print {
 		indent--;
 	}
 
-	public void instruction(Instruction instruction, String operands, String label, String mnemonic, String strOperands) {
+	public void instruction(Instruction instruction, String label, String mnemonic, String strOperands) {
+		InstructionSet.Type type = InstructionSet.getOperandsType(instruction.opcode());
+		String hexOperands = instruction.operands().length > 0 && type != InstructionSet.Type.LOOKUPSWITCH
+				? " " + Arrays.stream(instruction.operands()).mapToObj(num -> String.format("%02X", num))
+				.collect(Collectors.joining(" "))
+				: "";
 		String strArgFormat = strOperands.isEmpty() ? "" : " %s";
-		System.out.printf(OFFSET_FORMAT + "%02X%-12s %8s %s" + strArgFormat + "\n", instruction.offset(),
-				instruction.opcode(), operands, label, mnemonic, strOperands);
+		String labelFormat = hexOperands.length() < 15 ? " %8s" : "%s";
+		System.out.printf(OFFSET_FORMAT + "%02X%-12s" + labelFormat + " %s" + strArgFormat + "\n",
+				instruction.offset(), instruction.opcode(), hexOperands, label, mnemonic, strOperands);
 	}
 
 	public void incIndent() {

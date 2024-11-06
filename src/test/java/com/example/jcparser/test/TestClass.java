@@ -65,8 +65,9 @@ public class TestClass {
 			throw new InvalidParameterException(test);
 		}
 		return switch (i) {
-			case 1 -> "Test " + test;
+			case 64 -> test;
 			case 2 -> "Two " + test;
+			case 1 -> "Test " + test;
 			case 33 -> "Thirty three " + test;
 			default -> throw new IllegalStateException("Unexpected value: " + i);
 		};
