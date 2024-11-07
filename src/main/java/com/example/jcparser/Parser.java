@@ -75,7 +75,7 @@ public class Parser {
 
 		try (FileInputStream fis = new FileInputStream(file);
 		     DataInputStream dis = new DataInputStream(fis)) {
-			print.setLength(file.length());
+			print.setOffsetWidth(file.length());
 			count = Magic.BYTES;
 			Magic.getMagic(dis);
 			print.u2(readU2(dis), "Minor version", ConsoleColors.BLUE, true);

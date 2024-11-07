@@ -43,8 +43,12 @@ public class Print {
 		return constantFormater;
 	}
 
-	public void setLength(long length) {
+	public void setOffsetWidth(long length) {
 		OFFSET_FORMAT = "%0" + Long.toHexString(length).length() + "X ";
+	}
+
+	public String getOffsetFormat() {
+		return OFFSET_FORMAT;
 	}
 
 	public void u1(Parser.U1 u1, String title, boolean addDecimal) {
@@ -158,7 +162,8 @@ public class Print {
 
 	public void instruction(Instruction instruction, String label, String mnemonic, String strOperands) {
 		InstructionSet.Type type = InstructionSet.getOperandsType(instruction.opcode());
-		String hexOperands = instruction.operands().length > 0 && type != InstructionSet.Type.LOOKUPSWITCH
+		String hexOperands = instruction.operands().length > 0
+				&& type != InstructionSet.Type.LOOKUPSWITCH && type != InstructionSet.Type.TABLESWITCH
 				? " " + Arrays.stream(instruction.operands()).mapToObj(num -> String.format("%02X", num))
 				.collect(Collectors.joining(" "))
 				: "";

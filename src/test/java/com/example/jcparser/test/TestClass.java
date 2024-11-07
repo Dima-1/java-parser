@@ -64,11 +64,18 @@ public class TestClass {
 		if (i == 0) {
 			throw new InvalidParameterException(test);
 		}
-		return switch (i) {
+		String res = switch (i) { // TABLESWITCH
+			case 0xFF0 -> test;
+			case 0xFF2 -> "Two " + test;
+			case 0xFF1 -> "One " + test;
+			case 0xFF9 -> "Nine " + test; // FFA - LOOKUPSWITCH
+			default -> "Default " + i;
+		};
+		return switch (i) { // LOOKUPSWITCH
 			case 64 -> test;
 			case 2 -> "Two " + test;
-			case 1 -> "Test " + test;
-			case 33 -> "Thirty three " + test;
+			case 1 -> "One " + test;
+			case 32 -> "Thirty two " + test;
 			default -> throw new IllegalStateException("Unexpected value: " + i);
 		};
 	}
