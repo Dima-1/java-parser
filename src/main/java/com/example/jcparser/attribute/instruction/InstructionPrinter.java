@@ -1,6 +1,5 @@
 package com.example.jcparser.attribute.instruction;
 
-import com.example.jcparser.ConsoleColors;
 import com.example.jcparser.Parser;
 import com.example.jcparser.Parser.U1;
 import com.example.jcparser.Parser.U4;
@@ -14,6 +13,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static com.example.jcparser.ConsoleColors.*;
 
 public class InstructionPrinter {
 	private final Print print;
@@ -167,7 +168,7 @@ public class InstructionPrinter {
 
 	record InstructionUI(Instruction instruction, String description) {
 		InstructionUI {
-			description = ConsoleColors.CYAN + description + ConsoleColors.RESET;
+			description = addColor(CYAN, description);
 		}
 	}
 }

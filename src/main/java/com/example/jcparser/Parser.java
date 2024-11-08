@@ -13,11 +13,14 @@ import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import static com.example.jcparser.AccessFlag.Type.*;
+import static com.example.jcparser.ConsoleColors.*;
+import static com.example.jcparser.ConsoleColors.addColor;
 
 /**
  * <a href="https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-4.html#jvms-4.1">4.1. The ClassFile Structure</a>
@@ -76,12 +79,13 @@ public class Parser {
 		try (FileInputStream fis = new FileInputStream(file);
 		     DataInputStream dis = new DataInputStream(fis)) {
 			print.setOffsetWidth(file.length());
+			Magic.checkMagic(dis);
+			print.u4(new U4(0, ByteBuffer.wrap(Magic.bytes).getInt()), addColor(BLUE, "Magic"));
 			count = Magic.BYTES;
-			Magic.getMagic(dis);
-			print.u2(readU2(dis), "Minor version", ConsoleColors.BLUE, true);
-			print.u2(readU2(dis), "Major version", ConsoleColors.BLUE, true);
+			print.u2(readU2(dis), "Minor version", BLUE, true);
+			print.u2(readU2(dis), "Major version", BLUE, true);
 			U2 u2 = readU2(dis);
-			print.u2(u2, "Constant pool count", ConsoleColors.BLUE, true);
+			print.u2(u2, "Constant pool count", BLUE, true);
 			readConstantPool(dis, u2.value);
 			print.constantPool(constantPool);
 			U2 accessFlags = readU2(dis);
@@ -92,7 +96,7 @@ public class Parser {
 			readFields(dis);
 			readMethods(dis);
 			U2 attributesCount = readU2(dis);
-			print.u2(attributesCount, "Attributes count", ConsoleColors.BLUE, true);
+			print.u2(attributesCount, "Attributes count", BLUE, true);
 			if (attributesCount.value > 0) {
 				attributes.addAll(readAttributes(dis, attributesCount.value, null));
 				print.attributes(attributes);
@@ -104,7 +108,7 @@ public class Parser {
 
 	private void readInterfaces(DataInputStream dis) throws IOException {
 		U2 u2 = readU2(dis);
-		print.u2(u2, "Interfaces count", ConsoleColors.BLUE, true);
+		print.u2(u2, "Interfaces count", BLUE, true);
 		int interfacesCount = u2.value;
 		for (int i = 0; i < interfacesCount; i++) {
 			print.u2(readU2(dis, true), "");
@@ -128,7 +132,7 @@ public class Parser {
 	private void readAdditionData(DataInputStream dis, AccessFlag.Type type) throws IOException {
 		String title = (type == FIELD ? "Fields" : "Methods") + " count";
 		U2 u2 = readU2(dis);
-		print.u2(u2, title, ConsoleColors.BLUE, true);
+		print.u2(u2, title, BLUE, true);
 		int length = u2.value;
 		for (int i = 0; i < length; i++) {
 			U2 accessFlags = readU2(dis);
@@ -279,6 +283,11 @@ public class Parser {
 		};
 	}
 
+	/**
+	 * The implementation of the attributes follows the order shown in table 4.7-A
+	 * <a href="https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-4.html#jvms-4.7-300">
+	 * Table 4.7-A. Predefined class file attributes (by section)</a>
+	 */
 	private Attribute readAttribute(DataInputStream dis, U2 additional) throws IOException {
 		U2 attributeNameIndex = readU2(dis, true);
 		String name = ((ConstantPoolUtf8) constantPool.get(attributeNameIndex.getValue())).getUtf8();
@@ -394,6 +403,7 @@ public class Parser {
 					getParameterAnnotations(dis, attributeNameIndex, attributeLength, true);
 			case "RuntimeInvisibleParameterAnnotations" ->
 					getParameterAnnotations(dis, attributeNameIndex, attributeLength, false);
+
 			case "AnnotationDefault" -> {
 				ElementValue elementValue = readElementValue(dis);
 				yield new AnnotationDefaultAttribute(attributeNameIndex, attributeLength, elementValue);
@@ -808,11 +818,11 @@ public class Parser {
 		return new ExceptionsAttribute.Exception(startPc, endPc, handlerPc, catchType);
 	}
 
-	private static final class Magic {
+	public static final class Magic {
 		static final byte[] bytes = {(byte) 0xCA, (byte) 0xFE, (byte) 0xBA, (byte) 0xBE};
 		static final int BYTES = bytes.length;
 
-		private static void getMagic(DataInputStream dis) throws IOException {
+		private static void checkMagic(DataInputStream dis) throws IOException {
 			byte[] magic = dis.readNBytes(Magic.BYTES);
 			if (!Arrays.equals(magic, Magic.bytes)) {
 				StringBuilder sb = new StringBuilder();

@@ -86,8 +86,9 @@ public class Print {
 			constantString = constantFormater.formatNewOnlyString(u2.getCpe());
 		}
 		String yellowString = constantString.isEmpty() ? "%s" : " %s";
-		System.out.printf(OFFSET_FORMAT + "%s " + titleColor + "%s" + ConsoleColors.RESET + valueFormat + yellowString + "\n",
-				u2.getOffset(), splitHexValue, title.indent(getIndents()).stripTrailing(), decimalValue, constantString);
+		String coloredTitle = ConsoleColors.addColor(titleColor, title);
+		System.out.printf(OFFSET_FORMAT + "%s " + "%s" + valueFormat + yellowString + "\n",
+				u2.getOffset(), splitHexValue, coloredTitle.indent(getIndents()).stripTrailing(), decimalValue, constantString);
 	}
 
 	public void u2WithIndex(int index, Parser.U2 u2, String title) {

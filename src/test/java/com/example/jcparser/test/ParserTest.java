@@ -29,7 +29,7 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ParserTest {
-	public static final int CONSTANT_COUNT_LINE = 2;
+	public static final int CONSTANT_COUNT_LINE = 3;
 	public static final String COMMENT_PREFIX = "#";
 	private final ByteArrayOutputStream outStream = new ByteArrayOutputStream();
 	private final ByteArrayOutputStream errStream = new ByteArrayOutputStream();
@@ -111,7 +111,7 @@ class ParserTest {
 	void check_every_byte_present(String path, String[] lines) {
 		System.setOut(originalOut);
 		System.setErr(originalErr);
-		assertFalse(lines.length < CONSTANT_COUNT_LINE, "Wrong file size < 2 lines");
+		assertFalse(lines.length < CONSTANT_COUNT_LINE, "Wrong file size < " + CONSTANT_COUNT_LINE + " lines");
 		String[] bytes = getBytes(lines[CONSTANT_COUNT_LINE].split(" "));
 		int constantCount = Integer.parseInt(bytes[0] + bytes[1], 16);
 		int errorCount = 0;
