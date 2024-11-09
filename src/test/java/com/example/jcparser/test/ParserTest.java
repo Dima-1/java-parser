@@ -5,6 +5,9 @@ import com.example.jcparser.Parser;
 import com.example.jcparser.Print;
 import com.example.jcparser.attribute.instruction.InstructionSet;
 import com.example.jcparser.attribute.stackmapframe.FrameType;
+import com.example.jcparser.constantpool.ConstantPoolEntry;
+import com.example.jcparser.constantpool.ConstantPoolString;
+import com.example.jcparser.constantpool.ConstantPoolUtf8;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -21,8 +24,8 @@ import java.util.stream.Stream;
 
 import static com.example.jcparser.ConsoleColors.RED;
 import static com.example.jcparser.ConsoleColors.RESET;
-import static com.example.jcparser.Parser.ConstantTag.CONSTANT_String;
-import static com.example.jcparser.Parser.ConstantTag.CONSTANT_Utf8;
+import static com.example.jcparser.constantpool.ConstantTag.CONSTANT_String;
+import static com.example.jcparser.constantpool.ConstantTag.CONSTANT_Utf8;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Named.named;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
@@ -153,10 +156,10 @@ class ParserTest {
 		void check_options() {
 			System.setOut(new PrintStream(outStream));
 			System.setErr(new PrintStream(errStream));
-			List<Parser.ConstantPoolEntry> constantPool = new ArrayList<>();
+			List<ConstantPoolEntry> constantPool = new ArrayList<>();
 			constantPool.add(null);
-			constantPool.add(new Parser.ConstantPoolUtf8(0x0A, 1, CONSTANT_Utf8, "TestUtf8"));
-			constantPool.add(new Parser.ConstantPoolString(0x12, 2, CONSTANT_String, 1));
+			constantPool.add(new ConstantPoolUtf8(0x0A, 1, CONSTANT_Utf8, "TestUtf8"));
+			constantPool.add(new ConstantPoolString(0x12, 2, CONSTANT_String, 1));
 			Options options = new Options();
 			options.setConstants(false);
 			Print print = new Print(options);

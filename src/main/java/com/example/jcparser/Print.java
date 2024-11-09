@@ -7,6 +7,7 @@ import com.example.jcparser.attribute.instruction.Instruction;
 import com.example.jcparser.attribute.instruction.InstructionPrinter;
 import com.example.jcparser.attribute.instruction.InstructionSet;
 import com.example.jcparser.attribute.stackmapframe.StackFramePrinter;
+import com.example.jcparser.constantpool.*;
 
 import java.util.Arrays;
 import java.util.List;
@@ -23,12 +24,16 @@ public class Print {
 	private final InstructionPrinter instructionPrinter = new InstructionPrinter(this);
 	private final StackFramePrinter stackFramePrinter = new StackFramePrinter(this);
 	private final AttributePrinter attributePrinter = new AttributePrinter(this);
-	private final ConstantFormater constantFormater = new ConstantFormater();
+	private final ConstantFormater constantFormater = new ConstantFormater(this);
 	private String OFFSET_FORMAT = "%04X ";
 	private int indent;
 
 	public Print(Options options) {
 		this.options = options;
+	}
+
+	public Options getOptions() {
+		return options;
 	}
 
 	public InstructionPrinter getInstructionPrinter() {
@@ -142,8 +147,8 @@ public class Print {
 	}
 
 	void constantPoolEntry(ConstantFormater constantFormater) {
-		System.out.println(constantFormater.formatedString);
-		constantFormater.printGeneral = true;
+		System.out.println(constantFormater.getFormatedString());
+		constantFormater.setPrintGeneral(true);
 	}
 
 	public void accessFlags(Parser.U2 u2, AccessFlag.Type type) {
@@ -190,88 +195,4 @@ public class Print {
 		void print(T printer);
 	}
 
-	public interface Formatter<T> {
-		void format(T printer);
-	}
-
-	public class ConstantFormater {
-		private String formatedString;
-		private boolean printGeneral = true;
-		private List<ConstantPoolEntry> constants;
-
-		public void setConstantPool(List<ConstantPoolEntry> constants) {
-			this.constants = constants;
-		}
-
-		public List<ConstantPoolEntry> getConstantPool() {
-			return constants;
-		}
-
-		public void format(ConstantPoolEntry cpe) {
-			if (printGeneral) {
-				String cpName = cpe.getConstantTag().name().replaceFirst("^CONSTANT_", "");
-				formatedString = String.format(OFFSET_FORMAT + " %4X %19s", cpe.getOffset(), cpe.getIdx(), cpName);
-				printGeneral = false;
-			}
-		}
-
-		public void format(ConstantPoolUtf8 cpe) {
-			formatedString += " " + String.format(YELLOW_STRING, cpe.getUtf8());
-		}
-
-		void format(ConstantPoolInteger cpe) {
-			formatedString += " " + cpe.getValue();
-		}
-
-		void format(ConstantPoolFloat cpe) {
-			formatedString += " " + cpe.getValue();
-		}
-
-		void format(ConstantPoolLong cpe) {
-			formatedString += " " + cpe.getValue();
-		}
-
-		void format(ConstantPoolDouble cpe) {
-			formatedString += " " + cpe.getValue();
-		}
-
-		void format(ConstantPoolString cpe) {
-			format(cpe.getStringIndex(), constants);
-		}
-
-		private void format(int idx, List<ConstantPoolEntry> cpe) {
-			if (options.needRefs()) {
-				formatedString += String.format(HEX_2, idx);
-			}
-			cpe.get(idx).format(this);
-		}
-
-		void format(ConstantPoolMethodRef cpe) {
-			format(cpe.getClassIndex(), constants);
-			format(cpe.getNameAndTypeIndex(), constants);
-		}
-
-		void format(ConstantPoolNameAndType cpe) {
-			format(cpe.getNameIndex(), constants);
-			format(cpe.getDescriptorIndex(), constants);
-		}
-
-		void format(ConstantPoolDynamic cpe) {
-			formatedString += String.format(HEX_2, cpe.getBootstrapMethodAttrIndex());
-			format(cpe.getNameAndTypeIndex(), constants);
-		}
-
-		void format(ConstantPoolMethodHandle cpe) {
-			formatedString += " " + ConstantPoolMethodHandle.MHRef.values()[cpe.getReferenceKind()].name()
-					.replaceFirst("REF_", "");
-			format(cpe.getReferenceIndex(), constants);
-		}
-
-		public String formatNewOnlyString(ConstantPoolEntry cpe) {
-			printGeneral = false;
-			formatedString = "";
-			cpe.format(this);
-			return formatedString.stripLeading();
-		}
-	}
 }

@@ -1,13 +1,12 @@
 package com.example.jcparser;
 
-import com.example.jcparser.Print.ConstantFormater;
 import com.example.jcparser.attribute.*;
 import com.example.jcparser.attribute.annotation.*;
 import com.example.jcparser.attribute.instruction.CodeAttribute;
 import com.example.jcparser.attribute.instruction.InstructionSet;
 import com.example.jcparser.attribute.instruction.Instruction;
 import com.example.jcparser.attribute.stackmapframe.*;
-import org.apache.commons.text.StringEscapeUtils;
+import com.example.jcparser.constantpool.*;
 
 import java.io.DataInputStream;
 import java.io.File;
@@ -159,46 +158,6 @@ public class Parser {
 		return attributes;
 	}
 
-	public enum ConstantTag {
-
-		CONSTANT_Utf8(1),                //1  45.3	1.0.2
-		CONSTANT_Integer(3),             //3  45.3	1.0.2
-		CONSTANT_Float(4),               //4  45.3	1.0.2
-		CONSTANT_Long(5),                //5  45.3	1.0.2
-		CONSTANT_Double(6),              //6  45.3	1.0.2
-		CONSTANT_Class(7),               //7  45.3	1.0.2
-		CONSTANT_String(8),              //8  45.3	1.0.2
-		CONSTANT_Fieldref(9),            //9  45.3	1.0.2
-		CONSTANT_Methodref(10),          //10 45.3	1.0.2
-		CONSTANT_InterfaceMethodref(11), //11 45.3	1.0.2
-		CONSTANT_NameAndType(12),        //12 45.3	1.0.2
-		CONSTANT_MethodHandle(15),       //15 51.0	7
-		CONSTANT_MethodType(16),         //16 51.0	7
-		CONSTANT_Dynamic(17),            //17 55.0	11
-		CONSTANT_InvokeDynamic(18),      //18 51.0	7
-		CONSTANT_Module(19),             //19 53.0	9
-		CONSTANT_Package(20);            //20 53.0	9
-
-		private final int tag;
-
-		ConstantTag(int tag) {
-			this.tag = tag;
-		}
-
-		public boolean isConstantClass() {
-			return this == CONSTANT_Class;
-		}
-
-		public boolean isTwoEntriesTakeUp() {
-			return this == CONSTANT_Double | this == CONSTANT_Long;
-		}
-
-		public static ConstantTag getConstant(int tag) {
-			return Arrays.stream(values()).filter(v -> v.tag == tag).findFirst().orElseThrow(() ->
-					new IllegalArgumentException("Unknown constant tag: " + tag));
-		}
-	}
-
 	/**
 	 * <a href="https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-4.html#jvms-4.4">4.4. The Constant Pool</a>
 	 */
@@ -207,7 +166,7 @@ public class Parser {
 		for (int i = 1; i < constantPoolCount; i++) {
 			ConstantPoolEntry entry = createEntry(i, dis);
 			constantPool.add(entry);
-			if (entry.constantTag.isTwoEntriesTakeUp()) {
+			if (entry.getConstantTag().isTwoEntriesTakeUp()) {
 				constantPool.add(null);
 				i++;
 			}
@@ -403,7 +362,9 @@ public class Parser {
 					getParameterAnnotations(dis, attributeNameIndex, attributeLength, true);
 			case "RuntimeInvisibleParameterAnnotations" ->
 					getParameterAnnotations(dis, attributeNameIndex, attributeLength, false);
-
+			case "RuntimeVisibleTypeAnnotations" -> null; //todo
+			case "RuntimeInvisibleTypeAnnotations" -> null; //todo
+			
 			case "AnnotationDefault" -> {
 				ElementValue elementValue = readElementValue(dis);
 				yield new AnnotationDefaultAttribute(attributeNameIndex, attributeLength, elementValue);
@@ -496,35 +457,6 @@ public class Parser {
 				yield new Attribute(attributeNameIndex, attributeLength);
 			}
 		};
-	}
-
-	private Attribute getParameterAnnotations(DataInputStream dis, U2 attributeNameIndex,
-	                                          U4 attributeLength, boolean visible) throws IOException {
-		U1 numberOf = readU1(dis);
-		ParameterAnnotation[] parameterAnnotations
-				= new ParameterAnnotation[numberOf.getValue()];
-		for (int i = 0; i < numberOf.getValue(); i++) {
-			parameterAnnotations[i] = getParameterAnnotation(dis, visible);
-		}
-		return new RuntimeParameterAnnotationsAttribute(attributeNameIndex, attributeLength, numberOf,
-				parameterAnnotations, visible);
-	}
-
-	private RuntimeAnnotationsAttribute getRuntimeAnnotationsAttribute(DataInputStream dis, U2 attributeNameIndex,
-	                                                                   U4 attributeLength, boolean visible) throws IOException {
-		ParameterAnnotation result = getParameterAnnotation(dis, visible);
-		return new RuntimeAnnotationsAttribute(attributeNameIndex, attributeLength, result.numberOf(),
-				result.annotations(), visible);
-	}
-
-	private ParameterAnnotation getParameterAnnotation(DataInputStream dis, boolean visible) throws IOException {
-		U2 numberOf = readU2(dis);
-		RuntimeAnnotationsAttribute.Annotation[] annotations
-				= new RuntimeAnnotationsAttribute.Annotation[numberOf.getValue()];
-		for (int i = 0; i < numberOf.getValue(); i++) {
-			annotations[i] = getAnnotation(dis);
-		}
-		return new ParameterAnnotation(numberOf, annotations, visible);
 	}
 
 	private Class<? extends ConstantPoolEntry> getClass(U2 additional) {
@@ -704,6 +636,35 @@ public class Parser {
 		return new TypeInfo(tag, typeInfoAdditional);
 	}
 
+	private RuntimeAnnotationsAttribute getRuntimeAnnotationsAttribute(DataInputStream dis, U2 attributeNameIndex,
+	                                                                   U4 attributeLength, boolean visible) throws IOException {
+		ParameterAnnotation result = getParameterAnnotation(dis, visible);
+		return new RuntimeAnnotationsAttribute(attributeNameIndex, attributeLength, result.numberOf(),
+				result.annotations(), visible);
+	}
+
+	private Attribute getParameterAnnotations(DataInputStream dis, U2 attributeNameIndex,
+	                                          U4 attributeLength, boolean visible) throws IOException {
+		U1 numberOf = readU1(dis);
+		ParameterAnnotation[] parameterAnnotations
+				= new ParameterAnnotation[numberOf.getValue()];
+		for (int i = 0; i < numberOf.getValue(); i++) {
+			parameterAnnotations[i] = getParameterAnnotation(dis, visible);
+		}
+		return new RuntimeParameterAnnotationsAttribute(attributeNameIndex, attributeLength, numberOf,
+				parameterAnnotations, visible);
+	}
+
+	private ParameterAnnotation getParameterAnnotation(DataInputStream dis, boolean visible) throws IOException {
+		U2 numberOf = readU2(dis);
+		RuntimeAnnotationsAttribute.Annotation[] annotations
+				= new RuntimeAnnotationsAttribute.Annotation[numberOf.getValue()];
+		for (int i = 0; i < numberOf.getValue(); i++) {
+			annotations[i] = getAnnotation(dis);
+		}
+		return new ParameterAnnotation(numberOf, annotations, visible);
+	}
+
 	public BootstrapMethodsAttribute.BootstrapMethod getBootstrapMethod(int index, DataInputStream dis) throws IOException {
 		U2 bootstrapMethodRef = readU2(dis, true);
 		U2Array bootstrapArguments = readU2Array(dis);
@@ -831,267 +792,6 @@ public class Parser {
 				}
 				throw new RuntimeException("Wrong magic tag : " + sb);
 			}
-		}
-	}
-
-	public static class ConstantPoolEntry implements Print.Formatter<Print.ConstantFormater> {
-		private final int offset;
-		private final int idx;
-		private final ConstantTag constantTag;
-
-		public ConstantPoolEntry(int offset, int idx, ConstantTag constantTag) {
-			this.offset = offset;
-			this.idx = idx;
-			this.constantTag = constantTag;
-		}
-
-		public int getOffset() {
-			return offset;
-		}
-
-		public int getIdx() {
-			return idx;
-		}
-
-		public ConstantTag getConstantTag() {
-			return constantTag;
-		}
-
-		@Override
-		public void format(ConstantFormater formater) {
-			formater.format(this);
-		}
-	}
-
-	public static final class ConstantPoolUtf8 extends ConstantPoolEntry {
-		private final String utf8;
-
-		public ConstantPoolUtf8(int offset, int idx, ConstantTag constantTag, String utf8) {
-			super(offset, idx, constantTag);
-			this.utf8 = StringEscapeUtils.escapeJava(utf8);
-		}
-
-		public String getUtf8() {
-			return utf8;
-		}
-
-		@Override
-		public void format(ConstantFormater formater) {
-			super.format(formater);
-			formater.format(this);
-		}
-	}
-
-	public static class ConstantPoolInteger extends ConstantPoolEntry {
-		private final int value;
-
-		public ConstantPoolInteger(int offset, int idx, ConstantTag constantTag, int value) {
-			super(offset, idx, constantTag);
-			this.value = value;
-		}
-
-		public int getValue() {
-			return value;
-		}
-
-		@Override
-		public void format(ConstantFormater formater) {
-			super.format(formater);
-			formater.format(this);
-		}
-	}
-
-	public static class ConstantPoolFloat extends ConstantPoolEntry {
-		private final float value;
-
-		public ConstantPoolFloat(int offset, int idx, ConstantTag constantTag, float value) {
-			super(offset, idx, constantTag);
-			this.value = value;
-		}
-
-		public float getValue() {
-			return value;
-		}
-
-		@Override
-		public void format(ConstantFormater formater) {
-			super.format(formater);
-			formater.format(this);
-		}
-	}
-
-	public static class ConstantPoolLong extends ConstantPoolEntry {
-		private final long value;
-
-		public ConstantPoolLong(int offset, int idx, ConstantTag constantTag, long value) {
-			super(offset, idx, constantTag);
-			this.value = value;
-		}
-
-		public long getValue() {
-			return value;
-		}
-
-		@Override
-		public void format(ConstantFormater formater) {
-			super.format(formater);
-			formater.format(this);
-		}
-	}
-
-	public static class ConstantPoolDouble extends ConstantPoolEntry {
-		private final double value;
-
-		public ConstantPoolDouble(int offset, int idx, ConstantTag constantTag, double value) {
-			super(offset, idx, constantTag);
-			this.value = value;
-		}
-
-		public double getValue() {
-			return value;
-		}
-
-		@Override
-		public void format(ConstantFormater formater) {
-			super.format(formater);
-			formater.format(this);
-		}
-	}
-
-	public static final class ConstantPoolString extends ConstantPoolEntry {
-		private final int stringIndex;
-
-		public ConstantPoolString(int offset, int idx, ConstantTag constantTag,
-		                          int stringIndex) {
-			super(offset, idx, constantTag);
-			this.stringIndex = stringIndex;
-		}
-
-		public int getStringIndex() {
-			return stringIndex;
-		}
-
-		@Override
-		public void format(ConstantFormater formater) {
-			super.format(formater);
-			formater.format(this);
-		}
-	}
-
-	public static final class ConstantPoolMethodRef extends ConstantPoolEntry {
-		private final int classIndex;
-		private final int nameAndTypeIndex;
-
-		public ConstantPoolMethodRef(int offset, int idx, ConstantTag constantTag,
-		                             int classIndex, int nameAndTypeIndex) {
-			super(offset, idx, constantTag);
-			this.classIndex = classIndex;
-			this.nameAndTypeIndex = nameAndTypeIndex;
-		}
-
-		public int getClassIndex() {
-			return classIndex;
-		}
-
-		public int getNameAndTypeIndex() {
-			return nameAndTypeIndex;
-		}
-
-		@Override
-		public void format(ConstantFormater formater) {
-			super.format(formater);
-			formater.format(this);
-		}
-	}
-
-	public static final class ConstantPoolNameAndType extends ConstantPoolEntry {
-		private final int nameIndex;
-		private final int descriptorIndex;
-
-		public ConstantPoolNameAndType(int offset, int idx, ConstantTag constantTag,
-		                               int nameIndex, int descriptorIndex) {
-			super(offset, idx, constantTag);
-			this.nameIndex = nameIndex;
-			this.descriptorIndex = descriptorIndex;
-		}
-
-		public int getNameIndex() {
-			return nameIndex;
-		}
-
-		public int getDescriptorIndex() {
-			return descriptorIndex;
-		}
-
-		@Override
-		public void format(ConstantFormater formater) {
-			super.format(formater);
-			formater.format(this);
-		}
-	}
-
-	public static final class ConstantPoolDynamic extends ConstantPoolEntry {
-		private final int bootstrapMethodAttrIndex;
-		private final int nameAndTypeIndex;
-
-		public ConstantPoolDynamic(int offset, int idx, ConstantTag constantTag,
-		                           int bootstrapMethodAttrIndex, int nameAndTypeIndex) {
-			super(offset, idx, constantTag);
-			this.bootstrapMethodAttrIndex = bootstrapMethodAttrIndex;
-			this.nameAndTypeIndex = nameAndTypeIndex;
-		}
-
-		public int getBootstrapMethodAttrIndex() {
-			return bootstrapMethodAttrIndex;
-		}
-
-		public int getNameAndTypeIndex() {
-			return nameAndTypeIndex;
-		}
-
-		@Override
-		public void format(ConstantFormater formater) {
-			super.format(formater);
-			formater.format(this);
-		}
-	}
-
-	public static class ConstantPoolMethodHandle extends ConstantPoolEntry {
-
-		enum MHRef {
-			REF_getField,           //getfield C.f:T
-			REF_getStatic,          //getstatic C.f:T
-			REF_putField,           //putfield C.f:T
-			REF_putStatic,          //putstatic C.f:T
-			REF_invokeVirtual,      //invokevirtual C.m:(A*)T
-			REF_invokeStatic,       //invokestatic C.m:(A*)T
-			REF_invokeSpecial,      //invokespecial C.m:(A*)T
-			REF_newInvokeSpecial,   //new C; dup; invokespecial C.<init>:(A*)V
-			REF_invokeInterface     //invokeinterface C.m:(A*)T
-		}
-
-		private final int referenceKind;
-		private final int referenceIndex;
-
-		public ConstantPoolMethodHandle(int offset, int idx, ConstantTag constantTag,
-		                                int referenceKind, int referenceIndex) {
-			super(offset, idx, constantTag);
-			this.referenceKind = referenceKind;
-			this.referenceIndex = referenceIndex;
-		}
-
-		public int getReferenceKind() {
-			return referenceKind;
-		}
-
-		public int getReferenceIndex() {
-			return referenceIndex;
-		}
-
-		@Override
-		public void format(ConstantFormater formater) {
-			super.format(formater);
-			formater.format(this);
 		}
 	}
 

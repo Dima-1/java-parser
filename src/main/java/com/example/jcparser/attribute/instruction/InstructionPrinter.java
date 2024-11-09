@@ -1,6 +1,5 @@
 package com.example.jcparser.attribute.instruction;
 
-import com.example.jcparser.Parser;
 import com.example.jcparser.Parser.U1;
 import com.example.jcparser.Parser.U4;
 import com.example.jcparser.Print;
@@ -8,6 +7,8 @@ import com.example.jcparser.attribute.Attribute;
 import com.example.jcparser.attribute.LineNumberTableAttribute;
 import com.example.jcparser.attribute.LocalVariableAttribute;
 import com.example.jcparser.attribute.LocalVariableTableAttribute;
+import com.example.jcparser.constantpool.ConstantFormater;
+import com.example.jcparser.constantpool.ConstantPoolEntry;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -108,8 +109,8 @@ public class InstructionPrinter {
 		return bytes[0] << 24 | bytes[1] << 16 | bytes[2] << 8 | bytes[3];
 	}
 
-	private String cpToString(List<Parser.ConstantPoolEntry> cpeOperands) {
-		Print.ConstantFormater constantFormater = print.getConstantFormater();
+	private String cpToString(List<ConstantPoolEntry> cpeOperands) {
+		ConstantFormater constantFormater = print.getConstantFormater();
 		return cpeOperands.stream().map(constantFormater::formatNewOnlyString).collect(Collectors.joining(" "));
 	}
 
@@ -127,10 +128,10 @@ public class InstructionPrinter {
 		return lineNumber;
 	}
 
-	private List<Parser.ConstantPoolEntry> getCPOperands(Instruction instruction, InstructionSet.Type type) {
-		List<Parser.ConstantPoolEntry> cpeOperands = new ArrayList<>();
-		Print.ConstantFormater constantFormater = print.getConstantFormater();
-		List<Parser.ConstantPoolEntry> constantPool = constantFormater.getConstantPool();
+	private List<ConstantPoolEntry> getCPOperands(Instruction instruction, InstructionSet.Type type) {
+		List<ConstantPoolEntry> cpeOperands = new ArrayList<>();
+		ConstantFormater constantFormater = print.getConstantFormater();
+		List<ConstantPoolEntry> constantPool = constantFormater.getConstantPool();
 		if (type == InstructionSet.Type.CP_IDX) {
 			cpeOperands.add(constantPool.get(getSortFromBytes(instruction)));
 		} else {
@@ -139,8 +140,8 @@ public class InstructionPrinter {
 		return cpeOperands;
 	}
 
-	private List<Parser.ConstantPoolEntry> getVariableOperand(Instruction instruction, CodeAttribute attr) {
-		List<Parser.ConstantPoolEntry> varOperand = new ArrayList<>();
+	private List<ConstantPoolEntry> getVariableOperand(Instruction instruction, CodeAttribute attr) {
+		List<ConstantPoolEntry> varOperand = new ArrayList<>();
 		for (Attribute attribute : attr.getAttributes()) {
 			if (attribute instanceof LocalVariableTableAttribute variableAttr) {
 				LocalVariableAttribute.LocalVariable localVariable
