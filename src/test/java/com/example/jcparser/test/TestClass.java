@@ -1,8 +1,6 @@
 package com.example.jcparser.test;
 
-import java.lang.annotation.Repeatable;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.*;
 import java.security.InvalidParameterException;
 import java.util.NoSuchElementException;
 import java.util.ServiceLoader;
@@ -17,7 +15,7 @@ public class TestClass {
 	public static void main(String[] args) {
 		TestClass testClassVar = new TestClass();
 		testClassVar.testMethod();
-		String res = testClassVar.testMethodWithParameters(1, "MethodWithParameters");
+		String res = testClassVar.testMethodWithParameters(1, "MethodWithParameters", "param2");
 		System.out.println(res);
 		TestProvider provider = TestProvider.getInstance();
 		TestService service = provider.serviceImpl();
@@ -29,6 +27,11 @@ public class TestClass {
 	@Deprecated(forRemoval = true)
 	private int oldCodeMethod() {
 		return 10;
+	}
+
+	@Target({ElementType.TYPE_USE, ElementType.PARAMETER})
+	@Retention(RetentionPolicy.RUNTIME)
+	@interface NonNull {
 	}
 
 	@TestInvisibleAnnotation(hName = "New invisible name", hId = 2)
@@ -59,7 +62,8 @@ public class TestClass {
 	@TestAnnotation(name = "New name 1", id = 1)
 	@TestAnnotation(name = "New name 2", id = 2)
 	private String testMethodWithParameters(@TestAnnotation(name = "Params 1") int i,
-	                                        @TestInvisibleAnnotation(hName = "Params 2") final String test)
+	                                        @TestInvisibleAnnotation(hName = "Params 2") final String test,
+	                                        @NonNull String p2)
 			throws InvalidParameterException {
 		if (i == 0) {
 			throw new InvalidParameterException(test);

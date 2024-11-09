@@ -20,6 +20,7 @@ import java.util.List;
 import static com.example.jcparser.AccessFlag.Type.*;
 import static com.example.jcparser.ConsoleColors.*;
 import static com.example.jcparser.ConsoleColors.addColor;
+import static com.example.jcparser.attribute.annotation.RuntimeTypeAnnotationsAttribute.*;
 
 /**
  * <a href="https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-4.html#jvms-4.1">4.1. The ClassFile Structure</a>
@@ -362,9 +363,10 @@ public class Parser {
 					getParameterAnnotations(dis, attributeNameIndex, attributeLength, true);
 			case "RuntimeInvisibleParameterAnnotations" ->
 					getParameterAnnotations(dis, attributeNameIndex, attributeLength, false);
-			case "RuntimeVisibleTypeAnnotations" -> null; //todo
-			case "RuntimeInvisibleTypeAnnotations" -> null; //todo
-			
+			case "RuntimeVisibleTypeAnnotations" ->
+					getTypeAnnotations(dis, attributeNameIndex, attributeLength, true); //todo
+			case "RuntimeInvisibleTypeAnnotations" ->
+					getTypeAnnotations(dis, attributeNameIndex, attributeLength, false);  //todo
 			case "AnnotationDefault" -> {
 				ElementValue elementValue = readElementValue(dis);
 				yield new AnnotationDefaultAttribute(attributeNameIndex, attributeLength, elementValue);
@@ -646,8 +648,7 @@ public class Parser {
 	private Attribute getParameterAnnotations(DataInputStream dis, U2 attributeNameIndex,
 	                                          U4 attributeLength, boolean visible) throws IOException {
 		U1 numberOf = readU1(dis);
-		ParameterAnnotation[] parameterAnnotations
-				= new ParameterAnnotation[numberOf.getValue()];
+		ParameterAnnotation[] parameterAnnotations = new ParameterAnnotation[numberOf.getValue()];
 		for (int i = 0; i < numberOf.getValue(); i++) {
 			parameterAnnotations[i] = getParameterAnnotation(dis, visible);
 		}
@@ -663,6 +664,82 @@ public class Parser {
 			annotations[i] = getAnnotation(dis);
 		}
 		return new ParameterAnnotation(numberOf, annotations, visible);
+	}
+
+	private Attribute getTypeAnnotations(DataInputStream dis, U2 attributeNameIndex,
+	                                     U4 attributeLength, boolean visible) throws IOException {
+		U2 numberOf = readU2(dis);
+		TypeAnnotation[] typeAnnotations = new TypeAnnotation[numberOf.getValue()];
+		for (int i = 0; i < numberOf.getValue(); i++) {
+			typeAnnotations[i] = getTypeAnnotation(dis, visible);
+		}
+		return new RuntimeTypeAnnotationsAttribute(attributeNameIndex, attributeLength, numberOf,
+				typeAnnotations, visible);
+	}
+
+	private TypeAnnotation getTypeAnnotation(DataInputStream dis, boolean visible)
+			throws IOException {
+
+		TargetInfo targetInfo = getTargetInfo(dis);
+		U1 typePathLength = readU1(dis);
+		TypePath[] typePaths =
+				new TypePath[typePathLength.getValue()];
+		for (int i = 0; i < typePathLength.getValue(); i++) {
+			typePaths[i] = getTypePath(dis);
+		}
+		RuntimeAnnotationsAttribute.Annotation annotation = getAnnotation(dis);
+		return new TypeAnnotation(targetInfo, typePathLength, typePaths,
+				annotation);
+	}
+
+	private TargetInfo getTargetInfo(DataInputStream dis) throws IOException {
+		U1 targetType = readU1(dis);
+		return switch (TypeTargetInfo.getType(targetType.getValue())) {
+			case TYPE_PARAMETER_TARGET -> {
+				U1 typeParameterIndex = readU1(dis);
+				yield new TypeParameterTarget(targetType, typeParameterIndex);
+			}
+			case SUPERTYPE_TARGET -> {
+				U2 supertypeIndex = readU2(dis);
+				yield new SupertypeTargetClass(targetType, supertypeIndex);
+			}
+			case TYPE_PARAMETER_BOUND_TARGET -> {
+				U1 typeParameterIndex = readU2(dis);
+				U1 boundIndex = readU2(dis);
+				yield new TypeParameterBoundTarget(targetType, typeParameterIndex, boundIndex);
+			}
+			case EMPTY_TARGET -> new EmptyTarget(targetType);
+			case FORMAL_PARAMETER_TARGET -> {
+				U1 formalParameterIndex = readU1(dis);
+				yield new FormalParameterTarget(targetType, formalParameterIndex);
+			}
+			case THROWS_TARGET -> {
+				U2 throwsTypeIndex = readU2(dis);
+				yield new ThrowsTarget(targetType, throwsTypeIndex);
+			}
+			case LOCALVAR_TARGET -> {
+				yield new LocalVarTarget(targetType); //// TODO: 09.11.24  
+			}
+			case CATCH_TARGET -> {
+				U2 exceptionTableIndex = readU2(dis);
+				yield new CatchTarget(targetType, exceptionTableIndex);
+			}
+			case OFFSET_TARGET -> {
+				U2 offset = readU2(dis);
+				yield new OffsetTarget(targetType, offset);
+			}
+			case TYPE_ARGUMENT_TARGET -> {
+				U2 offset = readU2(dis);
+				U1 typeArgumentIndex = readU1(dis);
+				yield new TypeArgumentTarget(targetType, offset, typeArgumentIndex);
+			}
+		};
+	}
+
+	private TypePath getTypePath(DataInputStream dis) throws IOException {
+		U1 typePathKind = readU1(dis);
+		U1 typeArgumentIndex = readU1(dis);
+		return new TypePath(typePathKind, typeArgumentIndex);
 	}
 
 	public BootstrapMethodsAttribute.BootstrapMethod getBootstrapMethod(int index, DataInputStream dis) throws IOException {
