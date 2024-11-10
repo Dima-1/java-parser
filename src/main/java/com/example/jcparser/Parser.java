@@ -1,7 +1,18 @@
 package com.example.jcparser;
 
 import com.example.jcparser.attribute.*;
+import com.example.jcparser.attribute.BootstrapMethodsAttribute.BootstrapMethod;
+import com.example.jcparser.attribute.InnerClassesAttribute.InnerClass;
+import com.example.jcparser.attribute.LineNumberTableAttribute.LineNumber;
+import com.example.jcparser.attribute.LocalVariableAttribute.LocalVariable;
+import com.example.jcparser.attribute.MethodParameterAttribute.MethodParameter;
+import com.example.jcparser.attribute.ModuleAttribute.Exports;
+import com.example.jcparser.attribute.ModuleAttribute.Opens;
+import com.example.jcparser.attribute.ModuleAttribute.Provides;
+import com.example.jcparser.attribute.ModuleAttribute.Requires;
+import com.example.jcparser.attribute.RecordAttribute.ComponentInfo;
 import com.example.jcparser.attribute.annotation.*;
+import com.example.jcparser.attribute.annotation.RuntimeAnnotationsAttribute.Annotation;
 import com.example.jcparser.attribute.instruction.CodeAttribute;
 import com.example.jcparser.attribute.instruction.InstructionSet;
 import com.example.jcparser.attribute.instruction.Instruction;
@@ -137,11 +148,11 @@ public class Parser {
 		for (int i = 0; i < length; i++) {
 			U2 accessFlags = readU2(dis);
 			print.accessFlags(accessFlags, type);
-			print.u2(readU2(dis, true), "Name index");
+			print.u2(readU2(dis, true), type.getTitle() + " name index");
 			U2 descriptor = readU2(dis, true);
-			print.u2(descriptor, "Descriptor index");
+			print.u2(descriptor, type.getTitle() + " descriptor index");
 			u2 = readU2(dis);
-			print.u2(u2, "Attributes count");
+			print.u2(u2, type.getTitle() + " attributes count", true);
 			List<Attribute> attributes = new ArrayList<>(readAttributes(dis, u2.value, descriptor));
 			print.attributes(attributes);
 		}
@@ -270,8 +281,9 @@ public class Parser {
 					instructions.add(readInstruction(dis, startCodeCount));
 				} while (count < endCodeCount);
 				U2 exceptionTableLength = readU2(dis);
-				ExceptionsAttribute.Exception[] exceptions = new ExceptionsAttribute.Exception[exceptionTableLength.getValue()];
-				for (int i = 0; i < exceptionTableLength.getValue(); i++) {
+				int length = exceptionTableLength.getValue();
+				ExceptionsAttribute.Exception[] exceptions = new ExceptionsAttribute.Exception[length];
+				for (int i = 0; i < length; i++) {
 					exceptions[i] = readException(dis);
 				}
 				U2 numberOf = readU2(dis);
@@ -300,7 +312,7 @@ public class Parser {
 			}
 			case "InnerClasses" -> {
 				U2 numberOf = readU2(dis);
-				InnerClassesAttribute.InnerClass[] classes = new InnerClassesAttribute.InnerClass[numberOf.getValue()];
+				InnerClass[] classes = new InnerClass[numberOf.getValue()];
 				for (int i = 0; i < numberOf.getValue(); i++) {
 					classes[i] = getInnerClass(i, dis);
 				}
@@ -328,7 +340,7 @@ public class Parser {
 			}
 			case "LineNumberTable" -> {
 				U2 numberOf = readU2(dis);
-				LineNumberTableAttribute.LineNumber[] lineNumbers = new LineNumberTableAttribute.LineNumber[numberOf.getValue()];
+				LineNumber[] lineNumbers = new LineNumber[numberOf.getValue()];
 				for (int i = 0; i < numberOf.getValue(); i++) {
 					lineNumbers[i] = getLineNumber(i, dis);
 				}
@@ -337,8 +349,7 @@ public class Parser {
 			}
 			case "LocalVariableTable" -> {
 				U2 numberOf = readU2(dis);
-				LocalVariableAttribute.LocalVariable[] localVariables
-						= new LocalVariableAttribute.LocalVariable[numberOf.getValue()];
+				LocalVariable[] localVariables = new LocalVariable[numberOf.getValue()];
 				for (int i = 0; i < numberOf.getValue(); i++) {
 					localVariables[i] = getLocalVariable(dis, "Descriptor");
 				}
@@ -347,8 +358,7 @@ public class Parser {
 			}
 			case "LocalVariableTypeTable" -> {
 				U2 numberOf = readU2(dis);
-				LocalVariableAttribute.LocalVariable[] localVariables
-						= new LocalVariableAttribute.LocalVariable[numberOf.getValue()];
+				LocalVariable[] localVariables = new LocalVariable[numberOf.getValue()];
 				for (int i = 0; i < numberOf.getValue(); i++) {
 					localVariables[i] = getLocalVariable(dis, "Signature");
 				}
@@ -373,8 +383,9 @@ public class Parser {
 			}
 			case "BootstrapMethods" -> {
 				U2 numberOf = readU2(dis);
-				BootstrapMethodsAttribute.BootstrapMethod[] bootstrapMethods = new BootstrapMethodsAttribute.BootstrapMethod[numberOf.getValue()];
-				for (int i = 0; i < numberOf.getValue(); i++) {
+				int length = numberOf.getValue();
+				BootstrapMethod[] bootstrapMethods = new BootstrapMethod[length];
+				for (int i = 0; i < length; i++) {
 					bootstrapMethods[i] = getBootstrapMethod(i, dis);
 				}
 				yield new BootstrapMethodsAttribute(attributeNameIndex, attributeLength,
@@ -382,7 +393,7 @@ public class Parser {
 			}
 			case "MethodParameters" -> {
 				U1 numberOf = readU1(dis);
-				MethodParameterAttribute.MethodParameter[] methodParameters = new MethodParameterAttribute.MethodParameter[numberOf.getValue()];
+				MethodParameter[] methodParameters = new MethodParameter[numberOf.getValue()];
 				for (int i = 0; i < numberOf.getValue(); i++) {
 					methodParameters[i] = getMethodParameter(i, dis);
 				}
@@ -394,23 +405,23 @@ public class Parser {
 				U2 moduleFlags = readU2(dis);
 				U2 moduleVersionIndex = readU2(dis, true);
 				U2 requiresCount = readU2(dis);
-				ModuleAttribute.Requires[] requires = new ModuleAttribute.Requires[requiresCount.getValue()];
+				Requires[] requires = new Requires[requiresCount.getValue()];
 				for (int i = 0; i < requiresCount.getValue(); i++) {
 					requires[i] = readRequires(i, dis);
 				}
 				U2 exportsCount = readU2(dis);
-				ModuleAttribute.Exports[] exports = new ModuleAttribute.Exports[exportsCount.getValue()];
+				Exports[] exports = new Exports[exportsCount.getValue()];
 				for (int i = 0; i < exportsCount.getValue(); i++) {
 					exports[i] = readExports(i, dis);
 				}
 				U2 opensCount = readU2(dis);
-				ModuleAttribute.Opens[] opens = new ModuleAttribute.Opens[opensCount.getValue()];
+				Opens[] opens = new Opens[opensCount.getValue()];
 				for (int i = 0; i < opensCount.getValue(); i++) {
 					opens[i] = readOpens(i, dis);
 				}
 				U2Array uses = readU2Array(dis);
 				U2 providesCount = readU2(dis);
-				ModuleAttribute.Provides[] provides = new ModuleAttribute.Provides[providesCount.getValue()];
+				Provides[] provides = new Provides[providesCount.getValue()];
 				for (int i = 0; i < providesCount.getValue(); i++) {
 					provides[i] = readProvides(i, dis);
 				}
@@ -436,13 +447,13 @@ public class Parser {
 			}
 			case "Record" -> {
 				U2 numberOf = readU2(dis);
-				RecordAttribute.ComponentInfo[] components = new RecordAttribute.ComponentInfo[numberOf.value];
+				ComponentInfo[] components = new ComponentInfo[numberOf.value];
 				for (int i = 0; i < numberOf.getValue(); i++) {
 					U2 nameIndex = readU2(dis, true);
 					U2 descriptionIndex = readU2(dis, true);
 					U2 numberOfComponents = readU2(dis);
 					List<Attribute> attributes = new ArrayList<>(readAttributes(dis, numberOfComponents.value, null));
-					components[i] = new RecordAttribute.ComponentInfo(nameIndex, descriptionIndex, numberOfComponents,
+					components[i] = new ComponentInfo(nameIndex, descriptionIndex, numberOfComponents,
 							attributes);
 				}
 				yield new RecordAttribute(attributeNameIndex, attributeLength, numberOf, components);
@@ -568,7 +579,6 @@ public class Parser {
 		return new Instruction(offset, opcode, operandsArray);
 	}
 
-
 	private int readByte(DataInputStream dis) throws IOException {
 		int value = dis.readUnsignedByte();
 		count += Byte.BYTES;
@@ -658,8 +668,7 @@ public class Parser {
 
 	private ParameterAnnotation getParameterAnnotation(DataInputStream dis, boolean visible) throws IOException {
 		U2 numberOf = readU2(dis);
-		RuntimeAnnotationsAttribute.Annotation[] annotations
-				= new RuntimeAnnotationsAttribute.Annotation[numberOf.getValue()];
+		Annotation[] annotations = new Annotation[numberOf.getValue()];
 		for (int i = 0; i < numberOf.getValue(); i++) {
 			annotations[i] = getAnnotation(dis);
 		}
@@ -682,14 +691,12 @@ public class Parser {
 
 		TargetInfo targetInfo = getTargetInfo(dis);
 		U1 typePathLength = readU1(dis);
-		TypePath[] typePaths =
-				new TypePath[typePathLength.getValue()];
+		TypePath[] typePaths = new TypePath[typePathLength.getValue()];
 		for (int i = 0; i < typePathLength.getValue(); i++) {
 			typePaths[i] = getTypePath(dis);
 		}
-		RuntimeAnnotationsAttribute.Annotation annotation = getAnnotation(dis);
-		return new TypeAnnotation(targetInfo, typePathLength, typePaths,
-				annotation);
+		Annotation annotation = getAnnotation(dis);
+		return new TypeAnnotation(targetInfo, typePathLength, typePaths, annotation);
 	}
 
 	private TargetInfo getTargetInfo(DataInputStream dis) throws IOException {
@@ -718,7 +725,12 @@ public class Parser {
 				yield new ThrowsTarget(targetType, throwsTypeIndex);
 			}
 			case LOCALVAR_TARGET -> {
-				yield new LocalVarTarget(targetType); //// TODO: 09.11.24  
+				U2 tableLength = readU2(dis);
+				TableEntry[] table = new TableEntry[tableLength.getValue()];
+				for (int i = 0; i < tableLength.getValue(); i++) {
+					table[i] = getTableEntry(dis);
+				}
+				yield new LocalVarTarget(targetType, table);
 			}
 			case CATCH_TARGET -> {
 				U2 exceptionTableIndex = readU2(dis);
@@ -742,46 +754,53 @@ public class Parser {
 		return new TypePath(typePathKind, typeArgumentIndex);
 	}
 
-	public BootstrapMethodsAttribute.BootstrapMethod getBootstrapMethod(int index, DataInputStream dis) throws IOException {
+	private TableEntry getTableEntry(DataInputStream dis) throws IOException {
+		U2 startPc = readU2(dis);
+		U2 length = readU2(dis);
+		U2 index = readU2(dis);
+		return new TableEntry(startPc, length, index);
+	}
+
+	public BootstrapMethod getBootstrapMethod(int index, DataInputStream dis) throws IOException {
 		U2 bootstrapMethodRef = readU2(dis, true);
 		U2Array bootstrapArguments = readU2Array(dis);
-		return new BootstrapMethodsAttribute.BootstrapMethod(index, bootstrapMethodRef, bootstrapArguments);
+		return new BootstrapMethod(index, bootstrapMethodRef, bootstrapArguments);
 	}
 
-	private MethodParameterAttribute.MethodParameter getMethodParameter(int index, DataInputStream dis) throws IOException {
+	private MethodParameter getMethodParameter(int index, DataInputStream dis) throws IOException {
 		U2 nameIndex = readU2(dis, true);
 		U2 accessFlag = readU2(dis);
-		return new MethodParameterAttribute.MethodParameter(index, nameIndex, accessFlag);
+		return new MethodParameter(index, nameIndex, accessFlag);
 	}
 
-	private ModuleAttribute.Requires readRequires(int index, DataInputStream dis) throws IOException {
+	private Requires readRequires(int index, DataInputStream dis) throws IOException {
 		U2 requiresIndex = readU2(dis, true);
 		U2 accessFlag = readU2(dis);
 		U2 requiresVersionIndex = readU2(dis, true);
-		return new ModuleAttribute.Requires(index, requiresIndex, accessFlag, requiresVersionIndex);
+		return new Requires(index, requiresIndex, accessFlag, requiresVersionIndex);
 	}
 
-	private ModuleAttribute.Exports readExports(int index, DataInputStream dis) throws IOException {
+	private Exports readExports(int index, DataInputStream dis) throws IOException {
 		U2 exportsIndex = readU2(dis, true);
 		U2 accessFlag = readU2(dis);
 		U2Array exportsToIndex = readU2Array(dis);
-		return new ModuleAttribute.Exports(index, exportsIndex, accessFlag, exportsToIndex);
+		return new Exports(index, exportsIndex, accessFlag, exportsToIndex);
 	}
 
-	private ModuleAttribute.Opens readOpens(int index, DataInputStream dis) throws IOException {
+	private Opens readOpens(int index, DataInputStream dis) throws IOException {
 		U2 opensIndex = readU2(dis, true);
 		U2 accessFlag = readU2(dis);
 		U2Array opensToIndex = readU2Array(dis);
-		return new ModuleAttribute.Opens(index, opensIndex, accessFlag, opensToIndex);
+		return new Opens(index, opensIndex, accessFlag, opensToIndex);
 	}
 
-	private ModuleAttribute.Provides readProvides(int index, DataInputStream dis) throws IOException {
+	private Provides readProvides(int index, DataInputStream dis) throws IOException {
 		U2 providesIndex = readU2(dis, true);
 		U2Array providesWithIndex = readU2Array(dis);
-		return new ModuleAttribute.Provides(index, providesIndex, providesWithIndex);
+		return new Provides(index, providesIndex, providesWithIndex);
 	}
 
-	public InnerClassesAttribute.InnerClass getInnerClass(int index, DataInputStream dis) throws IOException {
+	public InnerClass getInnerClass(int index, DataInputStream dis) throws IOException {
 		U2 innerClassInfoIndex = readU2(dis, true);
 		U2 outerClassInfoIndex = readU2(dis, true);
 		outerClassInfoIndex.clearCpe();
@@ -789,32 +808,32 @@ public class Parser {
 		innerNameIndex.clearCpe();
 		U2 innerClassAccessFlags = readU2(dis);
 		innerClassAccessFlags.clearCpe();
-		return new InnerClassesAttribute.InnerClass(index, innerClassInfoIndex, outerClassInfoIndex, innerNameIndex, innerClassAccessFlags);
+		return new InnerClass(index, innerClassInfoIndex, outerClassInfoIndex, innerNameIndex, innerClassAccessFlags);
 	}
 
-	public LineNumberTableAttribute.LineNumber getLineNumber(int index, DataInputStream dis) throws IOException {
+	public LineNumber getLineNumber(int index, DataInputStream dis) throws IOException {
 		U2 startPC = readU2(dis);
 		U2 lineNumber = readU2(dis);
-		return new LineNumberTableAttribute.LineNumber(index, startPC, lineNumber);
+		return new LineNumber(index, startPC, lineNumber);
 	}
 
-	private LocalVariableAttribute.LocalVariable getLocalVariable(DataInputStream dis, String descriptorTitle) throws IOException {
+	private LocalVariable getLocalVariable(DataInputStream dis, String descriptorTitle) throws IOException {
 		U2 startPC = readU2(dis);
 		U2 length = readU2(dis);
 		U2 nameIndex = readU2(dis, true);
 		U2 descriptorIndex = readU2(dis, true);
 		U2 index = readU2(dis);
-		return new LocalVariableAttribute.LocalVariable(startPC, length, nameIndex, descriptorIndex, index, descriptorTitle);
+		return new LocalVariable(startPC, length, nameIndex, descriptorIndex, index, descriptorTitle);
 	}
 
-	private RuntimeAnnotationsAttribute.Annotation getAnnotation(DataInputStream dis) throws IOException {
+	private Annotation getAnnotation(DataInputStream dis) throws IOException {
 		U2 typeIndex = readU2(dis, true).check(ConstantPoolUtf8.class);
 		U2 lengthOfPair = readU2(dis);
 		ValuePair[] valuePairs = new ValuePair[lengthOfPair.getValue()];
 		for (int i = 0; i < lengthOfPair.getValue(); i++) {
 			valuePairs[i] = readValuePair(dis);
 		}
-		return new RuntimeAnnotationsAttribute.Annotation(
+		return new Annotation(
 				typeIndex, lengthOfPair, valuePairs);
 	}
 
@@ -828,7 +847,7 @@ public class Parser {
 		U2 u2First = null;
 		U2 u2Second = null;
 		ElementValue[] elementValues = null;
-		RuntimeAnnotationsAttribute.Annotation annotation = null;
+		Annotation annotation = null;
 		U1 tag = readU1(dis);
 		switch (TagValueItem.getTagValue(tag.getValue())) {
 			case CONST_VALUE_INDEX, CLASS_INFO_INDEX -> u2First = readU2(dis, true);

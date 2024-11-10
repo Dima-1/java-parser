@@ -3,7 +3,9 @@ package com.example.jcparser.attribute.annotation;
 import com.example.jcparser.Parser.U1;
 import com.example.jcparser.Parser.U2;
 import com.example.jcparser.Parser.U4;
+import com.example.jcparser.Print;
 import com.example.jcparser.attribute.Attribute;
+import com.example.jcparser.attribute.AttributePrinter;
 
 import java.util.Arrays;
 
@@ -20,6 +22,12 @@ public class RuntimeTypeAnnotationsAttribute extends Attribute {
 		this.visible = visible;
 	}
 
+	@Override
+	public void print(AttributePrinter printer) {
+		super.print(printer);
+		printer.print(this);
+	}
+
 	public U2 getNumberOf() {
 		return numberOf;
 	}
@@ -33,14 +41,25 @@ public class RuntimeTypeAnnotationsAttribute extends Attribute {
 	}
 
 	public record TypeAnnotation(TargetInfo targetInfo, U1 typePathLength, TypePath[] typePath,
-	                             RuntimeAnnotationsAttribute.Annotation annotation) {
+	                             RuntimeAnnotationsAttribute.Annotation annotation)
+			implements Print.Printable<AttributePrinter> {
+
+		@Override
+		public void print(AttributePrinter printer) {
+			printer.print(this);
+		}
 	}
 
-	public static class TargetInfo {
+	public static class TargetInfo implements Print.Printable<AttributePrinter> {
 		private final U1 targetType;
 
 		TargetInfo(U1 targetType) {
 			this.targetType = targetType;
+		}
+
+		@Override
+		public void print(AttributePrinter printer) {
+			printer.print(this);
 		}
 
 		public U1 getTargetType() {
@@ -100,8 +119,21 @@ public class RuntimeTypeAnnotationsAttribute extends Attribute {
 	}
 
 	public static class FormalParameterTarget extends TargetInfo {
+		private final U1 formalParameterIndex;
+
 		public FormalParameterTarget(U1 targetType, U1 formalParameterIndex) {
 			super(targetType);
+			this.formalParameterIndex = formalParameterIndex;
+		}
+
+		@Override
+		public void print(AttributePrinter printer) {
+			super.print(printer);
+			printer.print(this);
+		}
+
+		public U1 getFormalParameterIndex() {
+			return formalParameterIndex;
 		}
 	}
 
@@ -112,30 +144,67 @@ public class RuntimeTypeAnnotationsAttribute extends Attribute {
 	}
 
 	public static class LocalVarTarget extends TargetInfo {
-		public LocalVarTarget(U1 targetType) {
+		private final TableEntry[] table;
+
+		public LocalVarTarget(U1 targetType, TableEntry[] table) {
 			super(targetType);
+			this.table = table;
+		}
+
+		public TableEntry[] getTable() {
+			return table;
 		}
 	}
 
 	public static class CatchTarget extends TargetInfo {
+		private final U2 exceptionTableIndex;
+
 		public CatchTarget(U1 targetType, U2 exceptionTableIndex) {
 			super(targetType);
+			this.exceptionTableIndex = exceptionTableIndex;
+		}
+
+		public U2 getExceptionTableIndex() {
+			return exceptionTableIndex;
 		}
 	}
 
 	public static class OffsetTarget extends TargetInfo {
+		private final U2 offset;
+
 		public OffsetTarget(U1 targetType, U2 offset) {
 			super(targetType);
+			this.offset = offset;
+		}
+
+		public U2 getOffset() {
+			return offset;
 		}
 	}
 
 	public static class TypeArgumentTarget extends TargetInfo {
+		private final U2 offset;
+		private final U1 typeArgumentIndex;
+
 		public TypeArgumentTarget(U1 targetType, U2 offset, U1 typeArgumentIndex) {
 			super(targetType);
+			this.offset = offset;
+			this.typeArgumentIndex = typeArgumentIndex;
+		}
+
+		public U2 getOffset() {
+			return offset;
+		}
+
+		public U1 getTypeArgumentIndex() {
+			return typeArgumentIndex;
 		}
 	}
 
 	public record TypePath(U1 typePathKind, U1 typeArgumentIndex) {
+	}
+
+	public record TableEntry(U2 startPc, U2 length, U2 index) {
 	}
 
 	public enum TypeTargetInfo {
@@ -158,8 +227,8 @@ public class RuntimeTypeAnnotationsAttribute extends Attribute {
 
 		public static TypeTargetInfo getType(int targetType) {
 			return Arrays.stream(values()).filter(v -> Arrays.stream(v.targetTypes).anyMatch(tt -> tt == targetType))
-					.findFirst().orElseThrow(() ->
-							new IllegalArgumentException("Wrong targetType : " + Integer.toHexString(targetType).toUpperCase()));
+					.findFirst().orElseThrow(() -> new IllegalArgumentException(
+							"Wrong targetType : " + Integer.toHexString(targetType).toUpperCase()));
 		}
 	}
 }

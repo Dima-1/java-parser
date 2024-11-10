@@ -45,9 +45,11 @@ public class AttributePrinter {
 
 	void print(StackMapTableAttribute attr) {
 		print.u2(attr.getNumberOf(), "Attribute number of stack maps", true);
+		print.incIndent();
 		for (StackMapFrame stackMapFrame : attr.getEntries()) {
 			stackMapFrame.print(print.getStackFramePrinter());
 		}
+		print.decIndent();
 	}
 
 	void print(ExceptionsAttribute attr) {
@@ -187,6 +189,27 @@ public class AttributePrinter {
 		String visible = parameterAnnotation.visible() ? "visible" : "invisible";
 		print.u2(parameterAnnotation.numberOf(), "Attribute number of " + visible + " annotation", true);
 		printAnnotations(parameterAnnotation.annotations());
+	}
+
+	public void print(RuntimeTypeAnnotationsAttribute attr) {
+		String visible = attr.isVisible() ? "visible" : "invisible";
+		print.u2(attr.getNumberOf(), "Attribute number of " + visible + " annotation", true);
+		for (RuntimeTypeAnnotationsAttribute.TypeAnnotation typeAnnotation : attr.getTypeAnnotations()) {
+			typeAnnotation.print(this);
+		}
+	}
+
+	public void print(RuntimeTypeAnnotationsAttribute.TypeAnnotation typeAnnotation) {
+		typeAnnotation.targetInfo().print(this);
+		print.u1(typeAnnotation.typePathLength(), "Type path length", true);
+	}
+
+	public void print(RuntimeTypeAnnotationsAttribute.TargetInfo targetInfo) {
+		print.u1(targetInfo.getTargetType(), "Target info type", true);
+	}
+
+	public void print(RuntimeTypeAnnotationsAttribute.FormalParameterTarget targetInfo) {
+		print.u1(targetInfo.getFormalParameterIndex(), "Formal parameter index", true);
 	}
 
 
