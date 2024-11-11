@@ -202,16 +202,66 @@ public class AttributePrinter {
 	public void print(RuntimeTypeAnnotationsAttribute.TypeAnnotation typeAnnotation) {
 		typeAnnotation.targetInfo().print(this);
 		print.u1(typeAnnotation.typePathLength(), "Type path length", true);
+		for (RuntimeTypeAnnotationsAttribute.TypePath typePath : typeAnnotation.typePath()) {
+			typePath.print(this);
+		}
+		typeAnnotation.annotation().print(this);
 	}
 
 	public void print(RuntimeTypeAnnotationsAttribute.TargetInfo targetInfo) {
 		print.u1(targetInfo.getTargetType(), "Target info type", true);
 	}
 
+	public void print(RuntimeTypeAnnotationsAttribute.TypeParameterTarget targetInfo) {
+		print.u1(targetInfo.getTypeParameterIndex(), "Type parameter target", true);
+	}
+
+	public void print(RuntimeTypeAnnotationsAttribute.SupertypeTargetClass targetInfo) {
+		print.u2(targetInfo.getSupertypeIndex(), "Supertype index", true);
+	}
+
+	public void print(RuntimeTypeAnnotationsAttribute.TypeParameterBoundTarget targetInfo) {
+		print.u1(targetInfo.getTypeParameterIndex(), "Type parameter index", true);
+		print.u1(targetInfo.getBoundIndex(), "Bound index", true);
+	}
+
 	public void print(RuntimeTypeAnnotationsAttribute.FormalParameterTarget targetInfo) {
 		print.u1(targetInfo.getFormalParameterIndex(), "Formal parameter index", true);
 	}
 
+	public void print(RuntimeTypeAnnotationsAttribute.ThrowsTarget targetInfo) {
+		print.u2(targetInfo.getThrowsTypeIndex(), "Throws type index", true);
+	}
+
+	public void print(RuntimeTypeAnnotationsAttribute.LocalVarTarget targetInfo) {
+		for (RuntimeTypeAnnotationsAttribute.TableEntry tableEntry : targetInfo.getTable()) {
+			tableEntry.print(this);
+		}
+	}
+
+	public void print(RuntimeTypeAnnotationsAttribute.CatchTarget targetInfo) {
+		print.u2(targetInfo.getExceptionTableIndex(), "Exception table index", true);
+	}
+
+	public void print(RuntimeTypeAnnotationsAttribute.OffsetTarget targetInfo) {
+		print.u2(targetInfo.getOffset(), "Offset", true);
+	}
+
+	public void print(RuntimeTypeAnnotationsAttribute.TypeArgumentTarget targetInfo) {
+		print.u2(targetInfo.getOffset(), "Offset", true);
+		print.u1(targetInfo.getTypeArgumentIndex(), "Type argument index", true);
+	}
+
+	public void print(RuntimeTypeAnnotationsAttribute.TypePath typePath) {
+		print.u1(typePath.typePathKind(), "Kind", true);
+		print.u1(typePath.typeArgumentIndex(), "Argument index", true);
+	}
+
+	public void print(RuntimeTypeAnnotationsAttribute.TableEntry tableEntry) {
+		print.u2(tableEntry.startPc(), "Start PC", true);
+		print.u2(tableEntry.length(), "Length", true);
+		print.u2(tableEntry.index(), "Index", true);
+	}
 
 	public void print(AnnotationDefaultAttribute attr) {
 		attr.getElementValue().print(this);

@@ -75,6 +75,11 @@ public class RuntimeTypeAnnotationsAttribute extends Attribute {
 			this.typeParameterIndex = typeParameterIndex;
 		}
 
+		@Override
+		public void print(AttributePrinter printer) {
+			printer.print(this);
+		}
+
 		public U1 getTypeParameterIndex() {
 			return typeParameterIndex;
 		}
@@ -86,6 +91,11 @@ public class RuntimeTypeAnnotationsAttribute extends Attribute {
 		public SupertypeTargetClass(U1 targetType, U2 supertypeIndex) {
 			super(targetType);
 			this.supertypeIndex = supertypeIndex;
+		}
+
+		@Override
+		public void print(AttributePrinter printer) {
+			printer.print(this);
 		}
 
 		public U2 getSupertypeIndex() {
@@ -101,6 +111,11 @@ public class RuntimeTypeAnnotationsAttribute extends Attribute {
 			super(targetType);
 			this.typeParameterIndex = typeParameterIndex;
 			this.boundIndex = boundIndex;
+		}
+
+		@Override
+		public void print(AttributePrinter printer) {
+			printer.print(this);
 		}
 
 		public U1 getTypeParameterIndex() {
@@ -138,8 +153,20 @@ public class RuntimeTypeAnnotationsAttribute extends Attribute {
 	}
 
 	public static class ThrowsTarget extends TargetInfo {
+		private final U2 throwsTypeIndex;
+
 		public ThrowsTarget(U1 targetType, U2 throwsTypeIndex) {
 			super(targetType);
+			this.throwsTypeIndex = throwsTypeIndex;
+		}
+
+		@Override
+		public void print(AttributePrinter printer) {
+			printer.print(this);
+		}
+
+		public U2 getThrowsTypeIndex() {
+			return throwsTypeIndex;
 		}
 	}
 
@@ -149,6 +176,11 @@ public class RuntimeTypeAnnotationsAttribute extends Attribute {
 		public LocalVarTarget(U1 targetType, TableEntry[] table) {
 			super(targetType);
 			this.table = table;
+		}
+
+		@Override
+		public void print(AttributePrinter printer) {
+			printer.print(this);
 		}
 
 		public TableEntry[] getTable() {
@@ -164,6 +196,11 @@ public class RuntimeTypeAnnotationsAttribute extends Attribute {
 			this.exceptionTableIndex = exceptionTableIndex;
 		}
 
+		@Override
+		public void print(AttributePrinter printer) {
+			printer.print(this);
+		}
+
 		public U2 getExceptionTableIndex() {
 			return exceptionTableIndex;
 		}
@@ -175,6 +212,11 @@ public class RuntimeTypeAnnotationsAttribute extends Attribute {
 		public OffsetTarget(U1 targetType, U2 offset) {
 			super(targetType);
 			this.offset = offset;
+		}
+
+		@Override
+		public void print(AttributePrinter printer) {
+			printer.print(this);
 		}
 
 		public U2 getOffset() {
@@ -192,6 +234,11 @@ public class RuntimeTypeAnnotationsAttribute extends Attribute {
 			this.typeArgumentIndex = typeArgumentIndex;
 		}
 
+		@Override
+		public void print(AttributePrinter printer) {
+			printer.print(this);
+		}
+
 		public U2 getOffset() {
 			return offset;
 		}
@@ -201,10 +248,20 @@ public class RuntimeTypeAnnotationsAttribute extends Attribute {
 		}
 	}
 
-	public record TypePath(U1 typePathKind, U1 typeArgumentIndex) {
+	public record TypePath(U1 typePathKind, U1 typeArgumentIndex) implements Print.Printable<AttributePrinter> {
+
+		@Override
+		public void print(AttributePrinter printer) {
+			printer.print(this);
+		}
 	}
 
-	public record TableEntry(U2 startPc, U2 length, U2 index) {
+	public record TableEntry(U2 startPc, U2 length, U2 index) implements Print.Printable<AttributePrinter> {
+
+		@Override
+		public void print(AttributePrinter printer) {
+			printer.print(this);
+		}
 	}
 
 	public enum TypeTargetInfo {
